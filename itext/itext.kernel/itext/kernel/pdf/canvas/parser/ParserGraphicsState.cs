@@ -145,11 +145,11 @@ namespace iText.Kernel.Pdf.Canvas.Parser {
 
         private Subpath TransformSubpath(Subpath subpath, Matrix newCtm) {
             Subpath newSubpath = new Subpath();
-            newSubpath.SetClosed(subpath.IsClosed());
             foreach (IShape segment in subpath.GetSegments()) {
                 IShape transformedSegment = TransformSegment(segment, newCtm);
                 newSubpath.AddSegment(transformedSegment);
             }
+            newSubpath.SetClosed(subpath.IsClosed());
             return newSubpath;
         }
 
