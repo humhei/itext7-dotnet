@@ -74,9 +74,6 @@ namespace iText.Kernel.Pdf.Canvas.Parser {
 
         public override void UpdateCtm(Matrix newCtm) {
             base.UpdateCtm(newCtm);
-            if (clippingPath != null) {
-                TransformClippingPath(newCtm);
-            }
         }
 
         /// <summary>Intersects the current clipping path with the given path.</summary>
@@ -97,7 +94,7 @@ namespace iText.Kernel.Pdf.Canvas.Parser {
             if (clippingPath == null || clippingPath.IsEmpty()) {
                 return;
             }
-            Path pathCopy = new Path(path);
+            Path pathCopy = TransformPath(GetCtm(), new Path(path), true);
             pathCopy.CloseAllSubpaths();
             Clipper clipper = new Clipper();
             ClipperBridge.AddPath(clipper, clippingPath, PolyType.SUBJECT);
@@ -134,29 +131,36 @@ namespace iText.Kernel.Pdf.Canvas.Parser {
             this.clippingPath = pathCopy;
         }
 
-        private void TransformClippingPath(Matrix newCtm) {
+        private Path TransformPath(Matrix newCtm, Path originPath, bool isInverse)
+        {
             Path path = new Path();
-            foreach (Subpath subpath in clippingPath.GetSubpaths()) {
-                Subpath transformedSubpath = TransformSubpath(subpath, newCtm);
+            foreach (Subpath subpath in originPath.GetSubpaths())
+            {
+                Subpath transformedSubpath = TransformSubpath(subpath, newCtm ,isInverse);
                 path.AddSubpath(transformedSubpath);
             }
-            clippingPath = path;
+            return path;
         }
 
-        private Subpath TransformSubpath(Subpath subpath, Matrix newCtm) {
+        private void TransformClippingPath(Matrix newCtm) {
+
+            clippingPath = TransformPath(newCtm, clippingPath, true);
+        }
+
+        private Subpath TransformSubpath(Subpath subpath, Matrix newCtm, bool isInverse) {
             Subpath newSubpath = new Subpath();
             foreach (IShape segment in subpath.GetSegments()) {
-                IShape transformedSegment = TransformSegment(segment, newCtm);
+                IShape transformedSegment = TransformSegment(segment, newCtm, isInverse);
                 newSubpath.AddSegment(transformedSegment);
             }
             newSubpath.SetClosed(subpath.IsClosed());
             return newSubpath;
         }
 
-        private IShape TransformSegment(IShape segment, Matrix newCtm) {
+        private IShape TransformSegment(IShape segment, Matrix newCtm, bool isInverse) {
             IShape newSegment;
             IList<Point> segBasePts = segment.GetBasePoints();
-            Point[] transformedPoints = TransformPoints(newCtm, segBasePts.ToArray(new Point[segBasePts.Count]));
+            Point[] transformedPoints = TransformPoints(newCtm, isInverse, segBasePts.ToArray(new Point[segBasePts.Count]));
             if (segment is BezierCurve) {
                 newSegment = new BezierCurve(JavaUtil.ArraysAsList(transformedPoints));
             }
@@ -166,14 +170,27 @@ namespace iText.Kernel.Pdf.Canvas.Parser {
             return newSegment;
         }
 
-        private Point[] TransformPoints(Matrix transformationMatrix, params Point[] points) {
+        private Point[] TransformPoints(Matrix transformationMatrix, bool isInverse, params Point[] points) {
             try {
                 AffineTransform t = new AffineTransform(transformationMatrix.Get(Matrix.I11), transformationMatrix.Get(Matrix
                     .I12), transformationMatrix.Get(Matrix.I21), transformationMatrix.Get(Matrix.I22), transformationMatrix
                     .Get(Matrix.I31), transformationMatrix.Get(Matrix.I32));
                 t = t.CreateInverse();
                 Point[] transformed = new Point[points.Length];
-                t.Transform(points, 0, transformed, 0, points.Length);
+                if (isInverse)
+                {
+                    for (int i = 0; i < points.Length; i++)
+                    {
+                        var point = new Point();
+                        t.InverseTransform(points[i], point);
+                        transformed[i] = point;
+                    }
+
+                }
+                else
+                {
+                    t.Transform(points, 0, transformed, 0, points.Length);
+                }
                 return transformed;
             }
             catch (NoninvertibleTransformException e) {
