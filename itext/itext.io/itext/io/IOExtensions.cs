@@ -156,6 +156,14 @@ namespace iText.IO {
         }
 
         public static TValue Put<TKey, TValue>(this IDictionary<TKey, TValue> col, TKey key, TValue value) {
+            if (key is string key2)
+            {
+                if (key2 == "microsoft yahei ui")
+                {
+                    var a = 1;
+
+                }
+            }
             TValue oldVal = col.Get(key);
             col[key] = value;
             return oldVal;

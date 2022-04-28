@@ -50,7 +50,7 @@ namespace iText.Kernel.Pdf {
         private long position;
 
         public PdfLiteral(byte[] content)
-            : base(true) {
+            : base(directOnly: true) {
             this.content = content;
         }
 

@@ -142,10 +142,10 @@ namespace iText.Kernel.Pdf.Canvas.Parser {
             return path;
         }
 
-        private void TransformClippingPath(Matrix newCtm) {
+        //private void TransformClippingPath(Matrix newCtm) {
 
-            clippingPath = TransformPath(newCtm, clippingPath, true);
-        }
+        //    clippingPath = TransformPath(newCtm, clippingPath, true);
+        //}
 
         private Subpath TransformSubpath(Subpath subpath, Matrix newCtm, bool isInverse) {
             Subpath newSubpath = new Subpath();

@@ -67,7 +67,13 @@ namespace iText.Kernel.Pdf {
             String fileName = "surrogatePairTest.pdf";
             PdfWriter writer = new PdfWriter(outputFolder + fileName);
             PdfDocument doc = new PdfDocument(writer);
-            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "DejaVuSans.ttf", PdfEncodings.IDENTITY_H);
+            //PdfFontFactory.Register(@"D:\Users\Jia\Documents\MyData\Config\字体库\字体库\字体库\serif&san\无衬线体\过渡体\Arial\Arial.ttf");
+            PdfFont font = PdfFontFactory.CreateRegisteredFont(StandardFonts.HELVETICA_BOLD);
+            var p = PdfFontFactory.CreateFont(@"D:\Users\Jia\Documents\MyData\Config\字体库\字体库\字体库\serif&san\无衬线体\人文体\Tahoma\tahomabd.ttf");
+            var a = FontProgramFactory.GetRegisteredFontFamilies();
+            var b = FontProgramFactory.GetRegisteredFonts();
+
+
             PdfCanvas canvas = new PdfCanvas(doc.AddNewPage());
             canvas.SaveState().BeginText().MoveText(36, 750).SetFontAndSize(font, 72).ShowText("\uD835\uDD59\uD835\uDD56\uD835\uDD5D\uD835\uDD5D\uD835\uDD60\uD83D\uDE09\uD835\uDD68"
                  + "\uD835\uDD60\uD835\uDD63\uD835\uDD5D\uD835\uDD55").EndText().RestoreState();
