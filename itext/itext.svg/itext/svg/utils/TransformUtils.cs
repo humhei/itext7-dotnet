@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,6 +42,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
+using iText.Commons.Utils;
 using iText.IO.Util;
 using iText.Kernel.Geom;
 using iText.StyledXmlParser.Css.Util;
@@ -137,10 +138,10 @@ namespace iText.Svg.Utils {
         /// <returns>the AffineTransform object</returns>
         public static AffineTransform ParseTransform(String transform) {
             if (transform == null) {
-                throw new SvgProcessingException(SvgLogMessageConstant.TRANSFORM_NULL);
+                throw new SvgProcessingException(SvgExceptionMessageConstant.TRANSFORM_NULL);
             }
             if (String.IsNullOrEmpty(transform)) {
-                throw new SvgProcessingException(SvgLogMessageConstant.TRANSFORM_EMPTY);
+                throw new SvgProcessingException(SvgExceptionMessageConstant.TRANSFORM_EMPTY);
             }
             AffineTransform matrix = new AffineTransform();
             IList<String> listWithTransformations = SplitString(transform);
@@ -179,7 +180,7 @@ namespace iText.Svg.Utils {
         private static AffineTransform TransformationStringToMatrix(String transformation) {
             String name = GetNameFromString(transformation).ToUpperInvariant();
             if (String.IsNullOrEmpty(name)) {
-                throw new SvgProcessingException(SvgLogMessageConstant.INVALID_TRANSFORM_DECLARATION);
+                throw new SvgProcessingException(SvgExceptionMessageConstant.INVALID_TRANSFORM_DECLARATION);
             }
             switch (name) {
                 case MATRIX: {
@@ -207,7 +208,7 @@ namespace iText.Svg.Utils {
                 }
 
                 default: {
-                    throw new SvgProcessingException(SvgLogMessageConstant.UNKNOWN_TRANSFORMATION_TYPE);
+                    throw new SvgProcessingException(SvgExceptionMessageConstant.UNKNOWN_TRANSFORMATION_TYPE);
                 }
             }
         }
@@ -217,9 +218,9 @@ namespace iText.Svg.Utils {
         /// <returns>AffineTransform for the skew operation</returns>
         private static AffineTransform CreateSkewYTransformation(IList<String> values) {
             if (values.Count != 1) {
-                throw new SvgProcessingException(SvgLogMessageConstant.TRANSFORM_INCORRECT_NUMBER_OF_VALUES);
+                throw new SvgProcessingException(SvgExceptionMessageConstant.TRANSFORM_INCORRECT_NUMBER_OF_VALUES);
             }
-            double tan = Math.Tan(MathUtil.ToRadians((float)CssUtils.ParseFloat(values[0])));
+            double tan = Math.Tan(MathUtil.ToRadians((float)CssDimensionParsingUtils.ParseFloat(values[0])));
             //Differs from the notation in the PDF-spec for skews
             return new AffineTransform(1, tan, 0, 1, 0, 0);
         }
@@ -229,9 +230,9 @@ namespace iText.Svg.Utils {
         /// <returns>AffineTransform for the skew operation</returns>
         private static AffineTransform CreateSkewXTransformation(IList<String> values) {
             if (values.Count != 1) {
-                throw new SvgProcessingException(SvgLogMessageConstant.TRANSFORM_INCORRECT_NUMBER_OF_VALUES);
+                throw new SvgProcessingException(SvgExceptionMessageConstant.TRANSFORM_INCORRECT_NUMBER_OF_VALUES);
             }
-            double tan = Math.Tan(MathUtil.ToRadians((float)CssUtils.ParseFloat(values[0])));
+            double tan = Math.Tan(MathUtil.ToRadians((float)CssDimensionParsingUtils.ParseFloat(values[0])));
             //Differs from the notation in the PDF-spec for skews
             return new AffineTransform(1, 0, tan, 1, 0, 0);
         }
@@ -241,12 +242,12 @@ namespace iText.Svg.Utils {
         /// <returns>AffineTransform for the rotate operation</returns>
         private static AffineTransform CreateRotationTransformation(IList<String> values) {
             if (values.Count != 1 && values.Count != 3) {
-                throw new SvgProcessingException(SvgLogMessageConstant.TRANSFORM_INCORRECT_NUMBER_OF_VALUES);
+                throw new SvgProcessingException(SvgExceptionMessageConstant.TRANSFORM_INCORRECT_NUMBER_OF_VALUES);
             }
-            double angle = MathUtil.ToRadians((float)CssUtils.ParseFloat(values[0]));
+            double angle = MathUtil.ToRadians((float)CssDimensionParsingUtils.ParseFloat(values[0]));
             if (values.Count == 3) {
-                float centerX = CssUtils.ParseAbsoluteLength(values[1]);
-                float centerY = CssUtils.ParseAbsoluteLength(values[2]);
+                float centerX = CssDimensionParsingUtils.ParseAbsoluteLength(values[1]);
+                float centerY = CssDimensionParsingUtils.ParseAbsoluteLength(values[2]);
                 return AffineTransform.GetRotateInstance(angle, centerX, centerY);
             }
             return AffineTransform.GetRotateInstance(angle);
@@ -257,10 +258,10 @@ namespace iText.Svg.Utils {
         /// <returns>AffineTransform for the scale operation</returns>
         private static AffineTransform CreateScaleTransformation(IList<String> values) {
             if (values.Count == 0 || values.Count > 2) {
-                throw new SvgProcessingException(SvgLogMessageConstant.TRANSFORM_INCORRECT_NUMBER_OF_VALUES);
+                throw new SvgProcessingException(SvgExceptionMessageConstant.TRANSFORM_INCORRECT_NUMBER_OF_VALUES);
             }
-            float scaleX = CssUtils.ParseRelativeValue(values[0], 1);
-            float scaleY = values.Count == 2 ? CssUtils.ParseRelativeValue(values[1], 1) : scaleX;
+            float scaleX = CssDimensionParsingUtils.ParseRelativeValue(values[0], 1);
+            float scaleY = values.Count == 2 ? CssDimensionParsingUtils.ParseRelativeValue(values[1], 1) : scaleX;
             return AffineTransform.GetScaleInstance(scaleX, scaleY);
         }
 
@@ -269,10 +270,10 @@ namespace iText.Svg.Utils {
         /// <returns>AffineTransform for the translate operation</returns>
         private static AffineTransform CreateTranslateTransformation(IList<String> values) {
             if (values.Count == 0 || values.Count > 2) {
-                throw new SvgProcessingException(SvgLogMessageConstant.TRANSFORM_INCORRECT_NUMBER_OF_VALUES);
+                throw new SvgProcessingException(SvgExceptionMessageConstant.TRANSFORM_INCORRECT_NUMBER_OF_VALUES);
             }
-            float translateX = CssUtils.ParseAbsoluteLength(values[0]);
-            float translateY = values.Count == 2 ? CssUtils.ParseAbsoluteLength(values[1]) : 0;
+            float translateX = CssDimensionParsingUtils.ParseAbsoluteLength(values[0]);
+            float translateY = values.Count == 2 ? CssDimensionParsingUtils.ParseAbsoluteLength(values[1]) : 0;
             return AffineTransform.GetTranslateInstance(translateX, translateY);
         }
 
@@ -281,14 +282,14 @@ namespace iText.Svg.Utils {
         /// <returns>AffineTransform for the matrix keyword</returns>
         private static AffineTransform CreateMatrixTransformation(IList<String> values) {
             if (values.Count != 6) {
-                throw new SvgProcessingException(SvgLogMessageConstant.TRANSFORM_INCORRECT_NUMBER_OF_VALUES);
+                throw new SvgProcessingException(SvgExceptionMessageConstant.TRANSFORM_INCORRECT_NUMBER_OF_VALUES);
             }
             float a = (float)float.Parse(values[0], System.Globalization.CultureInfo.InvariantCulture);
             float b = (float)float.Parse(values[1], System.Globalization.CultureInfo.InvariantCulture);
             float c = (float)float.Parse(values[2], System.Globalization.CultureInfo.InvariantCulture);
             float d = (float)float.Parse(values[3], System.Globalization.CultureInfo.InvariantCulture);
-            float e = CssUtils.ParseAbsoluteLength(values[4]);
-            float f = CssUtils.ParseAbsoluteLength(values[5]);
+            float e = CssDimensionParsingUtils.ParseAbsoluteLength(values[4]);
+            float f = CssDimensionParsingUtils.ParseAbsoluteLength(values[5]);
             return new AffineTransform(a, b, c, d, e, f);
         }
 
@@ -298,7 +299,7 @@ namespace iText.Svg.Utils {
         private static String GetNameFromString(String transformation) {
             int indexOfParenthesis = transformation.IndexOf("(", StringComparison.Ordinal);
             if (indexOfParenthesis == -1) {
-                throw new SvgProcessingException(SvgLogMessageConstant.INVALID_TRANSFORM_DECLARATION);
+                throw new SvgProcessingException(SvgExceptionMessageConstant.INVALID_TRANSFORM_DECLARATION);
             }
             return transformation.JSubstring(0, transformation.IndexOf("(", StringComparison.Ordinal));
         }

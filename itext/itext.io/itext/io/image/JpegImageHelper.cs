@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,12 +44,16 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.IO.Colors;
 using iText.IO.Util;
 
 namespace iText.IO.Image {
     internal class JpegImageHelper {
+        private static readonly ILogger LOGGER = ITextLogManager.GetLogger(typeof(JpegImageHelper));
+
         /// <summary>This is a type of marker.</summary>
         private const int NOT_A_MARKER = -1;
 
@@ -116,7 +120,7 @@ namespace iText.IO.Image {
                 ProcessParameters(jpegStream, errorID, image);
             }
             catch (System.IO.IOException e) {
-                throw new iText.IO.IOException(iText.IO.IOException.JpegImageException, e);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.JpegImageException, e);
             }
             finally {
                 if (jpegStream != null) {
@@ -130,6 +134,31 @@ namespace iText.IO.Image {
             UpdateAttributes(image);
         }
 
+        internal static void AttemptToSetIccProfileToImage(byte[][] icc, ImageData image) {
+            if (icc != null) {
+                int total = 0;
+                foreach (byte[] value in icc) {
+                    if (value == null) {
+                        return;
+                    }
+                    total += value.Length - 14;
+                }
+                byte[] ficc = new byte[total];
+                total = 0;
+                foreach (byte[] bytes in icc) {
+                    Array.Copy(bytes, 14, ficc, total, bytes.Length - 14);
+                    total += bytes.Length - 14;
+                }
+                try {
+                    image.SetProfile(IccProfile.GetInstance(ficc, image.GetColorEncodingComponentsNumber()));
+                }
+                catch (Exception e) {
+                    LOGGER.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.DURING_CONSTRUCTION_OF_ICC_PROFILE_ERROR_OCCURRED
+                        , e.GetType().Name, e.Message));
+                }
+            }
+        }
+
         private static void UpdateAttributes(ImageData image) {
             image.filter = "DCTDecode";
             if (image.GetColorTransform() == 0) {
@@ -137,7 +166,8 @@ namespace iText.IO.Image {
                 decodeParms.Put("ColorTransform", 0);
                 image.decodeParms = decodeParms;
             }
-            if (image.GetColorSpace() != 1 && image.GetColorSpace() != 3 && image.IsInverted()) {
+            int colorComponents = image.GetColorEncodingComponentsNumber();
+            if (colorComponents != 1 && colorComponents != 3 && image.IsInverted()) {
                 image.decode = new float[] { 1, 0, 1, 0, 1, 0, 1, 0 };
             }
         }
@@ -146,14 +176,15 @@ namespace iText.IO.Image {
         private static void ProcessParameters(Stream jpegStream, String errorID, ImageData image) {
             byte[][] icc = null;
             if (jpegStream.Read() != 0xFF || jpegStream.Read() != 0xD8) {
-                throw new iText.IO.IOException(iText.IO.IOException._1IsNotAValidJpegFile).SetMessageParams(errorID);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException._1IsNotAValidJpegFile).SetMessageParams
+                    (errorID);
             }
             bool firstPass = true;
             int len;
             while (true) {
                 int v = jpegStream.Read();
                 if (v < 0) {
-                    throw new iText.IO.IOException(iText.IO.IOException.PrematureEofWhileReadingJpeg);
+                    throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.PrematureEofWhileReadingJpeg);
                 }
                 if (v == 0xFF) {
                     int marker = jpegStream.Read();
@@ -167,7 +198,8 @@ namespace iText.IO.Image {
                         byte[] bcomp = new byte[JFIF_ID.Length];
                         int r = jpegStream.Read(bcomp);
                         if (r != bcomp.Length) {
-                            throw new iText.IO.IOException(iText.IO.IOException._1CorruptedJfifMarker).SetMessageParams(errorID);
+                            throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException._1CorruptedJfifMarker).SetMessageParams
+                                (errorID);
                         }
                         bool found = true;
                         for (int k = 0; k < bcomp.Length; ++k) {
@@ -202,7 +234,7 @@ namespace iText.IO.Image {
                             byteappe[k] = (byte)jpegStream.Read();
                         }
                         if (byteappe.Length >= 12) {
-                            String appe = iText.IO.Util.JavaUtil.GetStringForBytes(byteappe, 0, 5, "ISO-8859-1");
+                            String appe = iText.Commons.Utils.JavaUtil.GetStringForBytes(byteappe, 0, 5, "ISO-8859-1");
                             if (appe.Equals("Adobe")) {
                                 image.SetInverted(true);
                             }
@@ -216,7 +248,7 @@ namespace iText.IO.Image {
                             byteapp2[k] = (byte)jpegStream.Read();
                         }
                         if (byteapp2.Length >= 14) {
-                            String app2 = iText.IO.Util.JavaUtil.GetStringForBytes(byteapp2, 0, 11, "ISO-8859-1");
+                            String app2 = iText.Commons.Utils.JavaUtil.GetStringForBytes(byteapp2, 0, 11, "ISO-8859-1");
                             if (app2.Equals("ICC_PROFILE")) {
                                 int order = byteapp2[12] & 0xff;
                                 int count = byteapp2[13] & 0xff;
@@ -295,8 +327,7 @@ namespace iText.IO.Image {
                                 dx = (unitsx == 2 ? (int)(dx * 2.54f + 0.5f) : dx);
                                 // make sure this is consistent with JFIF data
                                 if (image.GetDpiX() != 0 && image.GetDpiX() != dx) {
-                                    ILog logger = LogManager.GetLogger(typeof(JpegImageHelper));
-                                    logger.Debug(MessageFormatUtil.Format("Inconsistent metadata (dpiX: {0} vs {1})", image.GetDpiX(), dx));
+                                    LOGGER.LogDebug(MessageFormatUtil.Format("Inconsistent metadata (dpiX: {0} vs {1})", image.GetDpiX(), dx));
                                 }
                                 else {
                                     image.SetDpi(dx, image.GetDpiY());
@@ -306,8 +337,7 @@ namespace iText.IO.Image {
                                 dy = (unitsy == 2 ? (int)(dy * 2.54f + 0.5f) : dy);
                                 // make sure this is consistent with JFIF data
                                 if (image.GetDpiY() != 0 && image.GetDpiY() != dy) {
-                                    ILog logger = LogManager.GetLogger(typeof(JpegImageHelper));
-                                    logger.Debug(MessageFormatUtil.Format("Inconsistent metadata (dpiY: {0} vs {1})", image.GetDpiY(), dy));
+                                    LOGGER.LogDebug(MessageFormatUtil.Format("Inconsistent metadata (dpiY: {0} vs {1})", image.GetDpiY(), dy));
                                 }
                                 else {
                                     image.SetDpi(image.GetDpiX(), dx);
@@ -321,18 +351,19 @@ namespace iText.IO.Image {
                     if (markertype == VALID_MARKER) {
                         StreamUtil.Skip(jpegStream, 2);
                         if (jpegStream.Read() != 0x08) {
-                            throw new iText.IO.IOException(iText.IO.IOException._1MustHave8BitsPerComponent).SetMessageParams(errorID);
+                            throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException._1MustHave8BitsPerComponent).SetMessageParams
+                                (errorID);
                         }
                         image.SetHeight(GetShort(jpegStream));
                         image.SetWidth(GetShort(jpegStream));
-                        image.SetColorSpace(jpegStream.Read());
+                        image.SetColorEncodingComponentsNumber(jpegStream.Read());
                         image.SetBpc(8);
                         break;
                     }
                     else {
                         if (markertype == UNSUPPORTED_MARKER) {
-                            throw new iText.IO.IOException(iText.IO.IOException._1UnsupportedJpegMarker2).SetMessageParams(errorID, JavaUtil.IntegerToString
-                                (marker));
+                            throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException._1UnsupportedJpegMarker2).SetMessageParams
+                                (errorID, JavaUtil.IntegerToString(marker));
                         }
                         else {
                             if (markertype != NOPARAM_MARKER) {
@@ -342,30 +373,9 @@ namespace iText.IO.Image {
                     }
                 }
             }
-            if (icc != null) {
-                int total = 0;
-                for (int k = 0; k < icc.Length; ++k) {
-                    if (icc[k] == null) {
-                        icc = null;
-                        return;
-                    }
-                    total += icc[k].Length - 14;
-                }
-                byte[] ficc = new byte[total];
-                total = 0;
-                for (int k = 0; k < icc.Length; ++k) {
-                    Array.Copy(icc[k], 14, ficc, total, icc[k].Length - 14);
-                    total += icc[k].Length - 14;
-                }
-                try {
-                    image.SetProfile(IccProfile.GetInstance(ficc, image.GetColorSpace()));
-                }
-                catch (ArgumentException) {
-                }
-            }
+            AttemptToSetIccProfileToImage(icc, image);
         }
 
-        // ignore ICC profile if it's invalid.
         /// <summary>Reads a short from the <c>InputStream</c>.</summary>
         /// <param name="jpegStream">the <c>InputStream</c></param>
         /// <returns>an int</returns>

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,13 +42,15 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using Common.Logging;
-using iText.Kernel;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
 using iText.Kernel.Pdf.Xobject;
 using iText.Layout.Element;
+using iText.Layout.Exceptions;
 using iText.Layout.Renderer;
 
 namespace iText.Layout {
@@ -105,34 +107,32 @@ namespace iText.Layout {
         /// </param>
         /// <param name="rootArea">the maximum area that the Canvas may write upon</param>
         public Canvas(PdfPage page, Rectangle rootArea)
-            : this(InitPdfCanvasOrThrowIfPageIsFlushed(page), page.GetDocument(), rootArea) {
+            : this(InitPdfCanvasOrThrowIfPageIsFlushed(page), rootArea) {
             this.EnableAutoTagging(page);
             this.isCanvasOfPage = true;
         }
 
         /// <summary>
-        /// Creates a new Canvas to manipulate a specific document and content stream, which might be for example a page
+        /// Creates a new Canvas to manipulate a specific content stream, which might be for example a page
         /// or
         /// <see cref="iText.Kernel.Pdf.Xobject.PdfFormXObject"/>
         /// stream.
         /// </summary>
         /// <param name="pdfCanvas">the low-level content stream writer</param>
-        /// <param name="pdfDocument">the document that the resulting content stream will be written to</param>
         /// <param name="rootArea">the maximum area that the Canvas may write upon</param>
-        public Canvas(PdfCanvas pdfCanvas, PdfDocument pdfDocument, Rectangle rootArea)
+        public Canvas(PdfCanvas pdfCanvas, Rectangle rootArea)
             : base() {
-            this.pdfDocument = pdfDocument;
+            this.pdfDocument = pdfCanvas.GetDocument();
             this.pdfCanvas = pdfCanvas;
             this.rootArea = rootArea;
         }
 
         /// <summary>Creates a new Canvas to manipulate a specific document and page.</summary>
         /// <param name="pdfCanvas">The low-level content stream writer</param>
-        /// <param name="pdfDocument">The document that the resulting content stream will be written to</param>
         /// <param name="rootArea">The maximum area that the Canvas may write upon</param>
         /// <param name="immediateFlush">Whether to flush the canvas immediately after operations, false otherwise</param>
-        public Canvas(PdfCanvas pdfCanvas, PdfDocument pdfDocument, Rectangle rootArea, bool immediateFlush)
-            : this(pdfCanvas, pdfDocument, rootArea) {
+        public Canvas(PdfCanvas pdfCanvas, Rectangle rootArea, bool immediateFlush)
+            : this(pdfCanvas, rootArea) {
             this.immediateFlush = immediateFlush;
         }
 
@@ -143,7 +143,7 @@ namespace iText.Layout {
         /// <param name="formXObject">the form</param>
         /// <param name="pdfDocument">the document that the resulting content stream will be written to</param>
         public Canvas(PdfFormXObject formXObject, PdfDocument pdfDocument)
-            : this(new PdfCanvas(formXObject, pdfDocument), pdfDocument, formXObject.GetBBox().ToRectangle()) {
+            : this(new PdfCanvas(formXObject, pdfDocument), formXObject.GetBBox().ToRectangle()) {
         }
 
         /// <summary>
@@ -196,8 +196,8 @@ namespace iText.Layout {
         /// <param name="page">the page, on which this canvas will be rendered.</param>
         public virtual void EnableAutoTagging(PdfPage page) {
             if (IsCanvasOfPage() && this.page != page) {
-                ILog logger = LogManager.GetLogger(typeof(iText.Layout.Canvas));
-                logger.Error(iText.IO.LogMessageConstant.PASSED_PAGE_SHALL_BE_ON_WHICH_CANVAS_WILL_BE_RENDERED);
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Canvas));
+                logger.LogError(iText.IO.Logs.IoLogMessageConstant.PASSED_PAGE_SHALL_BE_ON_WHICH_CANVAS_WILL_BE_RENDERED);
             }
             this.page = page;
         }
@@ -291,7 +291,7 @@ namespace iText.Layout {
 
         private static PdfCanvas InitPdfCanvasOrThrowIfPageIsFlushed(PdfPage page) {
             if (page.IsFlushed()) {
-                throw new PdfException(PdfException.CannotDrawElementsOnAlreadyFlushedPages);
+                throw new PdfException(LayoutExceptionMessageConstant.CANNOT_DRAW_ELEMENTS_ON_ALREADY_FLUSHED_PAGES);
             }
             return new PdfCanvas(page);
         }

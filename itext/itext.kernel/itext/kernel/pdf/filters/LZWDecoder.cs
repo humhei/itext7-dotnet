@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.IO;
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 
 namespace iText.Kernel.Pdf.Filters {
     /// <summary>A class for performing LZW decoding.</summary>
@@ -78,7 +78,7 @@ namespace iText.Kernel.Pdf.Filters {
         /// <param name="uncompData">Array to return the uncompressed data in.</param>
         public virtual void Decode(byte[] data, Stream uncompData) {
             if (data[0] == (byte)0x00 && data[1] == (byte)0x01) {
-                throw new PdfException(PdfException.LzwFlavourNotSupported);
+                throw new PdfException(KernelExceptionMessageConstant.LZW_FLAVOUR_NOT_SUPPORTED);
             }
             InitializeStringTable();
             this.data = data;
@@ -137,7 +137,7 @@ namespace iText.Kernel.Pdf.Filters {
                 uncompData.Write(@string);
             }
             catch (System.IO.IOException e) {
-                throw new PdfException(PdfException.LzwDecoderException, e);
+                throw new PdfException(KernelExceptionMessageConstant.LZW_DECODER_EXCEPTION, e);
             }
         }
 

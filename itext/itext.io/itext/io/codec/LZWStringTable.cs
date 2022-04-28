@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,8 +41,7 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
-using System.IO;
-using iText.IO.Util;
+using iText.Commons.Utils;
 
 namespace iText.IO.Codec {
     /// <summary>General purpose LZW String Table.</summary>
@@ -256,7 +255,7 @@ namespace iText.IO.Codec {
             }
         }
 
-        public virtual void Dump(StreamWriter output) {
+        public virtual void Dump(FormattingStreamWriter output) {
             int i;
             for (i = 258; i < numStrings_; ++i) {
                 output.WriteLine(" strNxt_[" + i + "] = " + strNxt_[i] + " strChr_ " + JavaUtil.IntegerToHexString(strChr_

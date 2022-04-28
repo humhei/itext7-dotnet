@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,9 +41,9 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
-using Common.Logging;
-using iText.Kernel;
-using iText.Kernel.Crypto;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Kernel.Exceptions;
 
 namespace iText.Kernel.Pdf {
     public abstract class PdfObject {
@@ -165,8 +165,8 @@ namespace iText.Kernel.Pdf {
                 PdfDocument document = GetIndirectReference().GetDocument();
                 if (document != null) {
                     if (document.IsAppendMode() && !IsModified()) {
-                        ILog logger = LogManager.GetLogger(typeof(PdfObject));
-                        logger.Info(iText.IO.LogMessageConstant.PDF_OBJECT_FLUSHING_NOT_PERFORMED);
+                        ILogger logger = ITextLogManager.GetLogger(typeof(PdfObject));
+                        logger.LogInformation(iText.IO.Logs.IoLogMessageConstant.PDF_OBJECT_FLUSHING_NOT_PERFORMED);
                         return;
                     }
                     document.CheckIsoConformance(this, IsoKey.PDF_OBJECT);
@@ -175,7 +175,7 @@ namespace iText.Kernel.Pdf {
                 }
             }
             catch (System.IO.IOException e) {
-                throw new PdfException(PdfException.CannotFlushObject, e, this);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_FLUSH_OBJECT, e, this);
             }
         }
 
@@ -214,13 +214,15 @@ namespace iText.Kernel.Pdf {
 
         /// <summary>Marks object to be saved as indirect.</summary>
         /// <param name="document">a document the indirect reference will belong to.</param>
+        /// <param name="reference">indirect reference which will be associated with this document</param>
         /// <returns>object itself.</returns>
         public virtual PdfObject MakeIndirect(PdfDocument document, PdfIndirectReference reference) {
             if (document == null || indirectReference != null) {
                 return this;
             }
             if (document.GetWriter() == null) {
-                throw new PdfException(PdfException.ThereIsNoAssociatePdfWriterForMakingIndirects);
+                throw new PdfException(KernelExceptionMessageConstant.THERE_IS_NO_ASSOCIATE_PDF_WRITER_FOR_MAKING_INDIRECTS
+                    );
             }
             if (reference == null) {
                 indirectReference = document.CreateNextIndirectReference();
@@ -301,12 +303,13 @@ namespace iText.Kernel.Pdf {
         /// <returns>copied object.</returns>
         public virtual PdfObject CopyTo(PdfDocument document, bool allowDuplicating) {
             if (document == null) {
-                throw new PdfException(PdfException.DocumentForCopyToCannotBeNull);
+                throw new PdfException(KernelExceptionMessageConstant.DOCUMENT_FOR_COPY_TO_CANNOT_BE_NULL);
             }
             if (indirectReference != null) {
                 // TODO checkState(MUST_BE_INDIRECT) now is always false, because indirectReference != null. See also DEVSIX-602
                 if (indirectReference.GetWriter() != null || CheckState(MUST_BE_INDIRECT)) {
-                    throw new PdfException(PdfException.CannotCopyIndirectObjectFromTheDocumentThatIsBeingWritten);
+                    throw new PdfException(KernelExceptionMessageConstant.CANNOT_COPY_INDIRECT_OBJECT_FROM_THE_DOCUMENT_THAT_IS_BEING_WRITTEN
+                        );
                 }
                 if (!indirectReference.GetReader().IsOpenedWithFullPermission()) {
                     throw new BadPasswordException(BadPasswordException.PdfReaderNotOpenedWithOwnerPassword);
@@ -319,14 +322,11 @@ namespace iText.Kernel.Pdf {
         ///     </summary>
         /// <remarks>
         /// Sets the 'modified' flag to the indirect object, the flag denotes that the object was modified since the document opening.
+        /// It is recommended to set this flag after changing any PDF object.
         /// <para />
-        /// This flag is meaningful only if the
-        /// <see cref="PdfDocument"/>
-        /// is opened in append mode
-        /// (see
+        /// For example flag is used in the append mode (see
         /// <see cref="StampingProperties.UseAppendMode()"/>
         /// ).
-        /// <para />
         /// In append mode the whole document is preserved as is, and only changes to the document are
         /// appended to the end of the document file. Because of this, only modified objects need to be flushed and are
         /// allowed to be flushed (i.e. to be written).
@@ -359,6 +359,7 @@ namespace iText.Kernel.Pdf {
         /// prevented from releasing by high-level entities dealing with the objects.
         /// Also it's not possible to release the objects that have been modified.
         /// </remarks>
+        /// <returns>true if releasing this object is forbidden, otherwise false</returns>
         public virtual bool IsReleaseForbidden() {
             return CheckState(FORBID_RELEASE);
         }
@@ -366,8 +367,8 @@ namespace iText.Kernel.Pdf {
         public virtual void Release() {
             // In case ForbidRelease flag is set, release will not be performed.
             if (IsReleaseForbidden()) {
-                ILog logger = LogManager.GetLogger(typeof(PdfObject));
-                logger.Warn(iText.IO.LogMessageConstant.FORBID_RELEASE_IS_SET);
+                ILogger logger = ITextLogManager.GetLogger(typeof(PdfObject));
+                logger.LogWarning(iText.IO.Logs.IoLogMessageConstant.FORBID_RELEASE_IS_SET);
             }
             else {
                 if (indirectReference != null && indirectReference.GetReader() != null && !indirectReference.CheckState(FLUSHED
@@ -379,7 +380,7 @@ namespace iText.Kernel.Pdf {
             }
         }
 
-        //TODO log reasonless call of method
+        // TODO DEVSIX-4020. Log reasonless call of method
         /// <summary>
         /// Checks if this <c>PdfObject</c> is of the type
         /// <c>PdfNull</c>.
@@ -494,6 +495,10 @@ namespace iText.Kernel.Pdf {
 
         /// <summary>Sets special states of current object.</summary>
         /// <param name="state">special flag of current object</param>
+        /// <returns>
+        /// this
+        /// <see cref="PdfObject"/>
+        /// </returns>
         protected internal virtual PdfObject SetState(short state) {
             this.state |= state;
             return this;
@@ -501,6 +506,10 @@ namespace iText.Kernel.Pdf {
 
         /// <summary>Clear state of the flag of current object.</summary>
         /// <param name="state">special flag state to clear</param>
+        /// <returns>
+        /// this
+        /// <see cref="PdfObject"/>
+        /// </returns>
         protected internal virtual PdfObject ClearState(short state) {
             this.state &= (short)~state;
             return this;
@@ -511,7 +520,7 @@ namespace iText.Kernel.Pdf {
         /// <param name="document">document to copy object to.</param>
         protected internal virtual void CopyContent(PdfObject from, PdfDocument document) {
             if (IsFlushed()) {
-                throw new PdfException(PdfException.CannotCopyFlushedObject, this);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_COPY_FLUSHED_OBJECT, this);
             }
         }
 
@@ -554,7 +563,7 @@ namespace iText.Kernel.Pdf {
                 //copyTo case
                 PdfWriter writer = documentTo.GetWriter();
                 if (writer == null) {
-                    throw new PdfException(PdfException.CannotCopyToDocumentOpenedInReadingMode);
+                    throw new PdfException(KernelExceptionMessageConstant.CANNOT_COPY_TO_DOCUMENT_OPENED_IN_READING_MODE);
                 }
                 return writer.CopyObject(this, documentTo, allowDuplicating);
             }

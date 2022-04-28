@@ -29,7 +29,7 @@
 //        http://www.adobe.com/devnet/xmp/library/eula-xmp-library-java.html
 using System;
 using System.Text;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Kernel.XMP;
 
 namespace iText.Kernel.XMP.Impl {
@@ -164,8 +164,8 @@ namespace iText.Kernel.XMP.Impl {
         /// <param name="schema">a schema namespace</param>
         /// <param name="prop">an XMP Property</param>
         /// <returns>
-        /// Returns true if the property is defined as &quot;Internal
-        /// Property&quot;, see XMP Specification.
+        /// Returns true if the property is defined as &amp;quot;Internal
+        /// Property&amp;quot;, see XMP Specification.
         /// </returns>
         internal static bool IsInternalProperty(String schema, String prop) {
             bool isInternal = false;

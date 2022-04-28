@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,7 +45,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using iText.IO.Source;
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Filters;
 
@@ -137,6 +137,43 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Util {
             return inlineImageAsStreamObject;
         }
 
+        /// <param name="colorSpaceName">the name of the color space. If null, a bi-tonal (black and white) color space is assumed.
+        ///     </param>
+        /// <returns>the components per pixel for the specified color space</returns>
+        internal static int GetComponentsPerPixel(PdfName colorSpaceName, PdfDictionary colorSpaceDic) {
+            if (colorSpaceName == null) {
+                return 1;
+            }
+            if (colorSpaceName.Equals(PdfName.DeviceGray)) {
+                return 1;
+            }
+            if (colorSpaceName.Equals(PdfName.DeviceRGB)) {
+                return 3;
+            }
+            if (colorSpaceName.Equals(PdfName.DeviceCMYK)) {
+                return 4;
+            }
+            if (colorSpaceDic != null) {
+                PdfArray colorSpace = colorSpaceDic.GetAsArray(colorSpaceName);
+                if (colorSpace == null) {
+                    PdfName tempName = colorSpaceDic.GetAsName(colorSpaceName);
+                    if (tempName != null) {
+                        return GetComponentsPerPixel(tempName, colorSpaceDic);
+                    }
+                }
+                else {
+                    if (PdfName.Indexed.Equals(colorSpace.GetAsName(0))) {
+                        return 1;
+                    }
+                    if (PdfName.ICCBased.Equals(colorSpace.GetAsName(0))) {
+                        return colorSpace.GetAsStream(1).GetAsNumber(PdfName.N).IntValue();
+                    }
+                }
+            }
+            throw new InlineImageParsingUtils.InlineImageParseException(KernelExceptionMessageConstant.UNEXPECTED_COLOR_SPACE
+                ).SetMessageParams(colorSpaceName);
+        }
+
         /// <summary>Parses the next inline image dictionary from the parser.</summary>
         /// <remarks>
         /// Parses the next inline image dictionary from the parser.  The parser must be positioned immediately following the BI operator.
@@ -158,7 +195,7 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Util {
             }
             int ch = ps.GetTokeniser().Read();
             if (!PdfTokenizer.IsWhitespace(ch)) {
-                throw new InlineImageParsingUtils.InlineImageParseException(PdfException.UnexpectedCharacter1FoundAfterIDInInlineImage
+                throw new InlineImageParsingUtils.InlineImageParseException(KernelExceptionMessageConstant.UNEXPECTED_CHARACTER_FOUND_AFTER_ID_IN_INLINE_IMAGE
                     ).SetMessageParams(ch);
             }
             return dict;
@@ -198,40 +235,6 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Util {
                 }
             }
             return value;
-        }
-
-        /// <param name="colorSpaceName">the name of the color space. If null, a bi-tonal (black and white) color space is assumed.
-        ///     </param>
-        /// <returns>the components per pixel for the specified color space</returns>
-        private static int GetComponentsPerPixel(PdfName colorSpaceName, PdfDictionary colorSpaceDic) {
-            if (colorSpaceName == null) {
-                return 1;
-            }
-            if (colorSpaceName.Equals(PdfName.DeviceGray)) {
-                return 1;
-            }
-            if (colorSpaceName.Equals(PdfName.DeviceRGB)) {
-                return 3;
-            }
-            if (colorSpaceName.Equals(PdfName.DeviceCMYK)) {
-                return 4;
-            }
-            if (colorSpaceDic != null) {
-                PdfArray colorSpace = colorSpaceDic.GetAsArray(colorSpaceName);
-                if (colorSpace != null) {
-                    if (PdfName.Indexed.Equals(colorSpace.GetAsName(0))) {
-                        return 1;
-                    }
-                }
-                else {
-                    PdfName tempName = colorSpaceDic.GetAsName(colorSpaceName);
-                    if (tempName != null) {
-                        return GetComponentsPerPixel(tempName, colorSpaceDic);
-                    }
-                }
-            }
-            throw new InlineImageParsingUtils.InlineImageParseException(PdfException.UnexpectedColorSpace1).SetMessageParams
-                (colorSpaceName);
         }
 
         /// <summary>Computes the number of unfiltered bytes that each row of the image will contain.</summary>
@@ -285,7 +288,7 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Util {
             for (int i = startIndex; i < bytesToRead; i++) {
                 int ch = tokeniser.Read();
                 if (ch == -1) {
-                    throw new InlineImageParsingUtils.InlineImageParseException(PdfException.EndOfContentStreamReachedBeforeEndOfImageData
+                    throw new InlineImageParsingUtils.InlineImageParseException(KernelExceptionMessageConstant.END_OF_CONTENT_STREAM_REACHED_BEFORE_END_OF_IMAGE_DATA
                         );
                 }
                 bytes[i] = (byte)ch;
@@ -296,7 +299,7 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Util {
                 // Let's try to handle that case here.
                 PdfObject ei2 = ps.ReadObject();
                 if (!"EI".Equals(ei2.ToString())) {
-                    throw new InlineImageParsingUtils.InlineImageParseException(PdfException.OperatorEINotFoundAfterEndOfImageData
+                    throw new InlineImageParsingUtils.InlineImageParseException(KernelExceptionMessageConstant.OPERATOR_EI_NOT_FOUND_AFTER_END_OF_IMAGE_DATA
                         );
                 }
             }
@@ -355,7 +358,8 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Util {
                     }
                 }
             }
-            throw new InlineImageParsingUtils.InlineImageParseException(PdfException.CannotFindImageDataOrEI);
+            throw new InlineImageParsingUtils.InlineImageParseException(KernelExceptionMessageConstant.CANNOT_FIND_IMAGE_DATA_OR_EI
+                );
         }
 
         private static bool ImageColorSpaceIsKnown(PdfDictionary imageDictionary, PdfDictionary colorSpaceDic) {
@@ -382,10 +386,7 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Util {
             try {
                 IDictionary<PdfName, IFilterHandler> filters = new Dictionary<PdfName, IFilterHandler>(FilterHandlers.GetDefaultFilterHandlers
                     ());
-                DoNothingFilter stubfilter = new DoNothingFilter();
-                filters.Put(PdfName.DCTDecode, stubfilter);
-                filters.Put(PdfName.JBIG2Decode, stubfilter);
-                filters.Put(PdfName.JPXDecode, stubfilter);
+                filters.Put(PdfName.JBIG2Decode, new DoNothingFilter());
                 filters.Put(PdfName.FlateDecode, new FlateDecodeStrictFilter());
                 PdfReader.DecodeBytes(samples, imageDictionary, filters);
             }

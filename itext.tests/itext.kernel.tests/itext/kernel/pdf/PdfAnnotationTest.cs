@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -157,7 +157,7 @@ namespace iText.Kernel.Pdf {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.DESTINATION_NOT_PERMITTED_WHEN_ACTION_IS_SET)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DESTINATION_NOT_PERMITTED_WHEN_ACTION_IS_SET)]
         public virtual void LinkAnnotationActionDestinationTest() {
             String fileName = "linkAnnotationActionDestinationTest.pdf";
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(new FileStream(destinationFolder + fileName, FileMode.Create
@@ -312,11 +312,30 @@ namespace iText.Kernel.Pdf {
             target.GetAnnotation(pdfDoc);
             PdfLinkAnnotation linkAnnotation = new PdfLinkAnnotation(new Rectangle(400, 500, 50, 50));
             linkAnnotation.SetColor(ColorConstants.RED);
-            linkAnnotation.SetAction(PdfAction.CreateGoToE(new PdfNamedDestination("prime"), true, target));
+            linkAnnotation.SetAction(PdfAction.CreateGoToE(new PdfStringFS("Some fake destination"), new PdfNamedDestination
+                ("prime"), true, target));
             pdfDoc.GetFirstPage().AddAnnotation(linkAnnotation);
             pdfDoc.Close();
             CompareTool compareTool = new CompareTool();
             String errorMessage = compareTool.CompareByContent(filename, sourceFolder + "cmp_fileAttachmentTargetTest.pdf"
+                , destinationFolder, "diff_");
+            if (errorMessage != null) {
+                NUnit.Framework.Assert.Fail(errorMessage);
+            }
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.EMBEDDED_GO_TO_DESTINATION_NOT_SPECIFIED)]
+        public virtual void NoFileAttachmentTargetTest() {
+            String fileName = "noFileAttachmentTargetTest.pdf";
+            PdfDocument pdfDoc = new PdfDocument(new PdfWriter(destinationFolder + fileName));
+            pdfDoc.AddNewPage();
+            PdfLinkAnnotation linkAnnotation = new PdfLinkAnnotation(new Rectangle(400, 500, 50, 50));
+            linkAnnotation.SetAction(PdfAction.CreateGoToE(null, true, null));
+            pdfDoc.GetFirstPage().AddAnnotation(linkAnnotation);
+            pdfDoc.Close();
+            CompareTool compareTool = new CompareTool();
+            String errorMessage = compareTool.CompareByContent(destinationFolder + fileName, sourceFolder + "cmp_" + fileName
                 , destinationFolder, "diff_");
             if (errorMessage != null) {
                 NUnit.Framework.Assert.Fail(errorMessage);

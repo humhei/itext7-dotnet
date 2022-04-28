@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -55,7 +55,7 @@ namespace iText.Svg.Processors.Impl.Font {
             iText.StyledXmlParser.Jsoup.Nodes.Element styleTag = new iText.StyledXmlParser.Jsoup.Nodes.Element(iText.StyledXmlParser.Jsoup.Parser.Tag
                 .ValueOf("style"), "");
             TextNode styleContents = new TextNode("\n" + "\t@font-face{\n" + "\t\tfont-family:Courier;\n" + "\t\tsrc:local(Courier);\n"
-                 + "\t}\n" + "  ", "");
+                 + "\t}\n" + "  ");
             JsoupElementNode jSoupStyle = new JsoupElementNode(styleTag);
             jSoupStyle.AddChild(new JsoupTextNode(styleContents));
             SvgProcessorContext context = new SvgProcessorContext(new SvgConverterProperties());

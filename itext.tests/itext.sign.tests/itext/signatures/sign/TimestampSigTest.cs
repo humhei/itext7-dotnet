@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,9 +44,10 @@ using System;
 using System.IO;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.X509;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Kernel.Pdf;
 using iText.Signatures;
+using iText.Signatures.Testutils;
 using iText.Signatures.Testutils.Client;
 using iText.Test;
 using iText.Test.Signutils;
@@ -81,6 +82,8 @@ namespace iText.Signatures.Sign {
             TestTsaClient testTsa = new TestTsaClient(JavaUtil.ArraysAsList(tsaChain), tsaPrivateKey);
             signer.Timestamp(testTsa, "timestampSig1");
             PadesSigTest.BasicCheckSignedDoc(destinationFolder + "timestampTest01.pdf", "timestampSig1");
+            NUnit.Framework.Assert.IsNull(SignaturesCompareTool.CompareSignatures(outFileName, sourceFolder + "cmp_timestampTest01.pdf"
+                ));
         }
         //        TimeStampToken tsWrong = new TimeStampResponse(Files.readAllBytes(Paths.get("c:\\Users\\yulian\\Desktop\\myTs"))).getTimeStampToken();
         //

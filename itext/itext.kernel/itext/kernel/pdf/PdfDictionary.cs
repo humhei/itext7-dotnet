@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -432,6 +432,8 @@ namespace iText.Kernel.Pdf {
         }
 
         /// <param name="asDirect">true is to extract direct object always.</param>
+        /// <param name="key">the key to get the value from the map</param>
+        /// <returns>key if indirect reference is present</returns>
         public virtual PdfObject Get(PdfName key, bool asDirect) {
             if (!asDirect) {
                 return map.Get(key);

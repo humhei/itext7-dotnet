@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -78,7 +78,7 @@ namespace iText.Forms.Util {
             canvas.SaveState();
             canvas.ResetFillColorRgb();
             canvas.ConcatMatrix(width, 0, 0, height, moveX, moveY);
-            canvas.GetContentStream().GetOutputStream().WriteBytes(appearanceString.GetBytes(iText.IO.Util.EncodingUtil.ISO_8859_1
+            canvas.GetContentStream().GetOutputStream().WriteBytes(appearanceString.GetBytes(iText.Commons.Utils.EncodingUtil.ISO_8859_1
                 ));
             canvas.RestoreState();
         }

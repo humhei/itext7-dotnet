@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -88,7 +88,7 @@ namespace iText.Svg {
             /// <summary>Tag defining a clipping path.</summary>
             /// <remarks>Tag defining a clipping path. A clipping path defines the region where can be drawn. Anything outside the path won't be drawn.
             ///     </remarks>
-            public const String CLIP_PATH = "clippath";
+            public const String CLIP_PATH = "clipPath";
 
             /// <summary>Tag defining the color profile to be used.</summary>
             public const String COLOR_PROFILE = "color-profile";
@@ -229,7 +229,10 @@ namespace iText.Svg {
             /// <since>7.1.2</since>
             public const String LINE = "line";
 
-            /// <summary>Tag defining a linear gradient</summary>
+            /// <summary>
+            /// Tag defining a
+            /// <see cref="iText.Svg.Renderers.Impl.LinearGradientSvgNodeRenderer">linear gradient</see>.
+            /// </summary>
             public const String LINEAR_GRADIENT = "linearGradient";
 
             /// <summary>Tag defining a link</summary>
@@ -296,6 +299,12 @@ namespace iText.Svg {
             /// <summary>Tag defining the ramp of colors in a gradient.</summary>
             public const String STOP = "stop";
 
+            /// <summary>Tag defining the color in stop point of a gradient.</summary>
+            public const String STOP_COLOR = "stop-color";
+
+            /// <summary>Tag defining the opacity in stop point of a gradient.</summary>
+            public const String STOP_OPACITY = "stop-opacity";
+
             /// <summary>Tag defining the style to be.</summary>
             public const String STYLE = "style";
 
@@ -317,16 +326,15 @@ namespace iText.Svg {
             /// <since>7.1.2</since>
             public const String TEXT = "text";
 
+            /// <summary>Phantom tag for text leaf.</summary>
+            public const String TEXT_LEAF = ":text-leaf";
+
             /// <summary>Tag defining a path on which text can be drawn.</summary>
             public const String TEXT_PATH = "textPath";
 
             /// <summary>Tag defining the description of an element.</summary>
             /// <remarks>Tag defining the description of an element. Is not rendered.</remarks>
             public const String TITLE = "title";
-
-            /// <summary>Deprecated in SVG.</summary>
-            /// <remarks>Deprecated in SVG. Tag defining text that was defined in an SVG document.</remarks>
-            public const String TREF = "tref";
 
             /// <summary>Tag defining a span within a text element.</summary>
             public const String TSPAN = "tspan";
@@ -391,6 +399,12 @@ namespace iText.Svg {
             /// <summary>The Constant BOLD.</summary>
             public const String BOLD = "bold";
 
+            /// <summary>Attribute defining the units relation for a color gradient.</summary>
+            public const String GRADIENT_UNITS = "gradientUnits";
+
+            /// <summary>Attribute defining the transformations for a color gradient.</summary>
+            public const String GRADIENT_TRANSFORM = "gradientTransform";
+
             /// <summary>Attribute defining the height.</summary>
             /// <remarks>Attribute defining the height. Used in several elements.</remarks>
             public const String HEIGHT = "height";
@@ -401,17 +415,34 @@ namespace iText.Svg {
             /// <summary>Attribute defining the unique id of an element.</summary>
             public const String ID = "id";
 
-            /// <summary>Attribute defining the radius of a circle.</summary>
-            public const String R = "r";
+            /// <summary>Attribute defining the marker to use at the end of a path, line, polygon or polyline</summary>
+            public const String MARKER_END = "marker-end";
 
-            /// <summary>Attribute defining the x-axis of an ellipse or the x-axis radius of rounded rectangles.</summary>
-            public const String RX = "rx";
+            /// <summary>Attribute defining the height of the viewport in which the marker is to be fitted</summary>
+            public const String MARKER_HEIGHT = "markerHeight";
 
-            /// <summary>Attribute defining the y-axis of an ellipse or the y-axis radius of rounded rectangles.</summary>
-            public const String RY = "ry";
+            /// <summary>Attribute defining the marker drawn at every other vertex but the start and end of a path, line, polygon or polyline
+            ///     </summary>
+            public const String MARKER_MID = "marker-mid";
+
+            /// <summary>Attribute defining the marker to use at the start of a path, line, polygon or polyline</summary>
+            public const String MARKER_START = "marker-start";
+
+            /// <summary>Attribute defining the width of the viewport in which the marker is to be fitted</summary>
+            public const String MARKER_WIDTH = "markerWidth";
+
+            /// <summary>Attribute defining the coordinate system for attributes ‘markerWidth’, ‘markerHeight’ and the contents of the ‘marker’.
+            ///     </summary>
+            public const String MARKER_UNITS = "markerUnits";
+
+            /// <summary>Attribute defining the offset of a stop color for gradients.</summary>
+            public const String OFFSET = "offset";
 
             /// <summary>Attribute defining the opacity of a group or graphic element.</summary>
             public const String OPACITY = "opacity";
+
+            /// <summary>Attribute defining the orientation of a marker</summary>
+            public const String ORIENT = "orient";
 
             /// <summary>Close Path Operator.</summary>
             public const String PATH_DATA_CLOSE_PATH = "Z";
@@ -482,11 +513,40 @@ namespace iText.Svg {
             /// <summary>Relative Quadratic CurveTo Path Operator.</summary>
             public const String PATH_DATA_REL_QUAD_CURVE_TO = "q";
 
+            /// <summary>Attribute defining the coordinate system for the pattern content.</summary>
+            public const String PATTERN_CONTENT_UNITS = "patternContentUnits";
+
+            /// <summary>Attribute defining list of transform definitions for the pattern element.</summary>
+            public const String PATTERN_TRANSFORM = "patternTransform";
+
+            /// <summary>Attribute defining the coordinate system for attributes x, y, width , and height in pattern.</summary>
+            public const String PATTERN_UNITS = "patternUnits";
+
             /// <summary>Attribute defining the points of a polyline or polygon.</summary>
             public const String POINTS = "points";
 
             /// <summary>Attribute defining how to preserve the aspect ratio when scaling.</summary>
-            public const String PRESERVE_ASPECT_RATIO = "preserveaspectratio";
+            public const String PRESERVE_ASPECT_RATIO = "preserveAspectRatio";
+
+            /// <summary>Attribute defining the radius of a circle.</summary>
+            public const String R = "r";
+
+            /// <summary>Attribute defining the x-axis coordinate of the reference point which is to be aligned exactly at the marker position.
+            ///     </summary>
+            public const String REFX = "refX";
+
+            /// <summary>Attribute defining the y-axis coordinate of the reference point which is to be aligned exactly at the marker position.
+            ///     </summary>
+            public const String REFY = "refY";
+
+            /// <summary>Attribute defining the x-axis of an ellipse or the x-axis radius of rounded rectangles.</summary>
+            public const String RX = "rx";
+
+            /// <summary>Attribute defining the y-axis of an ellipse or the y-axis radius of rounded rectangles.</summary>
+            public const String RY = "ry";
+
+            /// <summary>Attribute defining the spread method for a color gradient.</summary>
+            public const String SPREAD_METHOD = "spreadMethod";
 
             /// <summary>Attribute defining the stroke color.</summary>
             public const String STROKE = "stroke";
@@ -522,7 +582,7 @@ namespace iText.Svg {
             public const String TRANSFORM = "transform";
 
             /// <summary>Attribute defining the viewbox of an element.</summary>
-            public const String VIEWBOX = "viewbox";
+            public const String VIEWBOX = "viewBox";
 
             /// <summary>Attribute defining the width of an element.</summary>
             public const String WIDTH = "width";
@@ -557,6 +617,12 @@ namespace iText.Svg {
 
         /// <summary>Class containing the constants for values appearing in SVG tags and attributes</summary>
         public sealed class Values {
+            /// <summary>Value representing automatic orientation for the marker attribute orient.</summary>
+            public const String AUTO = "auto";
+
+            /// <summary>Value representing reverse automatic orientation for the start marker.</summary>
+            public const String AUTO_START_REVERSE = "auto-start-reverse";
+
             /// <summary>Value representing the default value for the stroke linecap.</summary>
             public const String BUTT = "butt";
 
@@ -578,13 +644,11 @@ namespace iText.Svg {
             /// <summary>Value representing the "none" value".</summary>
             public const String NONE = "none";
 
+            /// <summary>Value representing the units relation "objectBoundingBox".</summary>
+            public const String OBJECT_BOUNDING_BOX = "objectBoundingBox";
+
             /// <summary>The value representing slice for the preserve aspect ratio calculations;</summary>
             public const String SLICE = "slice";
-
-            /// <summary>The value corresponding with the namespace url for SVG.</summary>
-            /// <remarks>The value corresponding with the namespace url for SVG. Will be removed since version 7.2.</remarks>
-            [Obsolete]
-            public const String SVGNAMESPACEURL = "http://www.w3.org/2000/svg";
 
             /// <summary>Value representing the text-alignment end for text objects</summary>
             public const String TEXT_ANCHOR_END = "end";
@@ -594,6 +658,22 @@ namespace iText.Svg {
 
             /// <summary>Value representing the text-alignment start for text objects</summary>
             public const String TEXT_ANCHOR_START = "start";
+
+            /// <summary>Value representing the gradient spread method "pad".</summary>
+            public const String SPREAD_METHOD_PAD = "pad";
+
+            /// <summary>Value representing the gradient spread method "repeat".</summary>
+            public const String SPREAD_METHOD_REPEAT = "repeat";
+
+            /// <summary>Value representing the gradient spread method "reflect".</summary>
+            public const String SPREAD_METHOD_REFLECT = "reflect";
+
+            /// <summary>The value for markerUnits that represent values in a coordinate system which has a single unit equal the size in user units of the current stroke width.
+            ///     </summary>
+            public const String STROKEWIDTH = "strokeWidth";
+
+            /// <summary>Value representing the units relation "userSpaceOnUse".</summary>
+            public const String USER_SPACE_ON_USE = "userSpaceOnUse";
 
             /// <summary>Value representing how to align when scaling.</summary>
             public const String XMIN_YMIN = "xminymin";

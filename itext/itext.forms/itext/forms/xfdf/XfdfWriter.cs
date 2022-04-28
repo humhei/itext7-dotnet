@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,15 +44,16 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Xml;
-using Common.Logging;
-using iText.IO.Util;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.Kernel.Pdf;
 
 namespace iText.Forms.Xfdf {
     internal class XfdfWriter {
         private Stream outputStream;
 
-        private static ILog logger = LogManager.GetLogger(typeof(iText.Forms.Xfdf.XfdfWriter));
+        private static ILogger logger = ITextLogManager.GetLogger(typeof(iText.Forms.Xfdf.XfdfWriter));
 
         /// <summary>Creates a XfdfWriter for output stream specified.</summary>
         /// <param name="outputStream">A stream to write xfdf file into.</param>
@@ -72,6 +73,29 @@ namespace iText.Forms.Xfdf {
         /// </param>
         internal virtual void Write(XfdfObject xfdfObject) {
             this.WriteDom(xfdfObject);
+        }
+
+        internal static void AddField(FieldObject fieldObject, XmlElement parentElement, XmlDocument document, IList
+            <FieldObject> fieldList) {
+            IList<FieldObject> childrenFields = FindChildrenFields(fieldObject, fieldList);
+            XmlElement field = document.CreateElement("field");
+            field.SetAttribute("name", fieldObject.GetName());
+            if (!childrenFields.IsEmpty()) {
+                foreach (FieldObject childField in childrenFields) {
+                    AddField(childField, field, document, fieldList);
+                }
+            }
+            else {
+                if (fieldObject.GetValue() != null && !String.IsNullOrEmpty(fieldObject.GetValue())) {
+                    XmlElement value = document.CreateElement("value");
+                    value.InnerText = fieldObject.GetValue();
+                    field.AppendChild(value);
+                }
+                else {
+                    logger.LogInformation(XfdfConstants.EMPTY_FIELD_VALUE_ELEMENT);
+                }
+            }
+            parentElement.AppendChild(field);
         }
 
         private void WriteDom(XfdfObject xfdfObject) {
@@ -143,29 +167,6 @@ namespace iText.Forms.Xfdf {
             return childrenFields;
         }
 
-        private static void AddField(FieldObject fieldObject, XmlElement parentElement, XmlDocument document, IList
-            <FieldObject> fieldList) {
-            IList<FieldObject> childrenFields = FindChildrenFields(fieldObject, fieldList);
-            XmlElement field = document.CreateElement("field");
-            field.SetAttribute("name", fieldObject.GetName());
-            if (!childrenFields.IsEmpty()) {
-                foreach (FieldObject childField in childrenFields) {
-                    AddField(childField, field, document, fieldList);
-                }
-            }
-            else {
-                if (fieldObject.GetValue() != null && !String.IsNullOrEmpty(fieldObject.GetValue())) {
-                    XmlElement value = document.CreateElement("value");
-                    value.InnerText = fieldObject.GetValue();
-                    field.AppendChild(value);
-                }
-                else {
-                    logger.Info(XfdfConstants.EMPTY_FIELD_VALUE_ELEMENT);
-                }
-            }
-            parentElement.AppendChild(field);
-        }
-
         private static void AddAnnot(AnnotObject annotObject, XmlElement annots, XmlDocument document) {
             if (annotObject.GetName() == null) {
                 return;
@@ -205,7 +206,7 @@ namespace iText.Forms.Xfdf {
                         annot.AppendChild(onActivation);
                     }
                     else {
-                        logger.Error("Dest and OnActivation elements are both missing");
+                        logger.LogError("Dest and OnActivation elements are both missing");
                     }
                 }
                 if (annotObject.GetBorderStyleAlt() != null) {
@@ -243,7 +244,7 @@ namespace iText.Forms.Xfdf {
                 .GetWidth()));
             //optional attribute
             if (borderStyleAltObject.GetDashPattern() != null) {
-                //TODO add real conversion from PdfArray (PdfName.D in Border dictionary) to String
+                //TODO DEVSIX-4028 add real conversion from PdfArray (PdfName.D in Border dictionary) to String
                 borderStyleAlt.SetAttribute(XfdfConstants.DASH_PATTERN, JavaUtil.ArraysToString(borderStyleAltObject.GetDashPattern
                     ()));
             }
@@ -407,7 +408,7 @@ namespace iText.Forms.Xfdf {
                                 goToR.AppendChild(file);
                             }
                             else {
-                                logger.Error("Dest or File elements are missing.");
+                                logger.LogError("Dest or File elements are missing.");
                             }
                         }
                         action.AppendChild(goToR);
@@ -427,7 +428,7 @@ namespace iText.Forms.Xfdf {
                                     launch.AppendChild(file);
                                 }
                                 else {
-                                    logger.Error("File element is missing");
+                                    logger.LogError("File element is missing");
                                 }
                                 if (actionObject.IsNewWindow()) {
                                     launch.SetAttribute(XfdfConstants.NEW_WINDOW, "true");

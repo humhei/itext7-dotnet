@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -105,6 +105,39 @@ namespace iText.Layout.Margincollapse {
             destInfo.SetUsedBufferSpaceOnTop(usedBufferSpaceOnTop);
             destInfo.SetUsedBufferSpaceOnBottom(usedBufferSpaceOnBottom);
             destInfo.SetClearanceApplied(clearanceApplied);
+        }
+
+        public static iText.Layout.Margincollapse.MarginsCollapseInfo CreateDeepCopy(iText.Layout.Margincollapse.MarginsCollapseInfo
+             instance) {
+            iText.Layout.Margincollapse.MarginsCollapseInfo copy = new iText.Layout.Margincollapse.MarginsCollapseInfo
+                ();
+            instance.CopyTo(copy);
+            copy.collapseBefore = instance.collapseBefore.Clone();
+            copy.collapseAfter = instance.collapseAfter.Clone();
+            if (instance.ownCollapseAfter != null) {
+                copy.SetOwnCollapseAfter(instance.ownCollapseAfter.Clone());
+            }
+            return copy;
+        }
+
+        public static void UpdateFromCopy(iText.Layout.Margincollapse.MarginsCollapseInfo originalInstance, iText.Layout.Margincollapse.MarginsCollapseInfo
+             processedCopy) {
+            originalInstance.ignoreOwnMarginTop = processedCopy.ignoreOwnMarginTop;
+            originalInstance.ignoreOwnMarginBottom = processedCopy.ignoreOwnMarginBottom;
+            originalInstance.collapseBefore.JoinMargin(processedCopy.collapseBefore);
+            originalInstance.collapseAfter.JoinMargin(processedCopy.collapseAfter);
+            if (processedCopy.GetOwnCollapseAfter() != null) {
+                if (originalInstance.GetOwnCollapseAfter() == null) {
+                    originalInstance.SetOwnCollapseAfter(new MarginsCollapse());
+                }
+                originalInstance.GetOwnCollapseAfter().JoinMargin(processedCopy.GetOwnCollapseAfter());
+            }
+            originalInstance.SetSelfCollapsing(processedCopy.isSelfCollapsing);
+            originalInstance.SetBufferSpaceOnTop(processedCopy.bufferSpaceOnTop);
+            originalInstance.SetBufferSpaceOnBottom(processedCopy.bufferSpaceOnBottom);
+            originalInstance.SetUsedBufferSpaceOnTop(processedCopy.usedBufferSpaceOnTop);
+            originalInstance.SetUsedBufferSpaceOnBottom(processedCopy.usedBufferSpaceOnBottom);
+            originalInstance.SetClearanceApplied(processedCopy.clearanceApplied);
         }
 
         internal virtual MarginsCollapse GetCollapseBefore() {

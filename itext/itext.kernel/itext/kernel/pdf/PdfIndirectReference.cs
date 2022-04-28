@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Text;
-using iText.IO.Util;
+using iText.Commons.Utils;
 
 namespace iText.Kernel.Pdf {
     public class PdfIndirectReference : PdfObject, IComparable<iText.Kernel.Pdf.PdfIndirectReference> {
@@ -121,6 +121,16 @@ namespace iText.Kernel.Pdf {
         /// Note: If chain of references has length of more than 32,
         /// this method return 31st reference in chain.
         /// </remarks>
+        /// <param name="recursively">
+        /// 
+        /// <see langword="true"/>
+        /// to resolve indirects chain
+        /// </param>
+        /// <returns>
+        /// the
+        /// <see cref="PdfObject"/>
+        /// result of indirect reference resolving
+        /// </returns>
         public virtual PdfObject GetRefersTo(bool recursively) {
             if (!recursively) {
                 if (refersTo == null && !CheckState(FLUSHED) && !CheckState(MODIFIED) && !CheckState(FREE) && GetReader() 
@@ -171,19 +181,27 @@ namespace iText.Kernel.Pdf {
                 return false;
             }
             iText.Kernel.Pdf.PdfIndirectReference that = (iText.Kernel.Pdf.PdfIndirectReference)o;
-            return objNr == that.objNr && genNr == that.genNr;
+            bool documentsEquals = pdfDocument == that.pdfDocument;
+            if (!documentsEquals) {
+                documentsEquals = pdfDocument != null && that.pdfDocument != null && pdfDocument.GetDocumentId() == that.pdfDocument
+                    .GetDocumentId();
+            }
+            return objNr == that.objNr && genNr == that.genNr && documentsEquals;
         }
 
         public override int GetHashCode() {
             int result = objNr;
             result = 31 * result + genNr;
+            if (pdfDocument != null) {
+                result = 31 * result + (int)pdfDocument.GetDocumentId();
+            }
             return result;
         }
 
         public virtual int CompareTo(iText.Kernel.Pdf.PdfIndirectReference o) {
             if (objNr == o.objNr) {
                 if (genNr == o.genNr) {
-                    return 0;
+                    return ComparePdfDocumentLinks(o);
                 }
                 return (genNr > o.genNr) ? 1 : -1;
             }
@@ -320,6 +338,30 @@ namespace iText.Kernel.Pdf {
         internal virtual void FixOffset(long offset) {
             if (!IsFree()) {
                 this.offsetOrIndex = offset;
+            }
+        }
+
+        private int ComparePdfDocumentLinks(iText.Kernel.Pdf.PdfIndirectReference toCompare) {
+            if (pdfDocument == toCompare.pdfDocument) {
+                return 0;
+            }
+            else {
+                if (pdfDocument == null) {
+                    return -1;
+                }
+                else {
+                    if (toCompare.pdfDocument == null) {
+                        return 1;
+                    }
+                    else {
+                        long thisDocumentId = pdfDocument.GetDocumentId();
+                        long documentIdToCompare = toCompare.pdfDocument.GetDocumentId();
+                        if (thisDocumentId == documentIdToCompare) {
+                            return 0;
+                        }
+                        return (thisDocumentId > documentIdToCompare) ? 1 : -1;
+                    }
+                }
             }
         }
     }

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -143,19 +143,6 @@ namespace iText.Layout.Borders {
             float[] verticalRadii = new float[] { verticalRadius1, verticalRadius2 };
             DrawDiscontinuousBorders(canvas, boundingRectangle, horizontalRadii, verticalRadii, defaultSide, borderWidthBefore
                 , borderWidthAfter);
-        }
-
-        /// <summary>Adjusts the size of the gap between dots</summary>
-        /// <param name="distance">
-        /// the
-        /// <see cref="Border">border</see>
-        /// length
-        /// </param>
-        /// <param name="initialGap">the initial size of the gap</param>
-        /// <returns>the adjusted size of the gap</returns>
-        [System.ObsoleteAttribute(@"logic moved to super-class")]
-        protected internal override float GetDotsGap(double distance, float initialGap) {
-            return base.GetDotsGap(distance, initialGap);
         }
     }
 }

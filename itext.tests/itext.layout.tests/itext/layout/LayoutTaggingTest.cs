@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,10 +42,10 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Text;
+using iText.Commons.Utils;
 using iText.IO.Font;
 using iText.IO.Font.Constants;
 using iText.IO.Image;
-using iText.IO.Util;
 using iText.Kernel.Colors;
 using iText.Kernel.Font;
 using iText.Kernel.Geom;
@@ -60,6 +60,7 @@ using iText.Kernel.Utils;
 using iText.Layout.Borders;
 using iText.Layout.Element;
 using iText.Layout.Font;
+using iText.Layout.Logs;
 using iText.Layout.Properties;
 using iText.Test;
 using iText.Test.Attributes;
@@ -97,7 +98,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
         public virtual void ImageTest01() {
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(destinationFolder + "imageTest01.pdf"));
             pdfDocument.SetTagged();
@@ -739,7 +740,6 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.RECTANGLE_HAS_NEGATIVE_OR_ZERO_SIZES, Count = 2)]
         public virtual void EmptyDivTest() {
             PdfWriter writer = new PdfWriter(destinationFolder + "emptyDivTest.pdf");
             PdfDocument pdf = new PdfDocument(writer);
@@ -767,7 +767,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ATTEMPT_TO_CREATE_A_TAG_FOR_FINISHED_HINT)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.ATTEMPT_TO_CREATE_A_TAG_FOR_FINISHED_HINT)]
         public virtual void NotAsciiCharTest() {
             //TODO update cmp-file after DEVSIX-3335 fixed
             PdfWriter writer = new PdfWriter(destinationFolder + "notAsciiCharTest.pdf");
@@ -786,8 +786,9 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
+        //TODO update cmp-file after DEVSIX-3351 fixed
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.XOBJECT_HAS_NO_STRUCT_PARENTS)]
         public virtual void CheckParentTreeIfFormXObjectTaggedTest() {
-            //TODO update cmp-file after DEVSIX-3351 fixed
             String outFileName = destinationFolder + "checkParentTreeIfFormXObjectTaggedTest.pdf";
             String cmpPdf = sourceFolder + "cmp_checkParentTreeIfFormXObjectTaggedTest.pdf";
             PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
@@ -799,7 +800,7 @@ namespace iText.Layout {
             canvas.EnableAutoTagging(page1);
             canvas.Add(new Paragraph(txt));
             PdfCanvas canvas1 = new PdfCanvas(page1);
-            canvas1.AddXObject(template, 10, 10);
+            canvas1.AddXObjectAt(template, 10, 10);
             pdfDoc.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpPdf, destinationFolder, "diff"
                 ));

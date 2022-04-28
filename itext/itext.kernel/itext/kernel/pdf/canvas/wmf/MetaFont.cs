@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -141,10 +141,10 @@ namespace iText.Kernel.Pdf.Canvas.Wmf {
                 name[k] = (byte)c;
             }
             try {
-                faceName = iText.IO.Util.JavaUtil.GetStringForBytes(name, 0, k, "Cp1252");
+                faceName = iText.Commons.Utils.JavaUtil.GetStringForBytes(name, 0, k, "Cp1252");
             }
             catch (ArgumentException) {
-                faceName = iText.IO.Util.JavaUtil.GetStringForBytes(name, 0, k);
+                faceName = iText.Commons.Utils.JavaUtil.GetStringForBytes(name, 0, k);
             }
             faceName = faceName.ToLowerInvariant();
         }

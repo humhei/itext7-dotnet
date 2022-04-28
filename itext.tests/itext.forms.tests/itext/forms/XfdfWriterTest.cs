@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,6 +42,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.IO;
+using iText.Forms.Exceptions;
 using iText.Forms.Xfdf;
 using iText.Kernel.Pdf;
 using iText.Kernel.Utils;
@@ -955,67 +956,21 @@ namespace iText.Forms {
 
         [NUnit.Framework.Test]
         public virtual void XfdfEmptyAttributeTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                XfdfObject xfdfObject = new XfdfObject();
-                AnnotsObject annots = new AnnotsObject();
-                xfdfObject.SetAnnots(annots);
-                AnnotObject annot = new AnnotObject();
-                annots.AddAnnot(annot);
-                String namePresent = "name1";
-                String nameAbsent = null;
-                String valuePresent = "value";
-                String valueAbsent = null;
-                annot.AddAttribute(new AttributeObject(nameAbsent, valuePresent));
-                annot.AddAttribute(new AttributeObject(namePresent, valueAbsent));
-            }
-            , NUnit.Framework.Throws.InstanceOf<XfdfException>().With.Message.EqualTo(XfdfConstants.ATTRIBUTE_NAME_OR_VALUE_MISSING))
-;
-        }
-
-        //TODO how to define test as unit test inside this whole class? is it even possible
-        [NUnit.Framework.Test]
-        public virtual void FieldEmptyValueTest() {
             XfdfObject xfdfObject = new XfdfObject();
-            FieldsObject fieldsObject = new FieldsObject();
-            FieldObject fieldObject = new FieldObject();
-            fieldObject.SetName("testname");
-            fieldObject.SetValue("");
-            fieldsObject.AddField(fieldObject);
-            xfdfObject.SetFields(fieldsObject);
-            String xfdfFilename = destinationFolder + "fieldEmptyValueTest.xfdf";
-            xfdfObject.WriteToFile(xfdfFilename);
-            NUnit.Framework.Assert.IsTrue(new CompareTool().CompareXmls(destinationFolder + "fieldEmptyValueTest.xfdf"
-                , sourceFolder + "cmp_fieldEmptyValueTest.xfdf"));
-        }
-
-        [NUnit.Framework.Test]
-        public virtual void FieldNullValueTest() {
-            XfdfObject xfdfObject = new XfdfObject();
-            FieldsObject fieldsObject = new FieldsObject();
-            FieldObject fieldObject = new FieldObject();
-            fieldObject.SetName("testname");
-            fieldsObject.AddField(fieldObject);
-            xfdfObject.SetFields(fieldsObject);
-            String xfdfFilename = destinationFolder + "fieldNullValueTest.xfdf";
-            xfdfObject.WriteToFile(xfdfFilename);
-            NUnit.Framework.Assert.IsTrue(new CompareTool().CompareXmls(destinationFolder + "fieldNullValueTest.xfdf", 
-                sourceFolder + "cmp_fieldNullValueTest.xfdf"));
-        }
-
-        //TODO how to define test as unit test inside this whole class? is it even possible
-        [NUnit.Framework.Test]
-        public virtual void FieldValueTest() {
-            XfdfObject xfdfObject = new XfdfObject();
-            FieldsObject fieldsObject = new FieldsObject();
-            FieldObject fieldObject = new FieldObject();
-            fieldObject.SetName("testname");
-            fieldObject.SetValue("testvalue");
-            fieldsObject.AddField(fieldObject);
-            xfdfObject.SetFields(fieldsObject);
-            String xfdfFilename = destinationFolder + "fieldValueTest.xfdf";
-            xfdfObject.WriteToFile(xfdfFilename);
-            NUnit.Framework.Assert.IsTrue(new CompareTool().CompareXmls(destinationFolder + "fieldValueTest.xfdf", sourceFolder
-                 + "cmp_fieldValueTest.xfdf"));
+            AnnotsObject annots = new AnnotsObject();
+            xfdfObject.SetAnnots(annots);
+            AnnotObject annot = new AnnotObject();
+            annots.AddAnnot(annot);
+            String namePresent = "name1";
+            String nameAbsent = null;
+            String valuePresent = "value";
+            String valueAbsent = null;
+            Exception e = NUnit.Framework.Assert.Catch(typeof(XfdfException), () => annot.AddAttribute(new AttributeObject
+                (nameAbsent, valuePresent)));
+            NUnit.Framework.Assert.AreEqual(XfdfException.ATTRIBUTE_NAME_OR_VALUE_MISSING, e.Message);
+            Exception e2 = NUnit.Framework.Assert.Catch(typeof(XfdfException), () => annot.AddAttribute(new AttributeObject
+                (namePresent, valueAbsent)));
+            NUnit.Framework.Assert.AreEqual(XfdfException.ATTRIBUTE_NAME_OR_VALUE_MISSING, e2.Message);
         }
     }
 }

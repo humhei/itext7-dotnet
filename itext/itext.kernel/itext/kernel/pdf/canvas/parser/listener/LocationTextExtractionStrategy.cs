@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,7 +44,7 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.Text;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf.Canvas;
 using iText.Kernel.Pdf.Canvas.Parser;
@@ -68,17 +68,7 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Listener {
 
         /// <summary>Creates a new text extraction renderer.</summary>
         public LocationTextExtractionStrategy()
-            : this(new _ITextChunkLocationStrategy_85()) {
-        }
-
-        private sealed class _ITextChunkLocationStrategy_85 : LocationTextExtractionStrategy.ITextChunkLocationStrategy {
-            public _ITextChunkLocationStrategy_85() {
-            }
-
-            public ITextChunkLocation CreateLocation(TextRenderInfo renderInfo, LineSegment baseline) {
-                return new TextChunkLocationDefaultImp(baseline.GetStartPoint(), baseline.GetEndPoint(), renderInfo.GetSingleSpaceWidth
-                    ());
-            }
+            : this(new LocationTextExtractionStrategy.ITextChunkLocationStrategyImpl()) {
         }
 
         /// <summary>
@@ -343,6 +333,13 @@ namespace iText.Kernel.Pdf.Canvas.Parser.Listener {
             internal IList<TextChunk> preceding = new List<TextChunk>();
 
             internal IList<TextChunk> succeeding = new List<TextChunk>();
+        }
+
+        private sealed class ITextChunkLocationStrategyImpl : LocationTextExtractionStrategy.ITextChunkLocationStrategy {
+            public ITextChunkLocation CreateLocation(TextRenderInfo renderInfo, LineSegment baseline) {
+                return new TextChunkLocationDefaultImp(baseline.GetStartPoint(), baseline.GetEndPoint(), renderInfo.GetSingleSpaceWidth
+                    ());
+            }
         }
     }
 }

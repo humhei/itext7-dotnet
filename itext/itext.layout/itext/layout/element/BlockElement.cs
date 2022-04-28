@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -70,7 +70,6 @@ namespace iText.Layout.Element {
 
         public override T1 GetDefaultProperty<T1>(int property) {
             switch (property) {
-                case Property.OVERFLOW:
                 case Property.OVERFLOW_X:
                 case Property.OVERFLOW_Y: {
                     return (T1)(Object)OverflowPropertyValue.FIT;
@@ -296,6 +295,7 @@ namespace iText.Layout.Element {
         /// If <strong>ratio</strong> is 1, additional character spacing will not be applied.
         /// If <strong>ratio</strong> is 0, additional word spacing will not be applied.
         /// </param>
+        /// <returns>this element</returns>
         public virtual T SetSpacingRatio(float ratio) {
             SetProperty(Property.SPACING_RATIO, ratio);
             return (T)(Object)this;

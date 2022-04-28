@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,8 +45,8 @@ using System;
 using System.IO;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Security;
-using iText.Kernel;
 using iText.Kernel.Crypto;
+using iText.Kernel.Exceptions;
 
 namespace iText.Kernel.Crypto.Securityhandler {
     public abstract class SecurityHandler {
@@ -70,7 +70,6 @@ namespace iText.Kernel.Crypto.Securityhandler {
         /// </summary>
         protected internal int nextObjectKeySize;
 
-        [System.NonSerialized]
         protected internal IDigest md5;
 
         /// <summary>Work area to prepare the object/generation bytes</summary>
@@ -84,8 +83,8 @@ namespace iText.Kernel.Crypto.Securityhandler {
         /// Note: For most of the supported security handlers algorithm to calculate encryption key for particular object
         /// is the same.
         /// </summary>
-        /// <param name="objNumber"/>
-        /// <param name="objGeneration"/>
+        /// <param name="objNumber">number of particular object for encryption</param>
+        /// <param name="objGeneration">generation of particular object for encryption</param>
         public virtual void SetHashKeyForNextObject(int objNumber, int objGeneration) {
             // added by ujihara
             md5.Reset();
@@ -112,7 +111,7 @@ namespace iText.Kernel.Crypto.Securityhandler {
                 md5 = DigestUtilities.GetDigest("MD5");
             }
             catch (Exception e) {
-                throw new PdfException(PdfException.PdfEncryption, e);
+                throw new PdfException(KernelExceptionMessageConstant.PDF_ENCRYPTION, e);
             }
         }
     }

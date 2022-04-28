@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,6 +42,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
+using iText.Commons.Utils;
 using iText.IO.Image;
 using iText.IO.Util;
 using iText.Kernel.Colors;
@@ -261,6 +262,29 @@ namespace iText.Layout {
             doc.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
                 , testName + "_diff"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void TabPositionAbsoluteValueTest() {
+            String outFileName = destinationFolder + "tabPositionAbsoluteValue.pdf";
+            String cmpFileName = sourceFolder + "cmp_tabPositionAbsoluteValue.pdf";
+            PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
+            Document doc = new Document(pdfDoc);
+            doc.Add(new Paragraph("x-coordinate = 100").SetFontColor(ColorConstants.RED).SetFirstLineIndent(100).SetFontSize
+                (8));
+            doc.Add(new Paragraph("x-coordinate = 200").SetFontColor(ColorConstants.GREEN).SetFirstLineIndent(200).SetFontSize
+                (8));
+            doc.Add(new Paragraph("x-coordinate = 300").SetFontColor(ColorConstants.BLUE).SetFirstLineIndent(300).SetFontSize
+                (8));
+            Paragraph p = new Paragraph().Add("Hello, iText!").Add(new Tab()).AddTabStops(new TabStop(100)).Add("Hi, iText!"
+                ).Add(new Tab()).AddTabStops(new TabStop(200)).Add("Hello, iText!").Add(new Tab()).AddTabStops(new TabStop
+                (300)).Add("Hello, iText!");
+            doc.Add(p);
+            float[] positions = new float[] { 100, 200, 300 };
+            DrawTabStopsPositions(positions, doc, 1, 0, 120);
+            doc.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                ));
         }
 
         [NUnit.Framework.Test]
@@ -499,9 +523,9 @@ namespace iText.Layout {
                 tabStops.Add(tabStop);
             }
             p.AddTabStops(tabStops);
-            foreach (String line in iText.IO.Util.StringUtil.Split(text, "\n")) {
-                foreach (String chunk in iText.IO.Util.StringUtil.Split(line, "\t")) {
-                    foreach (String piece in iText.IO.Util.StringUtil.Split(chunk, "#")) {
+            foreach (String line in iText.Commons.Utils.StringUtil.Split(text, "\n")) {
+                foreach (String chunk in iText.Commons.Utils.StringUtil.Split(line, "\t")) {
+                    foreach (String piece in iText.Commons.Utils.StringUtil.Split(chunk, "#")) {
                         if (!String.IsNullOrEmpty(piece)) {
                             p.Add(piece);
                         }

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -116,6 +116,12 @@ namespace iText.Kernel.Pdf {
         }
 
         /// <summary>Only PdfReader can use this method!</summary>
+        /// <param name="content">
+        /// byte content the
+        /// <see cref="PdfString"/>
+        /// will be created from
+        /// </param>
+        /// <param name="hexWriting">boolean indicating if hex writing will be used</param>
         protected internal PdfString(byte[] content, bool hexWriting)
             : base(content) {
             this.hexWriting = hexWriting;
@@ -150,6 +156,11 @@ namespace iText.Kernel.Pdf {
         }
 
         /// <summary>Gets the encoding of this string.</summary>
+        /// <returns>
+        /// the name of the encoding specifying the byte representation of current
+        /// <see cref="PdfString"/>
+        /// value
+        /// </returns>
         public virtual String GetEncoding() {
             return encoding;
         }
@@ -161,6 +172,11 @@ namespace iText.Kernel.Pdf {
         /// <c>PdfString</c>
         /// -object.
         /// </summary>
+        /// <returns>
+        /// Unicode string value created by current
+        /// <see cref="PdfString"/>
+        /// object
+        /// </returns>
         public virtual String ToUnicodeString() {
             if (encoding != null && encoding.Length != 0) {
                 return GetValue();
@@ -219,7 +235,8 @@ namespace iText.Kernel.Pdf {
 
         public override String ToString() {
             if (value == null) {
-                return iText.IO.Util.JavaUtil.GetStringForBytes(DecodeContent(), iText.IO.Util.EncodingUtil.ISO_8859_1);
+                return iText.Commons.Utils.JavaUtil.GetStringForBytes(DecodeContent(), iText.Commons.Utils.EncodingUtil.ISO_8859_1
+                    );
             }
             else {
                 return GetValue();
@@ -282,7 +299,11 @@ namespace iText.Kernel.Pdf {
         /// <c>generateContent()</c>
         /// won't be called.
         /// </remarks>
-        /// <param name="encrypt">@see PdfEncryption</param>
+        /// <param name="encrypt">
+        /// 
+        /// <see cref="PdfEncryption"/>
+        /// instance
+        /// </param>
         /// <returns>true if value was encrypted, otherwise false.</returns>
         protected internal virtual bool Encrypt(PdfEncryption encrypt) {
             if (CheckState(PdfObject.UNENCRYPTED)) {

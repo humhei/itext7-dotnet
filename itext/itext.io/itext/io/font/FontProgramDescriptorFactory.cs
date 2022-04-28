@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -152,10 +152,11 @@ namespace iText.IO.Font {
                     // count(.ttc) = 4
                     ttcName = baseName.JSubstring(0, ttcSplit + 4);
                     // count(.ttc,) = 5)
-                    ttcIndex = Convert.ToInt32(baseName.Substring(ttcSplit + 5));
+                    ttcIndex = Convert.ToInt32(baseName.Substring(ttcSplit + 5), System.Globalization.CultureInfo.InvariantCulture
+                        );
                 }
                 catch (FormatException nfe) {
-                    throw new iText.IO.IOException(nfe.Message, nfe);
+                    throw new iText.IO.Exceptions.IOException(nfe.Message, nfe);
                 }
                 OpenTypeParser parser = new OpenTypeParser(ttcName, ttcIndex);
                 FontProgramDescriptor descriptor = FetchOpenTypeFontDescriptor(parser);

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -79,8 +79,9 @@ namespace iText.Svg.Renderers {
         }
 
         [NUnit.Framework.Test]
-        //TODO: update cmp-file after DEVSIX-3432
-        [LogMessage(iText.StyledXmlParser.LogMessageConstant.UNKNOWN_ABSOLUTE_METRIC_LENGTH_PARSED, Count = 12)]
+        // TODO DEVSIX-3432 relative values doesn't support correctly for stroke-width attribute
+        [LogMessage(iText.StyledXmlParser.Logs.StyledXmlParserLogMessageConstant.UNKNOWN_ABSOLUTE_METRIC_LENGTH_PARSED
+            , Count = 12)]
         public virtual void StrokeWidthMeasureUnitsTest() {
             ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "strokeWidthMeasureUnitsTest");
         }

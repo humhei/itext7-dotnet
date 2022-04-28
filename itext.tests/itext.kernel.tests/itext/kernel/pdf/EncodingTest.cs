@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -89,7 +89,7 @@ namespace iText.Kernel.Pdf {
             PdfWriter writer = new PdfWriter(outputFolder + fileName);
             PdfDocument doc = new PdfDocument(writer);
             PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", "# simple 1 0020 041c 0456 0440 044a 0050 0065 0061 0063"
-                , true);
+                , PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED);
             PdfCanvas canvas = new PdfCanvas(doc.AddNewPage());
             canvas.SaveState().BeginText().MoveText(36, 806).SetFontAndSize(font, 12)
                         // Міръ Peace
@@ -137,12 +137,13 @@ namespace iText.Kernel.Pdf {
             String fileName = "notdefInTrueTypeFontTest.pdf";
             PdfWriter writer = new PdfWriter(outputFolder + fileName);
             PdfDocument doc = new PdfDocument(writer);
-            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", "# simple 32 0020 00C5 1987", true
-                );
+            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", "# simple 32 0020 00C5 1987", PdfFontFactory.EmbeddingStrategy
+                .PREFER_EMBEDDED);
             PdfCanvas canvas = new PdfCanvas(doc.AddNewPage());
             canvas.SaveState().BeginText().MoveText(36, 786).SetFontAndSize(font, 36).ShowText("\u00C5 \u1987").EndText
                 ().RestoreState();
-            font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", PdfEncodings.WINANSI, true);
+            font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", PdfEncodings.WINANSI, PdfFontFactory.EmbeddingStrategy
+                .PREFER_EMBEDDED);
             canvas.SaveState().BeginText().MoveText(36, 756).SetFontAndSize(font, 36).ShowText("\u1987").EndText().RestoreState
                 ();
             doc.Close();
@@ -205,7 +206,8 @@ namespace iText.Kernel.Pdf {
             String fileName = "symbolTrueTypeFontWinAnsiTest.pdf";
             PdfWriter writer = new PdfWriter(outputFolder + fileName);
             PdfDocument doc = new PdfDocument(writer);
-            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "Symbols1.ttf", true);
+            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "Symbols1.ttf", PdfEncodings.WINANSI, PdfFontFactory.EmbeddingStrategy
+                .PREFER_EMBEDDED);
             PdfCanvas canvas = new PdfCanvas(doc.AddNewPage());
             StringBuilder str = new StringBuilder();
             for (int i = 32; i <= 65; i++) {

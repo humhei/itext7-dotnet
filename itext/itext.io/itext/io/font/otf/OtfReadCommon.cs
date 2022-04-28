@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,8 +43,8 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
+using iText.Commons.Utils;
 using iText.IO.Source;
-using iText.IO.Util;
 
 namespace iText.IO.Font.Otf {
     public class OtfReadCommon {
@@ -73,16 +73,16 @@ namespace iText.IO.Font.Otf {
             int coverageFormat = rf.ReadShort();
             IList<int> glyphIds;
             if (coverageFormat == 1) {
-                int glyphCount = rf.ReadShort();
+                int glyphCount = rf.ReadUnsignedShort();
                 glyphIds = new List<int>(glyphCount);
                 for (int i = 0; i < glyphCount; i++) {
-                    int coverageGlyphId = rf.ReadShort();
+                    int coverageGlyphId = rf.ReadUnsignedShort();
                     glyphIds.Add(coverageGlyphId);
                 }
             }
             else {
                 if (coverageFormat == 2) {
-                    int rangeCount = rf.ReadShort();
+                    int rangeCount = rf.ReadUnsignedShort();
                     glyphIds = new List<int>();
                     for (int i = 0; i < rangeCount; i++) {
                         ReadRangeRecord(rf, glyphIds);
@@ -96,8 +96,8 @@ namespace iText.IO.Font.Otf {
         }
 
         private static void ReadRangeRecord(RandomAccessFileOrArray rf, IList<int> glyphIds) {
-            int startGlyphId = rf.ReadShort();
-            int endGlyphId = rf.ReadShort();
+            int startGlyphId = rf.ReadUnsignedShort();
+            int endGlyphId = rf.ReadUnsignedShort();
             int startCoverageIndex = rf.ReadShort();
             for (int glyphId = startGlyphId; glyphId <= endGlyphId; glyphId++) {
                 glyphIds.Add(glyphId);
@@ -172,14 +172,25 @@ namespace iText.IO.Font.Otf {
         }
 
         public static SubstLookupRecord[] ReadSubstLookupRecords(RandomAccessFileOrArray rf, int substCount) {
-            SubstLookupRecord[] substPosLookUpRecords = new SubstLookupRecord[substCount];
+            SubstLookupRecord[] substLookUpRecords = new SubstLookupRecord[substCount];
             for (int i = 0; i < substCount; ++i) {
                 SubstLookupRecord slr = new SubstLookupRecord();
                 slr.sequenceIndex = rf.ReadUnsignedShort();
                 slr.lookupListIndex = rf.ReadUnsignedShort();
-                substPosLookUpRecords[i] = slr;
+                substLookUpRecords[i] = slr;
             }
-            return substPosLookUpRecords;
+            return substLookUpRecords;
+        }
+
+        public static PosLookupRecord[] ReadPosLookupRecords(RandomAccessFileOrArray rf, int recordCount) {
+            PosLookupRecord[] posLookUpRecords = new PosLookupRecord[recordCount];
+            for (int i = 0; i < recordCount; ++i) {
+                PosLookupRecord lookupRecord = new PosLookupRecord();
+                lookupRecord.sequenceIndex = rf.ReadUnsignedShort();
+                lookupRecord.lookupListIndex = rf.ReadUnsignedShort();
+                posLookUpRecords[i] = lookupRecord;
+            }
+            return posLookUpRecords;
         }
 
         public static GposAnchor[] ReadAnchorArray(OpenTypeFontTableReader tableReader, int[] locations, int left, 

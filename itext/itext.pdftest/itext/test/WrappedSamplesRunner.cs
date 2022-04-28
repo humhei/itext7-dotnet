@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-    Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,6 +44,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using iText.Commons.Utils;
 using iText.IO.Util;
 using iText.Test.Attributes;
 using NUnit.Framework;
@@ -80,7 +81,7 @@ namespace iText.Test {
         public virtual void RunSamples() {
             Assume.That(sampleClassParams.ignoreMessage == null, sampleClassParams.ignoreMessage);
 
-            sampleClass = sampleClassParams.sampleType;
+            InitClass();
             System.Console.Out.WriteLine("Starting test " + sampleClassParams);
             
             string oldCurrentDir = Directory.GetCurrentDirectory();
@@ -107,6 +108,10 @@ namespace iText.Test {
 
         }
         
+        protected internal virtual void InitClass() {
+            sampleClass = sampleClassParams.sampleType;
+        }
+        
         /// <summary>Compares two PDF files using iText's CompareTool.</summary>
         /// <param name="outPath">The path to the working folder where comparison results and temp files will be created</param>
         /// <param name="dest">The PDF that resulted from the test</param>
@@ -124,8 +129,8 @@ namespace iText.Test {
                 return null;
             }
             int i = dest.LastIndexOf("/");
-            int j = dest.LastIndexOf("/chapter");
-            return "../../cmpfiles/" + dest.Substring(j, (i + 1) - j) + "cmp_" + dest.Substring(i + 1);
+            int j = dest.IndexOf("/") + 1;
+            return "../../../cmpfiles/" + dest.Substring(j, (i + 1) - j) + "cmp_" + dest.Substring(i + 1);
         }
 
         protected internal virtual String GetOutPath(String dest) {
@@ -169,7 +174,7 @@ namespace iText.Test {
             }
         }
 
-        private void RunMain() {
+        protected void RunMain() {
             MethodInfo mainMethod = GetMain(sampleClassParams.sampleType);
             if (mainMethod == null) {
                 throw new ArgumentException("Class must have main method.");
@@ -190,7 +195,7 @@ namespace iText.Test {
             if (!IsInSearchPath(classType.FullName, searchConfig)) {
                 return null;
             }
-            if (IsIgnoredClassOrPackage(classType.FullName, searchConfig)) {
+            if (IsIgnoredClassOrPackage(classType, searchConfig)) {
                 return null;
             }
 
@@ -200,10 +205,10 @@ namespace iText.Test {
             return runnerParams;
         }
 
-        private static bool IsIgnoredClassOrPackage(String fullName, RunnerSearchConfig searchConfig) {
+        private static bool IsIgnoredClassOrPackage(Type type, RunnerSearchConfig searchConfig) {
+            String fullName = type.FullName;
             foreach (String ignoredPath in searchConfig.GetIgnoredPaths()) {
-                String filePath = Path.Combine(TestUtil.GetParentProjectDirectory(TestContext
-                        .CurrentContext.TestDirectory), 
+                String filePath = Path.Combine(TestUtil.GetParentProjectDirectory(type.GetAssembly().Location), 
                     ignoredPath.Replace(".", "\\"));
 
                 if ((Directory.Exists(filePath) && fullName.Contains(ignoredPath))

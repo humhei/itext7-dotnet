@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,9 +44,9 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.Text;
+using iText.Commons.Utils;
 using iText.IO.Font;
 using iText.IO.Source;
-using iText.IO.Util;
 
 namespace iText.IO.Font.Cmap {
     public class CMapContentParser {
@@ -96,7 +96,7 @@ namespace iText.IO.Font.Cmap {
             IDictionary<String, CMapObject> dic = new Dictionary<String, CMapObject>();
             while (true) {
                 if (!NextValidToken()) {
-                    throw new iText.IO.IOException("Unexpected end of file.");
+                    throw new iText.IO.Exceptions.IOException("Unexpected end of file.");
                 }
                 if (tokeniser.GetTokenType() == PdfTokenizer.TokenType.EndDic) {
                     break;
@@ -105,17 +105,17 @@ namespace iText.IO.Font.Cmap {
                     continue;
                 }
                 if (tokeniser.GetTokenType() != PdfTokenizer.TokenType.Name) {
-                    throw new iText.IO.IOException("Dictionary key {0} is not a name.").SetMessageParams(tokeniser.GetStringValue
-                        ());
+                    throw new iText.IO.Exceptions.IOException("Dictionary key {0} is not a name.").SetMessageParams(tokeniser.
+                        GetStringValue());
                 }
                 String name = tokeniser.GetStringValue();
                 CMapObject obj = ReadObject();
                 if (obj.IsToken()) {
                     if (obj.ToString().Equals(">>")) {
-                        tokeniser.ThrowError(iText.IO.IOException.UnexpectedGtGt);
+                        tokeniser.ThrowError(iText.IO.Exceptions.IOException.UnexpectedGtGt);
                     }
                     if (obj.ToString().Equals("]")) {
-                        tokeniser.ThrowError(iText.IO.IOException.UnexpectedCloseBracket);
+                        tokeniser.ThrowError(iText.IO.Exceptions.IOException.UnexpectedCloseBracket);
                     }
                 }
                 dic.Put(name, obj);
@@ -135,7 +135,7 @@ namespace iText.IO.Font.Cmap {
                         break;
                     }
                     if (obj.ToString().Equals(">>")) {
-                        tokeniser.ThrowError(iText.IO.IOException.UnexpectedGtGt);
+                        tokeniser.ThrowError(iText.IO.Exceptions.IOException.UnexpectedGtGt);
                     }
                 }
                 array.Add(obj);

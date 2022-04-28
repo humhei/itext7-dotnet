@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,8 +43,9 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
-using iText.IO.Util;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 
 namespace iText.Kernel.Pdf {
     public class PdfNameTree {
@@ -52,7 +53,7 @@ namespace iText.Kernel.Pdf {
 
         private PdfCatalog catalog;
 
-        private IDictionary<String, PdfObject> items = new Dictionary<String, PdfObject>();
+        private IDictionary<String, PdfObject> items = new LinkedDictionary<String, PdfObject>();
 
         private PdfName treeType;
 
@@ -78,9 +79,8 @@ namespace iText.Kernel.Pdf {
                 dictionary = dictionary.GetAsDictionary(treeType);
                 if (dictionary != null) {
                     items = ReadTree(dictionary);
-                    //@TODO It's done for auto porting to itextsharp, cuz u cannot change collection which you iterate
-                    // in for loop (even if you change only value of a Map entry) in .NET. Java doesn't have such a problem.
-                    // We should find a better solution in the future.
+                    // A separate collection for keys is used for auto porting to C#, because in C#
+                    // it is impossible to change the collection which you iterate in for loop
                     ICollection<String> keys = new HashSet<String>();
                     keys.AddAll(items.Keys);
                     foreach (String key in keys) {
@@ -128,9 +128,9 @@ namespace iText.Kernel.Pdf {
                     return;
                 }
                 else {
-                    ILog logger = LogManager.GetLogger(typeof(iText.Kernel.Pdf.PdfNameTree));
-                    logger.Warn(MessageFormatUtil.Format(iText.IO.LogMessageConstant.NAME_ALREADY_EXISTS_IN_THE_NAME_TREE, key
-                        ));
+                    ILogger logger = ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.PdfNameTree));
+                    logger.LogWarning(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.NAME_ALREADY_EXISTS_IN_THE_NAME_TREE
+                        , key));
                 }
             }
             modified = true;
@@ -216,7 +216,7 @@ namespace iText.Kernel.Pdf {
         }
 
         private IDictionary<String, PdfObject> ReadTree(PdfDictionary dictionary) {
-            IDictionary<String, PdfObject> items = new Dictionary<String, PdfObject>();
+            IDictionary<String, PdfObject> items = new LinkedDictionary<String, PdfObject>();
             if (dictionary != null) {
                 IterateItems(dictionary, items, null);
             }

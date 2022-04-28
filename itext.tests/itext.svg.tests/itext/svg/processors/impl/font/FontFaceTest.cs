@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,11 +42,11 @@ address: sales@itextpdf.com
 */
 using System;
 using System.IO;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Kernel.Pdf;
 using iText.StyledXmlParser.Css.Media;
 using iText.StyledXmlParser.Resolver.Font;
-using iText.Svg.Exceptions;
+using iText.Svg.Logs;
 using iText.Svg.Processors;
 using iText.Svg.Processors.Impl;
 using iText.Svg.Renderers;
@@ -64,6 +64,19 @@ namespace iText.Svg.Processors.Impl.Font {
         [NUnit.Framework.OneTimeSetUp]
         public static void BeforeClass() {
             ITextTest.CreateDestinationFolder(destinationFolder);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void UnicodeRangeTest() {
+            // TODO fix cmp file after DEVSIX-2256 is finished. Right now unicode range is not processed correctly
+            ConvertAndCompare(sourceFolder, destinationFolder, "unicodeRangeTest");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void DroidSerifSingleQuotesTest() {
+            // TODO fix cmp file after DEVSIX-2534 is finished. Right now droid fonts are not applied if
+            //  their aliases are inside single quotes and contain spaces
+            ConvertAndCompare(sourceFolder, destinationFolder, "droidSerifSingleQuotesTest");
         }
 
         [NUnit.Framework.Test]
@@ -132,30 +145,34 @@ namespace iText.Svg.Processors.Impl.Font {
 
         [NUnit.Framework.Test]
         public virtual void W3cProblemTest01() {
-            //TODO: In w3c test suite this font is labeled as invalid though it correctly parsers both in browser and iText
+            //TODO(DEVSIX-5755): In w3c test suite this font is labeled as invalid though it correctly parsers both in browser and iText
             //See BlocksMetadataPadding001Test in io for decompression details
             RunTest("w3cProblemTest01");
         }
 
         [NUnit.Framework.Test]
-        [NUnit.Framework.Ignore("DEVSIX-1612")]
         public virtual void W3cProblemTest02() {
-            //TODO: In w3c test suite this font is labeled as invalid though and its loading failed in browser, though iText parses its as correct one and LOADS!
-            //See DirectoryTableOrder002Test in io for decompression details
-            RunTest("w3cProblemTest02");
+            try {
+                RunTest("w3cProblemTest02");
+            }
+            catch (OverflowException) {
+                return;
+            }
+            NUnit.Framework.Assert.Fail("In w3c test suite this font is labeled as invalid, " + "so the invalid negative value is expected while creating a glyph."
+                );
         }
 
         [NUnit.Framework.Test]
         public virtual void W3cProblemTest03() {
-            //TODO: silently omitted, decompression should fail.
+            //TODO(DEVSIX-5756): silently omitted, decompression should fail.
             //See HeaderFlavor001Test in io for decompression details
             RunTest("w3cProblemTest03");
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.FONT_SUBSET_ISSUE)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.FONT_SUBSET_ISSUE)]
         public virtual void W3cProblemTest04() {
-            //TODO: silently omitted, decompression should fail. Browser loads font but don't draw glyph.
+            //TODO(DEVSIX-5756): silently omitted, decompression should fail. Browser loads font but don't draw glyph.
             //See HeaderFlavor002Test in io for decompression details
             //NOTE, iText fails on subsetting as expected.
             RunTest("w3cProblemTest04");
@@ -163,24 +180,28 @@ namespace iText.Svg.Processors.Impl.Font {
 
         [NUnit.Framework.Test]
         public virtual void W3cProblemTest05() {
-            //TODO: In w3c test suite this font is labeled as invalid though it correctly parsers both in browser and iText
+            //TODO(DEVSIX-5755): In w3c test suite this font is labeled as invalid though it correctly parsers both in browser and iText
             //See HeaderReserved001Test in io for decompression details
             RunTest("w3cProblemTest05");
         }
 
         [NUnit.Framework.Test]
         public virtual void W3cProblemTest06() {
-            //TODO: In w3c test suite this font is labeled as invalid though it correctly parsers both in browser and iText
+            //TODO(DEVSIX-5755): In w3c test suite this font is labeled as invalid though it correctly parsers both in browser and iText
             //See TabledataHmtxTransform003Test in io for decompression details
             RunTest("w3cProblemTest06");
         }
 
         [NUnit.Framework.Test]
-        [NUnit.Framework.Ignore("DEVSIX-1612")]
         public virtual void W3cProblemTest07() {
-            //TODO: In w3c test suite this font is labeled as invalid though and its loading failed in browser, though iText parses its as correct one and LOADS!
-            //See ValidationOff012Test in io for decompression details
-            RunTest("w3cProblemTest07");
+            try {
+                RunTest("w3cProblemTest07");
+            }
+            catch (OverflowException) {
+                return;
+            }
+            NUnit.Framework.Assert.Fail("In w3c test suite this font is labeled as invalid, " + "so the invalid negative value is expected while creating a glyph."
+                );
         }
 
         [NUnit.Framework.Test]
@@ -237,7 +258,7 @@ namespace iText.Svg.Processors.Impl.Font {
             String fileName = "resolveFonts_WithAllProperties";
             String svgFile = "fontSelectorTest";
             WriterProperties writerprops = new WriterProperties().SetCompressionLevel(0);
-            String baseUri = FileUtil.GetParentDirectory(new FileInfo(sourceFolder + svgFile + ".svg"));
+            String baseUri = FileUtil.GetParentDirectoryUri(new FileInfo(sourceFolder + svgFile + ".svg"));
             ISvgConverterProperties properties = new SvgConverterProperties().SetBaseUri(baseUri).SetFontProvider(new 
                 BasicFontProvider()).SetMediaDeviceDescription(new MediaDeviceDescription(MediaType.ALL));
             ConvertToSinglePage(new FileInfo(sourceFolder + svgFile + ".svg"), new FileInfo(destinationFolder + fileName
@@ -260,7 +281,7 @@ namespace iText.Svg.Processors.Impl.Font {
             String fileName = "resolveFonts_WithConverterPropsAndWriterProps";
             String svgFile = "fontSelectorTest";
             WriterProperties writerprops = new WriterProperties().SetCompressionLevel(0);
-            String baseUri = FileUtil.GetParentDirectory(new FileInfo(sourceFolder + svgFile + ".svg"));
+            String baseUri = FileUtil.GetParentDirectoryUri(new FileInfo(sourceFolder + svgFile + ".svg"));
             ISvgConverterProperties properties = new SvgConverterProperties().SetBaseUri(baseUri).SetFontProvider(new 
                 BasicFontProvider()).SetMediaDeviceDescription(new MediaDeviceDescription(MediaType.ALL));
             ConvertToSinglePage(new FileStream(sourceFolder + svgFile + ".svg", FileMode.Open, FileAccess.Read), new FileStream
@@ -290,16 +311,11 @@ namespace iText.Svg.Processors.Impl.Font {
             Compare(fileName, sourceFolder, destinationFolder);
         }
 
-        // TODO DEVSIX-2113
-        // This test passes correctly when baseUri is set manually. Remove SvgConverterProperties and use convertToSinglePage(File, File) method instead.
-        // It must produce the same pdf as the one with a pre-defined baseUri does
         [NUnit.Framework.Test]
         public virtual void ResolveFontsDefaultUri() {
-            SvgConverterProperties properties = new SvgConverterProperties();
-            properties.SetBaseUri(sourceFolder);
             String fileName = "fontSelectorTest02";
             ConvertToSinglePage(new FileInfo(sourceFolder + fileName + ".svg"), new FileInfo(destinationFolder + fileName
-                 + ".pdf"), properties);
+                 + ".pdf"));
             Compare(fileName, sourceFolder, destinationFolder);
         }
 

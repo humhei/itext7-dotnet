@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -46,11 +46,11 @@ using System.IO;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
+using iText.Commons.Utils;
 using iText.IO.Source;
-using iText.IO.Util;
-using iText.Kernel;
 using iText.Kernel.Crypto;
 using iText.Kernel.Crypto.Securityhandler;
+using iText.Kernel.Exceptions;
 
 namespace iText.Kernel.Pdf {
     /// <author>Paulo Soares</author>
@@ -79,10 +79,17 @@ namespace iText.Kernel.Pdf {
         private SecurityHandler securityHandler;
 
         /// <summary>Creates the encryption.</summary>
-        /// <remarks>
-        /// Creates the encryption. The userPassword and the
-        /// ownerPassword can be null or have zero length. In this case the ownerPassword
-        /// is replaced by a random string. The open permissions for the document can be
+        /// <param name="userPassword">
+        /// the user password. Can be null or of zero length, which is equal to
+        /// omitting the user password
+        /// </param>
+        /// <param name="ownerPassword">
+        /// the owner password. If it's null or empty, iText will generate
+        /// a random string to be used as the owner password
+        /// </param>
+        /// <param name="permissions">
+        /// the user permissions
+        /// The open permissions for the document can be
         /// <see cref="EncryptionConstants.ALLOW_PRINTING"/>
         /// ,
         /// <see cref="EncryptionConstants.ALLOW_MODIFY_CONTENTS"/>
@@ -98,11 +105,8 @@ namespace iText.Kernel.Pdf {
         /// <see cref="EncryptionConstants.ALLOW_ASSEMBLY"/>
         /// and
         /// <see cref="EncryptionConstants.ALLOW_DEGRADED_PRINTING"/>.
-        /// The permissions can be combined by ORing them.
-        /// </remarks>
-        /// <param name="userPassword">the user password. Can be null or empty</param>
-        /// <param name="ownerPassword">the owner password. Can be null or empty</param>
-        /// <param name="permissions">the user permissions</param>
+        /// The permissions can be combined by ORing them
+        /// </param>
         /// <param name="encryptionType">
         /// the type of encryption. It can be one of
         /// <see cref="EncryptionConstants.STANDARD_ENCRYPTION_40"/>
@@ -114,8 +118,23 @@ namespace iText.Kernel.Pdf {
         /// <see cref="EncryptionConstants.ENCRYPTION_AES_256"/>.
         /// Optionally
         /// <see cref="EncryptionConstants.DO_NOT_ENCRYPT_METADATA"/>
-        /// can be ORed to output the metadata in cleartext
+        /// can be
+        /// ORed to output the metadata in cleartext.
+        /// <see cref="EncryptionConstants.EMBEDDED_FILES_ONLY"/>
+        /// can be ORed as well.
+        /// Please be aware that the passed encryption types may override permissions:
+        /// <see cref="EncryptionConstants.STANDARD_ENCRYPTION_40"/>
+        /// implicitly sets
+        /// <see cref="EncryptionConstants.DO_NOT_ENCRYPT_METADATA"/>
+        /// and
+        /// <see cref="EncryptionConstants.EMBEDDED_FILES_ONLY"/>
+        /// as false;
+        /// <see cref="EncryptionConstants.STANDARD_ENCRYPTION_128"/>
+        /// implicitly sets
+        /// <see cref="EncryptionConstants.EMBEDDED_FILES_ONLY"/>
+        /// as false;
         /// </param>
+        /// <param name="documentId">document id which will be used for encryption</param>
         /// <param name="version">
         /// the
         /// <see cref="PdfVersion"/>
@@ -166,8 +185,14 @@ namespace iText.Kernel.Pdf {
 
         /// <summary>Creates the certificate encryption.</summary>
         /// <remarks>
-        /// Creates the certificate encryption. An array of one or more public certificates
-        /// must be provided together with an array of the same size for the permissions for each certificate.
+        /// Creates the certificate encryption.
+        /// <para />
+        /// An array of one or more public certificates must be provided together with
+        /// an array of the same size for the permissions for each certificate.
+        /// </remarks>
+        /// <param name="certs">the public certificates to be used for the encryption</param>
+        /// <param name="permissions">
+        /// the user permissions for each of the certificates
         /// The open permissions for the document can be
         /// <see cref="EncryptionConstants.ALLOW_PRINTING"/>
         /// ,
@@ -184,10 +209,8 @@ namespace iText.Kernel.Pdf {
         /// <see cref="EncryptionConstants.ALLOW_ASSEMBLY"/>
         /// and
         /// <see cref="EncryptionConstants.ALLOW_DEGRADED_PRINTING"/>.
-        /// The permissions can be combined by ORing them.
-        /// </remarks>
-        /// <param name="certs">the public certificates to be used for the encryption</param>
-        /// <param name="permissions">the user permissions for each of the certificates</param>
+        /// The permissions can be combined by ORing them
+        /// </param>
         /// <param name="encryptionType">
         /// the type of encryption. It can be one of
         /// <see cref="EncryptionConstants.STANDARD_ENCRYPTION_40"/>
@@ -199,7 +222,26 @@ namespace iText.Kernel.Pdf {
         /// <see cref="EncryptionConstants.ENCRYPTION_AES_256"/>.
         /// Optionally
         /// <see cref="EncryptionConstants.DO_NOT_ENCRYPT_METADATA"/>
-        /// can be ORed to output the metadata in cleartext
+        /// can be ORed
+        /// to output the metadata in cleartext.
+        /// <see cref="EncryptionConstants.EMBEDDED_FILES_ONLY"/>
+        /// can be ORed as well.
+        /// Please be aware that the passed encryption types may override permissions:
+        /// <see cref="EncryptionConstants.STANDARD_ENCRYPTION_40"/>
+        /// implicitly sets
+        /// <see cref="EncryptionConstants.DO_NOT_ENCRYPT_METADATA"/>
+        /// and
+        /// <see cref="EncryptionConstants.EMBEDDED_FILES_ONLY"/>
+        /// as false;
+        /// <see cref="EncryptionConstants.STANDARD_ENCRYPTION_128"/>
+        /// implicitly sets
+        /// <see cref="EncryptionConstants.EMBEDDED_FILES_ONLY"/>
+        /// as false;
+        /// </param>
+        /// <param name="version">
+        /// the
+        /// <see cref="PdfVersion"/>
+        /// of the target document for encryption
         /// </param>
         public PdfEncryption(X509Certificate[] certs, int[] permissions, int encryptionType, PdfVersion version)
             : base(new PdfDictionary()) {
@@ -313,12 +355,12 @@ namespace iText.Kernel.Pdf {
                 md5 = DigestUtilities.GetDigest("MD5");
             }
             catch (Exception e) {
-                throw new PdfException(PdfException.PdfEncryption, e);
+                throw new PdfException(KernelExceptionMessageConstant.PDF_ENCRYPTION, e);
             }
             long time = SystemUtil.GetTimeBasedSeed();
             long mem = SystemUtil.GetFreeMemory();
             String s = time + "+" + mem + "+" + (seq++);
-            return md5.Digest(s.GetBytes(iText.IO.Util.EncodingUtil.ISO_8859_1));
+            return md5.Digest(s.GetBytes(iText.Commons.Utils.EncodingUtil.ISO_8859_1));
         }
 
         /// <summary>Creates a PdfLiteral that contains an array of two id entries.</summary>
@@ -386,6 +428,7 @@ namespace iText.Kernel.Pdf {
         }
 
         /// <summary>Gets encryption algorithm and access permissions.</summary>
+        /// <returns>the crypto mode value</returns>
         /// <seealso cref="EncryptionConstants"/>
         public virtual int GetCryptoMode() {
             return cryptoMode;
@@ -420,7 +463,7 @@ namespace iText.Kernel.Pdf {
                 ose.Write(b);
             }
             catch (System.IO.IOException e) {
-                throw new PdfException(PdfException.PdfEncryption, e);
+                throw new PdfException(KernelExceptionMessageConstant.PDF_ENCRYPTION, e);
             }
             ose.Finish();
             return ba.ToArray();
@@ -441,7 +484,7 @@ namespace iText.Kernel.Pdf {
                 return ba.ToArray();
             }
             catch (System.IO.IOException e) {
-                throw new PdfException(PdfException.PdfEncryption, e);
+                throw new PdfException(KernelExceptionMessageConstant.PDF_ENCRYPTION, e);
             }
         }
 
@@ -521,7 +564,6 @@ namespace iText.Kernel.Pdf {
                 }
 
                 case EncryptionConstants.STANDARD_ENCRYPTION_128: {
-                    embeddedFilesOnly = false;
                     if (length > 0) {
                         SetKeyLength(length);
                     }
@@ -545,7 +587,7 @@ namespace iText.Kernel.Pdf {
                 }
 
                 default: {
-                    throw new PdfException(PdfException.NoValidEncryptionMode);
+                    throw new PdfException(KernelExceptionMessageConstant.NO_VALID_ENCRYPTION_MODE);
                 }
             }
             return revision;
@@ -556,9 +598,10 @@ namespace iText.Kernel.Pdf {
             int length = 0;
             PdfNumber rValue = encDict.GetAsNumber(PdfName.R);
             if (rValue == null) {
-                throw new PdfException(PdfException.IllegalRValue);
+                throw new PdfException(KernelExceptionMessageConstant.ILLEGAL_R_VALUE);
             }
             int revision = rValue.IntValue();
+            bool embeddedFilesOnlyMode = ReadEmbeddedFilesOnlyFromEncryptDictionary(encDict);
             switch (revision) {
                 case 2: {
                     cryptoMode = EncryptionConstants.STANDARD_ENCRYPTION_40;
@@ -568,11 +611,11 @@ namespace iText.Kernel.Pdf {
                 case 3: {
                     PdfNumber lengthValue = encDict.GetAsNumber(PdfName.Length);
                     if (lengthValue == null) {
-                        throw new PdfException(PdfException.IllegalLengthValue);
+                        throw new PdfException(KernelExceptionMessageConstant.ILLEGAL_LENGTH_VALUE);
                     }
                     length = lengthValue.IntValue();
                     if (length > 128 || length < 40 || length % 8 != 0) {
-                        throw new PdfException(PdfException.IllegalLengthValue);
+                        throw new PdfException(KernelExceptionMessageConstant.ILLEGAL_LENGTH_VALUE);
                     }
                     cryptoMode = EncryptionConstants.STANDARD_ENCRYPTION_128;
                     break;
@@ -581,11 +624,11 @@ namespace iText.Kernel.Pdf {
                 case 4: {
                     PdfDictionary dic = (PdfDictionary)encDict.Get(PdfName.CF);
                     if (dic == null) {
-                        throw new PdfException(PdfException.CfNotFoundEncryption);
+                        throw new PdfException(KernelExceptionMessageConstant.CF_NOT_FOUND_ENCRYPTION);
                     }
                     dic = (PdfDictionary)dic.Get(PdfName.StdCF);
                     if (dic == null) {
-                        throw new PdfException(PdfException.StdcfNotFoundEncryption);
+                        throw new PdfException(KernelExceptionMessageConstant.STDCF_NOT_FOUND_ENCRYPTION);
                     }
                     if (PdfName.V2.Equals(dic.Get(PdfName.CFM))) {
                         cryptoMode = EncryptionConstants.STANDARD_ENCRYPTION_128;
@@ -595,12 +638,15 @@ namespace iText.Kernel.Pdf {
                             cryptoMode = EncryptionConstants.ENCRYPTION_AES_128;
                         }
                         else {
-                            throw new PdfException(PdfException.NoCompatibleEncryptionFound);
+                            throw new PdfException(KernelExceptionMessageConstant.NO_COMPATIBLE_ENCRYPTION_FOUND);
                         }
                     }
                     PdfBoolean em = encDict.GetAsBoolean(PdfName.EncryptMetadata);
                     if (em != null && !em.GetValue()) {
                         cryptoMode |= EncryptionConstants.DO_NOT_ENCRYPT_METADATA;
+                    }
+                    if (embeddedFilesOnlyMode) {
+                        cryptoMode |= EncryptionConstants.EMBEDDED_FILES_ONLY;
                     }
                     break;
                 }
@@ -612,11 +658,14 @@ namespace iText.Kernel.Pdf {
                     if (em5 != null && !em5.GetValue()) {
                         cryptoMode |= EncryptionConstants.DO_NOT_ENCRYPT_METADATA;
                     }
+                    if (embeddedFilesOnlyMode) {
+                        cryptoMode |= EncryptionConstants.EMBEDDED_FILES_ONLY;
+                    }
                     break;
                 }
 
                 default: {
-                    throw new PdfException(PdfException.UnknownEncryptionTypeREq1).SetMessageParams(rValue);
+                    throw new PdfException(KernelExceptionMessageConstant.UNKNOWN_ENCRYPTION_TYPE_R).SetMessageParams(rValue);
                 }
             }
             revision = SetCryptoMode(cryptoMode, length);
@@ -628,9 +677,10 @@ namespace iText.Kernel.Pdf {
             int length = 0;
             PdfNumber vValue = encDict.GetAsNumber(PdfName.V);
             if (vValue == null) {
-                throw new PdfException(PdfException.IllegalVValue);
+                throw new PdfException(KernelExceptionMessageConstant.ILLEGAL_V_VALUE);
             }
             int v = vValue.IntValue();
+            bool embeddedFilesOnlyMode = ReadEmbeddedFilesOnlyFromEncryptDictionary(encDict);
             switch (v) {
                 case 1: {
                     cryptoMode = EncryptionConstants.STANDARD_ENCRYPTION_40;
@@ -641,11 +691,11 @@ namespace iText.Kernel.Pdf {
                 case 2: {
                     PdfNumber lengthValue = encDict.GetAsNumber(PdfName.Length);
                     if (lengthValue == null) {
-                        throw new PdfException(PdfException.IllegalLengthValue);
+                        throw new PdfException(KernelExceptionMessageConstant.ILLEGAL_LENGTH_VALUE);
                     }
                     length = lengthValue.IntValue();
                     if (length > 128 || length < 40 || length % 8 != 0) {
-                        throw new PdfException(PdfException.IllegalLengthValue);
+                        throw new PdfException(KernelExceptionMessageConstant.ILLEGAL_LENGTH_VALUE);
                     }
                     cryptoMode = EncryptionConstants.STANDARD_ENCRYPTION_128;
                     break;
@@ -655,11 +705,11 @@ namespace iText.Kernel.Pdf {
                 case 5: {
                     PdfDictionary dic = encDict.GetAsDictionary(PdfName.CF);
                     if (dic == null) {
-                        throw new PdfException(PdfException.CfNotFoundEncryption);
+                        throw new PdfException(KernelExceptionMessageConstant.CF_NOT_FOUND_ENCRYPTION);
                     }
                     dic = (PdfDictionary)dic.Get(PdfName.DefaultCryptFilter);
                     if (dic == null) {
-                        throw new PdfException(PdfException.DefaultcryptfilterNotFoundEncryption);
+                        throw new PdfException(KernelExceptionMessageConstant.DEFAULT_CRYPT_FILTER_NOT_FOUND_ENCRYPTION);
                     }
                     if (PdfName.V2.Equals(dic.Get(PdfName.CFM))) {
                         cryptoMode = EncryptionConstants.STANDARD_ENCRYPTION_128;
@@ -676,7 +726,7 @@ namespace iText.Kernel.Pdf {
                                 length = 256;
                             }
                             else {
-                                throw new PdfException(PdfException.NoCompatibleEncryptionFound);
+                                throw new PdfException(KernelExceptionMessageConstant.NO_COMPATIBLE_ENCRYPTION_FOUND);
                             }
                         }
                     }
@@ -684,14 +734,33 @@ namespace iText.Kernel.Pdf {
                     if (em != null && !em.GetValue()) {
                         cryptoMode |= EncryptionConstants.DO_NOT_ENCRYPT_METADATA;
                     }
+                    if (embeddedFilesOnlyMode) {
+                        cryptoMode |= EncryptionConstants.EMBEDDED_FILES_ONLY;
+                    }
                     break;
                 }
 
                 default: {
-                    throw new PdfException(PdfException.UnknownEncryptionTypeVEq1, vValue);
+                    throw new PdfException(KernelExceptionMessageConstant.UNKNOWN_ENCRYPTION_TYPE_V, vValue);
                 }
             }
             return SetCryptoMode(cryptoMode, length);
+        }
+
+        internal static bool ReadEmbeddedFilesOnlyFromEncryptDictionary(PdfDictionary encDict) {
+            PdfName embeddedFilesFilter = encDict.GetAsName(PdfName.EFF);
+            bool encryptEmbeddedFiles = !PdfName.Identity.Equals(embeddedFilesFilter) && embeddedFilesFilter != null;
+            bool encryptStreams = !PdfName.Identity.Equals(encDict.GetAsName(PdfName.StmF));
+            bool encryptStrings = !PdfName.Identity.Equals(encDict.GetAsName(PdfName.StrF));
+            if (encryptStreams || encryptStrings || !encryptEmbeddedFiles) {
+                return false;
+            }
+            PdfDictionary cfDictionary = encDict.GetAsDictionary(PdfName.CF);
+            if (cfDictionary != null) {
+                // Here we check if the crypt filter for embedded files and the filter in the CF dictionary are the same
+                return cfDictionary.GetAsDictionary(embeddedFilesFilter) != null;
+            }
+            return false;
         }
 
         private int FixAccessibilityPermissionPdf20(int permissions) {

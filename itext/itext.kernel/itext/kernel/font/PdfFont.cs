@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,20 +43,23 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using System.Text;
 using iText.IO.Font;
 using iText.IO.Font.Otf;
-using iText.IO.Util;
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
 
 namespace iText.Kernel.Font {
     public abstract class PdfFont : PdfObjectWrapper<PdfDictionary> {
+        /// <summary>The upper bound value for char code.</summary>
+        /// <remarks>
+        /// The upper bound value for char code. As for simple fonts char codes are a single byte values,
+        /// it may vary from 0 to 255.
+        /// </remarks>
+        public const int SIMPLE_FONT_MAX_CHAR_CODE_VALUE = 255;
+
         protected internal FontProgram fontProgram;
 
         protected internal static readonly byte[] EMPTY_BYTES = new byte[0];
-
-        protected internal static readonly double[] DEFAULT_FONT_MATRIX = new double[] { 0.001, 0, 0, 0.001, 0, 0 };
 
         protected internal IDictionary<int, Glyph> notdefGlyphs = new Dictionary<int, Glyph>();
 
@@ -154,18 +157,37 @@ namespace iText.Kernel.Font {
         public abstract String Decode(PdfString content);
 
         /// <summary>
-        /// Decodes a given
-        /// <see cref="iText.Kernel.Pdf.PdfString"/>
-        /// containing encoded string (e.g. from content stream) into a
+        /// Decodes sequence of character codes (e.g. from content stream) into a
         /// <see cref="iText.IO.Font.Otf.GlyphLine"/>
         /// </summary>
-        /// <param name="content">the encoded string</param>
+        /// <param name="characterCodes">
+        /// the string which is interpreted as a sequence of character codes. Note, that
+        /// <see cref="iText.Kernel.Pdf.PdfString"/>
+        /// acts as a storage for char code values specific to given font, therefore
+        /// individual character codes must not be interpreted as code units of the UTF-16 encoding
+        /// </param>
         /// <returns>
         /// the
         /// <see cref="iText.IO.Font.Otf.GlyphLine"/>
         /// containing the glyphs encoded by the passed string
         /// </returns>
-        public abstract GlyphLine DecodeIntoGlyphLine(PdfString content);
+        public abstract GlyphLine DecodeIntoGlyphLine(PdfString characterCodes);
+
+        /// <summary>
+        /// Decodes sequence of character codes (e.g. from content stream) to sequence of glyphs
+        /// and appends them to the passed list.
+        /// </summary>
+        /// <param name="list">the list to the end of which decoded glyphs are to be added</param>
+        /// <param name="characterCodes">
+        /// the string which is interpreted as a sequence of character codes. Note, that
+        /// <see cref="iText.Kernel.Pdf.PdfString"/>
+        /// acts as a storage for char code values specific to given font, therefore
+        /// individual character codes must not be interpreted as code units of the UTF-16 encoding
+        /// </param>
+        /// <returns>true if all codes where successfully decoded, false otherwise</returns>
+        public virtual bool AppendDecodedCodesToGlyphsList(IList<Glyph> list, PdfString characterCodes) {
+            return false;
+        }
 
         public abstract float GetContentWidth(PdfString content);
 
@@ -174,10 +196,6 @@ namespace iText.Kernel.Font {
         public abstract void WriteText(GlyphLine text, int from, int to, PdfOutputStream stream);
 
         public abstract void WriteText(String text, PdfOutputStream stream);
-
-        public virtual double[] GetFontMatrix() {
-            return DEFAULT_FONT_MATRIX;
-        }
 
         /// <summary>Returns the width of a certain character of this font in 1000 normalized units.</summary>
         /// <param name="unicode">a certain character.</param>
@@ -526,11 +544,7 @@ namespace iText.Kernel.Font {
         /// </returns>
         protected internal static String UpdateSubsetPrefix(String fontName, bool isSubset, bool isEmbedded) {
             if (isSubset && isEmbedded) {
-                StringBuilder s = new StringBuilder(fontName.Length + 7);
-                for (int k = 0; k < 6; ++k) {
-                    s.Append((char)(JavaUtil.Random() * 26 + 'A'));
-                }
-                return s.Append('+').Append(fontName).ToString();
+                return FontUtil.AddRandomSubsetPrefixForFontName(fontName);
             }
             return fontName;
         }
@@ -553,8 +567,8 @@ namespace iText.Kernel.Font {
         /// , if there is an error reading the font.
         /// </returns>
         protected internal virtual PdfStream GetPdfFontStream(byte[] fontStreamBytes, int[] fontStreamLengths) {
-            if (fontStreamBytes == null) {
-                throw new PdfException(PdfException.FontEmbeddingIssue);
+            if (fontStreamBytes == null || fontStreamLengths == null) {
+                throw new PdfException(KernelExceptionMessageConstant.FONT_EMBEDDING_ISSUE);
             }
             PdfStream fontStream = new PdfStream(fontStreamBytes);
             MakeObjectIndirect(fontStream);
@@ -562,47 +576,6 @@ namespace iText.Kernel.Font {
                 fontStream.Put(new PdfName("Length" + (k + 1)), new PdfNumber(fontStreamLengths[k]));
             }
             return fontStream;
-        }
-
-        /// <summary>
-        /// Normalizes given ranges by making sure that first values in pairs are lower than second values and merges overlapping
-        /// ranges in one.
-        /// </summary>
-        /// <param name="ranges">
-        /// a
-        /// <see cref="System.Collections.IList{E}"/>
-        /// of integer arrays, which are constituted by pairs of ints that denote
-        /// each range limits. Each integer array size shall be a multiple of two.
-        /// </param>
-        /// <returns>single merged array consisting of pairs of integers, each of them denoting a range.</returns>
-        [System.ObsoleteAttribute(@"The logic has been moved to iText.IO.Font.TrueTypeFont .")]
-        protected internal static int[] CompactRanges(IList<int[]> ranges) {
-            IList<int[]> simp = new List<int[]>();
-            foreach (int[] range in ranges) {
-                for (int j = 0; j < range.Length; j += 2) {
-                    simp.Add(new int[] { Math.Max(0, Math.Min(range[j], range[j + 1])), Math.Min(0xffff, Math.Max(range[j], range
-                        [j + 1])) });
-                }
-            }
-            for (int k1 = 0; k1 < simp.Count - 1; ++k1) {
-                for (int k2 = k1 + 1; k2 < simp.Count; ++k2) {
-                    int[] r1 = simp[k1];
-                    int[] r2 = simp[k2];
-                    if (r1[0] >= r2[0] && r1[0] <= r2[1] || r1[1] >= r2[0] && r1[0] <= r2[1]) {
-                        r1[0] = Math.Min(r1[0], r2[0]);
-                        r1[1] = Math.Max(r1[1], r2[1]);
-                        simp.JRemoveAt(k2);
-                        --k2;
-                    }
-                }
-            }
-            int[] s = new int[simp.Count * 2];
-            for (int k = 0; k < simp.Count; ++k) {
-                int[] r = simp[k];
-                s[k * 2] = r[0];
-                s[k * 2 + 1] = r[1];
-            }
-            return s;
         }
 
         /// <summary>Helper method for making an object indirect, if the object already is indirect.</summary>

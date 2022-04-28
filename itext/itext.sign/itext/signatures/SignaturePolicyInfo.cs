@@ -2,7 +2,7 @@
 $Id$
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -47,7 +47,7 @@ using Org.BouncyCastle;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.Esf;
 using Org.BouncyCastle.Asn1.X509;
-using iText.IO.Codec;
+using iText.Commons.Utils;
 
 namespace iText.Signatures {
     /// <summary>
@@ -133,10 +133,13 @@ namespace iText.Signatures {
                 spqi = new SigPolicyQualifierInfo(Org.BouncyCastle.Asn1.Pkcs.PkcsObjectIdentifiers.IdSpqEtsUri, new DerIA5String
                     (this.policyUri));
             }
-            signaturePolicyIdentifier = new SignaturePolicyIdentifier(new SignaturePolicyId(DerObjectIdentifier.GetInstance
-                (new DerObjectIdentifier(this.policyIdentifier.Replace("urn:oid:", ""))), new OtherHashAlgAndValue(new 
-                AlgorithmIdentifier(new DerObjectIdentifier(algId)), new DerOctetString(this.policyHash)), SignUtils.CreateSigPolicyQualifiers
-                (spqi)));
+            DerObjectIdentifier identifier = DerObjectIdentifier.GetInstance(new DerObjectIdentifier(this.policyIdentifier
+                .Replace("urn:oid:", "")));
+            OtherHashAlgAndValue otherHashAlgAndValue = new OtherHashAlgAndValue(new AlgorithmIdentifier(new DerObjectIdentifier
+                (algId)), new DerOctetString(this.policyHash));
+            SignaturePolicyId signaturePolicyId = new SignaturePolicyId(identifier, otherHashAlgAndValue, SignUtils.CreateSigPolicyQualifiers
+                (spqi));
+            signaturePolicyIdentifier = new SignaturePolicyIdentifier(signaturePolicyId);
             return signaturePolicyIdentifier;
         }
     }

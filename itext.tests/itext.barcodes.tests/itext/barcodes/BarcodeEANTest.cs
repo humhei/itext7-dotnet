@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -110,6 +110,70 @@ namespace iText.Barcodes {
             codeSUPP.SetBaseline(-2);
             BarcodeEANSUPP eanSupp = new BarcodeEANSUPP(codeEAN, codeSUPP);
             eanSupp.PlaceBarcode(canvas, null, ColorConstants.BLUE);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + filename, sourceFolder
+                 + "cmp_" + filename, destinationFolder, "diff_"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void PlaceBarcodeUPCATest() {
+            String filename = "placeBarcodeUPCATest.pdf";
+            PdfWriter writer = new PdfWriter(destinationFolder + filename);
+            PdfDocument document = new PdfDocument(writer);
+            PdfPage page = document.AddNewPage();
+            PdfCanvas canvas = new PdfCanvas(page);
+            Barcode1D barcode = new BarcodeEAN(document);
+            barcode.SetCodeType(BarcodeEAN.UPCA);
+            barcode.SetCode("012340000006");
+            barcode.PlaceBarcode(canvas, ColorConstants.BLACK, ColorConstants.BLACK);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + filename, sourceFolder
+                 + "cmp_" + filename, destinationFolder, "diff_"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void PlaceBarcodeUPCETest() {
+            String filename = "placeBarcodeUPCETest.pdf";
+            PdfWriter writer = new PdfWriter(destinationFolder + filename);
+            PdfDocument document = new PdfDocument(writer);
+            PdfPage page = document.AddNewPage();
+            PdfCanvas canvas = new PdfCanvas(page);
+            Barcode1D barcode = new BarcodeEAN(document);
+            barcode.SetCodeType(BarcodeEAN.UPCE);
+            barcode.SetCode("03456781");
+            barcode.PlaceBarcode(canvas, ColorConstants.BLACK, ColorConstants.BLACK);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + filename, sourceFolder
+                 + "cmp_" + filename, destinationFolder, "diff_"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void PlaceBarcodeSUPP2Test() {
+            String filename = "placeBarcodeSUPP2Test.pdf";
+            PdfWriter writer = new PdfWriter(destinationFolder + filename);
+            PdfDocument document = new PdfDocument(writer);
+            PdfPage page = document.AddNewPage();
+            PdfCanvas canvas = new PdfCanvas(page);
+            Barcode1D barcode = new BarcodeEAN(document);
+            barcode.SetCodeType(BarcodeEAN.SUPP2);
+            barcode.SetCode("03456781");
+            barcode.PlaceBarcode(canvas, ColorConstants.BLACK, ColorConstants.BLACK);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + filename, sourceFolder
+                 + "cmp_" + filename, destinationFolder, "diff_"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void PlaceBarcodeSUPP5Test() {
+            String filename = "placeBarcodeSUPP5Test.pdf";
+            PdfWriter writer = new PdfWriter(destinationFolder + filename);
+            PdfDocument document = new PdfDocument(writer);
+            PdfPage page = document.AddNewPage();
+            PdfCanvas canvas = new PdfCanvas(page);
+            Barcode1D barcode = new BarcodeEAN(document);
+            barcode.SetCodeType(BarcodeEAN.SUPP5);
+            barcode.SetCode("55999");
+            barcode.PlaceBarcode(canvas, ColorConstants.BLACK, ColorConstants.BLACK);
             document.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + filename, sourceFolder
                  + "cmp_" + filename, destinationFolder, "diff_"));

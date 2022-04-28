@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -113,6 +113,11 @@ namespace iText.Layout.Layout {
         /// </remarks>
         protected internal IRenderer overflowRenderer;
 
+        /// <summary>
+        /// The
+        /// <see cref="iText.Layout.Element.AreaBreak"/>
+        /// that will be rendered by this object.
+        /// </summary>
         protected internal AreaBreak areaBreak;
 
         /// <summary>
@@ -192,7 +197,10 @@ namespace iText.Layout.Layout {
         /// Sets the status of
         /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)"/>.
         /// </summary>
-        /// <param name="status"/>
+        /// <param name="status">
+        /// the status of
+        /// <see cref="iText.Layout.Renderer.IRenderer.Layout(LayoutContext)"/>
+        /// </param>
         public virtual void SetStatus(int status) {
             this.status = status;
         }
@@ -230,7 +238,7 @@ namespace iText.Layout.Layout {
         /// Sets the split
         /// <see cref="iText.Layout.Renderer.IRenderer">renderer</see>.
         /// </summary>
-        /// <param name="splitRenderer"/>
+        /// <param name="splitRenderer">the renderer to draw the splitted part of the content</param>
         public virtual void SetSplitRenderer(IRenderer splitRenderer) {
             this.splitRenderer = splitRenderer;
         }
@@ -251,15 +259,20 @@ namespace iText.Layout.Layout {
         /// Sets the overflow
         /// <see cref="iText.Layout.Renderer.IRenderer">renderer</see>.
         /// </summary>
-        /// <param name="overflowRenderer"/>
+        /// <param name="overflowRenderer">the renderer to draw the overflowed part of the content</param>
         public virtual void SetOverflowRenderer(IRenderer overflowRenderer) {
             this.overflowRenderer = overflowRenderer;
         }
 
+        /// <summary>Gets areaBreak value.</summary>
+        /// <returns>the areaBreak value</returns>
         public virtual AreaBreak GetAreaBreak() {
             return areaBreak;
         }
 
+        /// <summary>Sets areaBreak value.</summary>
+        /// <param name="areaBreak">the areaBreak value</param>
+        /// <returns>the areaBreak value</returns>
         public virtual iText.Layout.Layout.LayoutResult SetAreaBreak(AreaBreak areaBreak) {
             this.areaBreak = areaBreak;
             return this;

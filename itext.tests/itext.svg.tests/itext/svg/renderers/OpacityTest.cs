@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -79,22 +79,16 @@ namespace iText.Svg.Renderers {
 
         [NUnit.Framework.Test]
         public virtual void TestFillOpacityWithComma() {
-            NUnit.Framework.Assert.That(() =>  {
-                //TODO DEVSIX-2678
-                ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "testFillOpacityWithComma");
-            }
-            , NUnit.Framework.Throws.InstanceOf<FormatException>())
-;
+            //TODO DEVSIX-2678
+            NUnit.Framework.Assert.Catch(typeof(FormatException), () => ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER
+                , "testFillOpacityWithComma"));
         }
 
         [NUnit.Framework.Test]
         public virtual void TestFillOpacityWithPercents() {
-            NUnit.Framework.Assert.That(() =>  {
-                //TODO DEVSIX-2678
-                ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "testFillOpacityWithPercents");
-            }
-            , NUnit.Framework.Throws.InstanceOf<FormatException>())
-;
+            //TODO DEVSIX-2678
+            NUnit.Framework.Assert.Catch(typeof(FormatException), () => ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER
+                , "testFillOpacityWithPercents"));
         }
 
         [NUnit.Framework.Test]
@@ -105,22 +99,16 @@ namespace iText.Svg.Renderers {
 
         [NUnit.Framework.Test]
         public virtual void TestStrokeOpacityWithComma() {
-            NUnit.Framework.Assert.That(() =>  {
-                //TODO DEVSIX-2679
-                ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "testStrokeOpacityWithComma");
-            }
-            , NUnit.Framework.Throws.InstanceOf<Exception>())
-;
+            //TODO DEVSIX-2679
+            NUnit.Framework.Assert.Catch(typeof(Exception), () => ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, 
+                "testStrokeOpacityWithComma"));
         }
 
         [NUnit.Framework.Test]
         public virtual void TestStrokeOpacityWithPercents() {
-            NUnit.Framework.Assert.That(() =>  {
-                //TODO DEVSIX-2679
-                ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "testStrokeOpacityWithPercents");
-            }
-            , NUnit.Framework.Throws.InstanceOf<FormatException>())
-;
+            //TODO DEVSIX-2679
+            NUnit.Framework.Assert.Catch(typeof(FormatException), () => ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER
+                , "testStrokeOpacityWithPercents"));
         }
 
         [NUnit.Framework.Test]

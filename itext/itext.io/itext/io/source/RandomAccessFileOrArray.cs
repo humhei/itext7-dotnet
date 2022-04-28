@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,7 +44,7 @@ address: sales@itextpdf.com
 using System;
 using System.IO;
 using System.Text;
-using iText.IO.Util;
+using iText.Commons.Utils;
 
 namespace iText.IO.Source {
     /// <summary>Class that is used to unify reading from random access files and arrays.</summary>
@@ -577,7 +577,7 @@ namespace iText.IO.Source {
         public virtual String ReadString(int length, String encoding) {
             byte[] buf = new byte[length];
             ReadFully(buf);
-            return iText.IO.Util.JavaUtil.GetStringForBytes(buf, encoding);
+            return iText.Commons.Utils.JavaUtil.GetStringForBytes(buf, encoding);
         }
 
         private void EnsureByteSourceIsThreadSafe() {

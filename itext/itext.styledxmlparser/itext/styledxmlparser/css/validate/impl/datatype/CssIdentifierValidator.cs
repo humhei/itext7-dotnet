@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -62,7 +62,7 @@ namespace iText.StyledXmlParser.Css.Validate.Impl.Datatype {
         * @see com.itextpdf.styledxmlparser.css.validate.ICssDataTypeValidator#isValid(java.lang.String)
         */
         public virtual bool IsValid(String objectString) {
-            // TODO now the validation is very lenient. Make it more strict
+            // TODO DEVSIX-3969: now the validation is very lenient. Make it more strict
             if (objectString.Length >= 2 && objectString.StartsWith("--")) {
                 return false;
             }

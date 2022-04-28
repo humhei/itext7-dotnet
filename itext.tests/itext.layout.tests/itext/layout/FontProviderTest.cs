@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,11 +45,11 @@ using System.Collections.Generic;
 using System.IO;
 using iText.IO.Font;
 using iText.IO.Font.Constants;
-using iText.Kernel;
 using iText.Kernel.Font;
 using iText.Kernel.Pdf;
 using iText.Kernel.Utils;
 using iText.Layout.Element;
+using iText.Layout.Exceptions;
 using iText.Layout.Font;
 using iText.Layout.Properties;
 using iText.Test;
@@ -166,17 +166,15 @@ namespace iText.Layout {
 
         [NUnit.Framework.Test]
         public virtual void FontProviderNotSetExceptionTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                String fileName = "fontProviderNotSetExceptionTest.pdf";
-                String outFileName = destinationFolder + fileName + ".pdf";
-                PdfDocument pdfDoc = new PdfDocument(new PdfWriter(new FileStream(outFileName, FileMode.Create)));
+            String fileName = "fontProviderNotSetExceptionTest.pdf";
+            String outFileName = destinationFolder + fileName + ".pdf";
+            using (PdfDocument pdfDoc = new PdfDocument(new PdfWriter(new FileStream(outFileName, FileMode.Create)))) {
                 Document doc = new Document(pdfDoc);
                 Paragraph paragraph = new Paragraph("Hello world!").SetFontFamily("ABRACADABRA_NO_FONT_PROVIDER_ANYWAY");
-                doc.Add(paragraph);
-                doc.Close();
+                Exception e = NUnit.Framework.Assert.Catch(typeof(InvalidOperationException), () => doc.Add(paragraph));
+                NUnit.Framework.Assert.AreEqual(LayoutExceptionMessageConstant.FONT_PROVIDER_NOT_SET_FONT_FAMILY_NOT_RESOLVED
+                    , e.Message);
             }
-            , NUnit.Framework.Throws.InstanceOf<InvalidOperationException>().With.Message.EqualTo(PdfException.FontProviderNotSetFontFamilyNotResolved))
-;
         }
     }
 }

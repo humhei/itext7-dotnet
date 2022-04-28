@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,10 +42,12 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System.Collections.Generic;
-using Common.Logging;
-using iText.IO.Util;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.Kernel.Pdf;
-using iText.Pdfa;
+using iText.Pdfa.Exceptions;
+using iText.Pdfa.Logs;
 
 namespace iText.Pdfa.Checker {
     /// <summary>
@@ -60,8 +62,9 @@ namespace iText.Pdfa.Checker {
     /// The specification implemented by this class is ISO 19005-3
     /// </remarks>
     public class PdfA3Checker : PdfA2Checker {
-        protected internal static readonly ICollection<PdfName> allowedAFRelationships = new HashSet<PdfName>(JavaUtil.ArraysAsList
-            (PdfName.Source, PdfName.Data, PdfName.Alternative, PdfName.Supplement, PdfName.Unspecified));
+        protected internal static readonly ICollection<PdfName> allowedAFRelationships = JavaCollectionsUtil.UnmodifiableSet
+            (new HashSet<PdfName>(JavaUtil.ArraysAsList(PdfName.Source, PdfName.Data, PdfName.Alternative, PdfName
+            .Supplement, PdfName.Unspecified)));
 
         /// <summary>Creates a PdfA3Checker with the required conformance level</summary>
         /// <param name="conformanceLevel">
@@ -106,8 +109,8 @@ namespace iText.Pdfa.Checker {
                     }
                 }
                 else {
-                    ILog logger = LogManager.GetLogger(typeof(PdfAChecker));
-                    logger.Warn(PdfAConformanceLogMessageConstant.EMBEDDED_FILE_SHOULD_CONTAIN_PARAMS_KEY);
+                    ILogger logger = ITextLogManager.GetLogger(typeof(PdfAChecker));
+                    logger.LogWarning(PdfAConformanceLogMessageConstant.EMBEDDED_FILE_SHOULD_CONTAIN_PARAMS_KEY);
                 }
             }
         }

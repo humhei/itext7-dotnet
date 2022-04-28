@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,9 +43,9 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.IO;
+using iText.Commons.Utils;
 using iText.IO.Font.Constants;
 using iText.IO.Image;
-using iText.IO.Util;
 using iText.Kernel.Colors;
 using iText.Kernel.Font;
 using iText.Kernel.Geom;
@@ -113,7 +113,7 @@ namespace iText.Kernel.Pdf {
             int total = 817;
             int flushedExpected = 0;
             // link annots, line annots, actions and images: one hundred of each
-            int notReadExpected = 401;
+            int notReadExpected = 402;
             Test("baseReading01.pdf", PageFlushingTest.DocMode.READING, PageFlushingTest.FlushMode.NONE, PageFlushingTest.PagesOp
                 .READ, total, flushedExpected, notReadExpected);
         }
@@ -122,7 +122,7 @@ namespace iText.Kernel.Pdf {
         public virtual void ReleaseDeepReading01() {
             int total = 817;
             int flushedExpected = 0;
-            int notReadExpected = 803;
+            int notReadExpected = 804;
             Test("releaseDeepReading01.pdf", PageFlushingTest.DocMode.READING, PageFlushingTest.FlushMode.RELEASE_DEEP
                 , PageFlushingTest.PagesOp.READ, total, flushedExpected, notReadExpected);
         }
@@ -363,7 +363,7 @@ namespace iText.Kernel.Pdf {
                 pdfCanvas.SaveState();
                 for (int j = 0; j < numOfAddedXObjectsPerPage; ++j) {
                     PdfImageXObject xObject = new PdfImageXObject(ImageDataFactory.Create(sourceFolder + "simple.jpg"));
-                    pdfCanvas.AddXObject(xObject, new Rectangle(36, 720 - j * 150, 20, 20));
+                    pdfCanvas.AddXObjectFittedIntoRectangle(xObject, new Rectangle(36, 720 - j * 150, 20, 20));
                     xObject.MakeIndirect(pdf).Flush();
                 }
                 pdfCanvas.RestoreState();
@@ -530,10 +530,10 @@ namespace iText.Kernel.Pdf {
             canvas.SaveState().SetLineWidth(5).Arc(400, 650, 550, 750, 0, 180).Stroke().RestoreState();
             canvas.SaveState().SetLineWidth(5).MoveTo(400, 550).CurveTo(500, 570, 450, 450, 550, 550).Stroke().RestoreState
                 ();
-            canvas.AddXObject(xObject, 100, 500, 400);
+            canvas.AddXObjectFittedIntoRectangle(xObject, new Rectangle(100, 500, 400, xObject.GetHeight()));
             PdfImageXObject xObject2 = new PdfImageXObject(ImageDataFactory.Create(sourceFolder + "itext.png"));
             xObject2.MakeIndirect(pdfPage.GetDocument());
-            canvas.AddXObject(xObject2, 100, 300, 400);
+            canvas.AddXObjectFittedIntoRectangle(xObject2, new Rectangle(100, 500, 400, xObject2.GetHeight()));
         }
 
         private static PdfCanvas AddBasicContent(PdfPage pdfPage, PdfFont font) {

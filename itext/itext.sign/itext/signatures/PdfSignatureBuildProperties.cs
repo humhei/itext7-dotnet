@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -64,7 +64,7 @@ namespace iText.Signatures {
         /// <see cref="PdfSignatureApp"/>
         /// dictionary.
         /// </summary>
-        /// <param name="name"/>
+        /// <param name="name">the signature creator's name to be set</param>
         public virtual void SetSignatureCreator(String name) {
             GetPdfSignatureAppProperty().SetSignatureCreator(name);
         }

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,8 +43,8 @@ address: sales@itextpdf.com
 */
 using System;
 using System.IO;
-using iText.Kernel;
 using iText.Kernel.Crypto;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
 
 namespace iText.Kernel.Crypto.Securityhandler {
@@ -202,7 +202,7 @@ namespace iText.Kernel.Crypto.Securityhandler {
                 userKey = ComputeUserKey();
                 // computed user key should be equal to uValue
                 if (IsValidPassword(uValue, userKey)) {
-                    throw new BadPasswordException(PdfException.BadUserPassword);
+                    throw new BadPasswordException(KernelExceptionMessageConstant.BAD_USER_PASSWORD);
                 }
                 usedOwnerPassword = false;
             }

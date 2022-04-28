@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -48,6 +48,7 @@ using iText.Layout.Borders;
 using iText.Layout.Element;
 using iText.Layout.Properties;
 using iText.Test;
+using iText.Test.Attributes;
 
 namespace iText.Layout {
     public class ParagraphTest : ExtendedITextTest {
@@ -96,9 +97,9 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        public virtual void WordWasSplitAndItWillFitOntoNextLineTest01() {
-            String outFileName = destinationFolder + "wordWasSplitAndItWillFitOntoNextLineTest01.pdf";
-            String cmpFileName = sourceFolder + "cmp_wordWasSplitAndItWillFitOntoNextLineTest01.pdf";
+        public virtual void ForceOverflowForTextRendererPartialResult01() {
+            String outFileName = destinationFolder + "forceOverflowForTextRendererPartialResult01.pdf";
+            String cmpFileName = sourceFolder + "cmp_forceOverflowForTextRendererPartialResult01.pdf";
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(outFileName));
             Document doc = new Document(pdfDocument);
             Paragraph p = new Paragraph().SetBorder(new SolidBorder(ColorConstants.YELLOW, 0)).SetTextAlignment(TextAlignment
@@ -108,6 +109,24 @@ namespace iText.Layout {
             }
             doc.Add(p);
             doc.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                , "diff"));
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.RECTANGLE_HAS_NEGATIVE_OR_ZERO_SIZES, LogLevel = LogLevelConstants
+            .INFO)]
+        public virtual void WordWasSplitAndItWillFitOntoNextLineTest02() {
+            // TODO DEVSIX-4622
+            String outFileName = destinationFolder + "wordWasSplitAndItWillFitOntoNextLineTest02.pdf";
+            String cmpFileName = sourceFolder + "cmp_wordWasSplitAndItWillFitOntoNextLineTest02.pdf";
+            PdfDocument pdfDocument = new PdfDocument(new PdfWriter(outFileName));
+            Document document = new Document(pdfDocument);
+            Paragraph paragraph = new Paragraph().Add(new Text("Short").SetBackgroundColor(ColorConstants.YELLOW)).Add
+                (new Text(" Loooooooooooooooooooong").SetBackgroundColor(ColorConstants.RED)).SetWidth(90).SetBorder(new 
+                SolidBorder(1));
+            document.Add(paragraph);
+            document.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
                 , "diff"));
         }

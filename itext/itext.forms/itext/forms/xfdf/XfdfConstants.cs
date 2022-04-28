@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,11 +43,8 @@ address: sales@itextpdf.com
 using System;
 
 namespace iText.Forms.Xfdf {
-    /// <summary>Class containing constants to be used in xfdf processing.</summary>
+    /// <summary>Class containing constants to be used in XFDF processing.</summary>
     public sealed class XfdfConstants {
-        private XfdfConstants() {
-        }
-
         public const String TEXT = "text";
 
         public const String HIGHLIGHT = "highlight";
@@ -282,12 +279,7 @@ namespace iText.Forms.Xfdf {
 
         public const String DEFAULT_STYLE = "defaultstyle";
 
-        public const String ATTRIBUTE_NAME_OR_VALUE_MISSING = "Attribute name or value are missing";
-
-        public const String PAGE_IS_MISSING = "Required Page attribute is missing.";
-
-        [System.ObsoleteAttribute(@"Use LogMessageConstant#UNSUPPORTED_ANNOTATION_ATTRIBUTE instead. The constant will be removed in 7.2."
-            )]
-        public const String UNSUPPORTED_ANNOTATION_ATTRIBUTE = "Unsupported attribute type";
+        private XfdfConstants() {
+        }
     }
 }

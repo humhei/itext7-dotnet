@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,6 +42,7 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
+using iText.Commons.Utils;
 
 namespace iText.IO.Util {
     /// <summary>A hash map that uses primitive ints for the key rather than objects.</summary>
@@ -58,15 +59,15 @@ namespace iText.IO.Util {
     /// <author>Bruno Lowagie (change Objects as keys into int values)</author>
     /// <author>Paulo Soares (added extra methods)</author>
     public class IntHashtable
-#if !NETSTANDARD1_6
+#if !NETSTANDARD2_0
  : ICloneable
 #endif
  {
+        /// <summary>The total number of entries in the hash table.</summary>
+        internal int count;
+
         /// <summary>The hash table data.</summary>
         private IntHashtable.Entry[] table;
-
-        /// <summary>The total number of entries in the hash table.</summary>
-        private int count;
 
         /// <summary>The table is rehashed when its size exceeds this threshold.</summary>
         /// <remarks>
@@ -434,8 +435,8 @@ namespace iText.IO.Util {
             for (int i = table.Length; i-- > 0; ) {
                 t.table[i] = table[i] != null ? (IntHashtable.Entry)table[i].Clone() : null;
             }
+            t.count = count;
             return t;
         }
-        // this shouldn't happen, since we are Cloneable
     }
 }

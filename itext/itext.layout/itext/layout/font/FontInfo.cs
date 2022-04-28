@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,6 +43,7 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using iText.Commons.Utils;
 using iText.IO.Font;
 using iText.IO.Util;
 
@@ -68,7 +69,7 @@ namespace iText.Layout.Font {
     /// <see cref="GetAlias()"/>
     /// and
     /// <see cref="GetDescriptor()"/>
-    /// do not taken into account in
+    /// are not taken into account in
     /// <see cref="Equals(System.Object)"/>
     /// ,
     /// the same font with different aliases will have equal FontInfo's,
@@ -181,6 +182,7 @@ namespace iText.Layout.Font {
         /// was created with
         /// <c>byte[]</c>.
         /// </summary>
+        /// <returns>font data</returns>
         public byte[] GetFontData() {
             return fontData;
         }

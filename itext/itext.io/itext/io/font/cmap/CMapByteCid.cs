@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -71,9 +71,11 @@ namespace iText.IO.Font.Cmap {
             }
         }
 
-        /// <param name="cidBytes"/>
-        /// <param name="offset"/>
-        /// <param name="length"/>
+        /// <summary>Decode byte sequence.</summary>
+        /// <param name="cidBytes">byteCodeBytes</param>
+        /// <param name="offset">number of bytes to skip before starting to return chars from the sequence</param>
+        /// <param name="length">number of bytes to process</param>
+        /// <returns>string that contains decoded representation of the given sequence</returns>
         public virtual String DecodeSequence(byte[] cidBytes, int offset, int length) {
             StringBuilder sb = new StringBuilder();
             CMapByteCid.Cursor cursor = new CMapByteCid.Cursor(offset, length);
@@ -110,7 +112,7 @@ namespace iText.IO.Font.Cmap {
                 int one = seq[idx] & 0xff;
                 int c = plane[one];
                 if (c != 0 && (c & 0x8000) == 0) {
-                    throw new iText.IO.IOException("Inconsistent mapping.");
+                    throw new iText.IO.Exceptions.IOException("Inconsistent mapping.");
                 }
                 if (c == 0) {
                     planes.Add(new int[256]);
@@ -123,7 +125,7 @@ namespace iText.IO.Font.Cmap {
             int one_1 = seq[size] & 0xff;
             int c_1 = plane_1[one_1];
             if ((c_1 & 0x8000) != 0) {
-                throw new iText.IO.IOException("Inconsistent mapping.");
+                throw new iText.IO.Exceptions.IOException("Inconsistent mapping.");
             }
             plane_1[one_1] = cid;
         }

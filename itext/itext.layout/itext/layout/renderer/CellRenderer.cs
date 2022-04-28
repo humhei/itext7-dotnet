@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,12 +41,13 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf.Canvas;
 using iText.Layout;
 using iText.Layout.Borders;
 using iText.Layout.Element;
+using iText.Layout.Exceptions;
 using iText.Layout.Properties;
 
 namespace iText.Layout.Renderer {
@@ -108,7 +109,7 @@ namespace iText.Layout.Renderer {
                     transform = transform.CreateInverse();
                 }
                 catch (NoninvertibleTransformException e) {
-                    throw new PdfException(PdfException.NoninvertibleMatrixCannotBeProcessed, e);
+                    throw new PdfException(LayoutExceptionMessageConstant.NONINVERTIBLE_MATRIX_CANNOT_BE_PROCESSED, e);
                 }
                 transform.Concatenate(new AffineTransform());
                 canvas.ConcatMatrix(transform);
@@ -180,8 +181,26 @@ namespace iText.Layout.Renderer {
             return rect;
         }
 
-        /// <summary><inheritDoc/></summary>
+        /// <summary>
+        /// Gets a new instance of this class to be used as a next renderer, after this renderer is used, if
+        /// <see cref="BlockRenderer.Layout(iText.Layout.Layout.LayoutContext)"/>
+        /// is called more than once.
+        /// </summary>
+        /// <remarks>
+        /// Gets a new instance of this class to be used as a next renderer, after this renderer is used, if
+        /// <see cref="BlockRenderer.Layout(iText.Layout.Layout.LayoutContext)"/>
+        /// is called more than once.
+        /// <para />
+        /// If a renderer overflows to the next area, iText uses this method to create a renderer
+        /// for the overflow part. So if one wants to extend
+        /// <see cref="CellRenderer"/>
+        /// , one should override
+        /// this method: otherwise the default method will be used and thus the default rather than the custom
+        /// renderer will be created.
+        /// </remarks>
+        /// <returns>new renderer instance</returns>
         public override IRenderer GetNextRenderer() {
+            LogWarningIfGetNextRendererNotOverridden(typeof(iText.Layout.Renderer.CellRenderer), this.GetType());
             return new iText.Layout.Renderer.CellRenderer((Cell)GetModelElement());
         }
     }

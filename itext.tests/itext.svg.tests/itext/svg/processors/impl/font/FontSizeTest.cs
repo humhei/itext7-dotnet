@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -65,7 +65,8 @@ namespace iText.Svg.Processors.Impl.Font {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.StyledXmlParser.LogMessageConstant.UNKNOWN_ABSOLUTE_METRIC_LENGTH_PARSED)]
+        [LogMessage(iText.StyledXmlParser.Logs.StyledXmlParserLogMessageConstant.UNKNOWN_ABSOLUTE_METRIC_LENGTH_PARSED
+            )]
         public virtual void FontSize02Test() {
             String name = "fontSizeTest02";
             ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, name);
@@ -91,7 +92,7 @@ namespace iText.Svg.Processors.Impl.Font {
 
         [NUnit.Framework.Test]
         public virtual void DiffUnitsOfMeasure() {
-            //TODO: update cmp-file after DEVSIX-2785 and DEVSIX-2884
+            // TODO DEVSIX-2884 rem in font-size doesn't support correctly
             String name = "diff_units_of_measure";
             ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, name);
         }

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,9 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.IO.Source;
 using iText.IO.Util;
 
@@ -92,8 +94,9 @@ namespace iText.IO.Font.Otf {
                 otfClass = new iText.IO.Font.Otf.OtfClass(rf, classLocation);
             }
             catch (System.IO.IOException e) {
-                ILog logger = LogManager.GetLogger(typeof(iText.IO.Font.Otf.OtfClass));
-                logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.OPENTYPE_GDEF_TABLE_ERROR, e.Message));
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.IO.Font.Otf.OtfClass));
+                logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.OPENTYPE_GDEF_TABLE_ERROR, e.Message
+                    ));
                 otfClass = null;
             }
             return otfClass;

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,7 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.Text;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Layout.Hyphenation;
 using iText.Test;
 
@@ -124,6 +124,7 @@ namespace iText.Layout {
 
         [NUnit.Framework.Test]
         public virtual void RunTest() {
+            // This test can't be sped up because it uses of a lot of input data
             foreach (HyphenateTest.TestParams param in @params) {
                 TryHyphenate(param.lang, param.testWorld, param.shouldPass);
             }
@@ -131,7 +132,7 @@ namespace iText.Layout {
         }
 
         private void TryHyphenate(String lang, String testWorld, bool shouldPass) {
-            String[] parts = iText.IO.Util.StringUtil.Split(lang, "_");
+            String[] parts = iText.Commons.Utils.StringUtil.Split(lang, "_");
             lang = parts[0];
             String country = (parts.Length == 2) ? parts[1] : null;
             HyphenationConfig config = new HyphenationConfig(lang, country, 3, 3);

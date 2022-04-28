@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -73,6 +73,12 @@ namespace iText.Svg.Renderers.Impl {
             SvgTagSvgNodeRenderer one = new SvgTagSvgNodeRenderer();
             CircleSvgNodeRenderer two = new CircleSvgNodeRenderer();
             NUnit.Framework.Assert.IsFalse(one.Equals(two));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void NoObjectBoundingBoxTest() {
+            SvgTagSvgNodeRenderer renderer = new SvgTagSvgNodeRenderer();
+            NUnit.Framework.Assert.IsNull(renderer.GetObjectBoundingBox(null));
         }
     }
 }

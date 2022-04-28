@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,7 +45,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using iText.IO.Util;
+using iText.Commons.Utils;
 
 namespace iText.Kernel.Utils {
     /// <summary>
@@ -53,9 +53,10 @@ namespace iText.Kernel.Utils {
     /// 5, then pages 10 through 15, then page 18, then page 21 and so on.
     /// </summary>
     public class PageRange {
-        private static readonly Regex SEQUENCE_PATTERN = iText.IO.Util.StringUtil.RegexCompile("(\\d+)-(\\d+)?");
+        private static readonly Regex SEQUENCE_PATTERN = iText.Commons.Utils.StringUtil.RegexCompile("(\\d+)-(\\d+)?"
+            );
 
-        private static readonly Regex SINGLE_PAGE_PATTERN = iText.IO.Util.StringUtil.RegexCompile("(\\d+)");
+        private static readonly Regex SINGLE_PAGE_PATTERN = iText.Commons.Utils.StringUtil.RegexCompile("(\\d+)");
 
         private IList<PageRange.IPageRangePart> sequences = new List<PageRange.IPageRangePart>();
 
@@ -88,8 +89,8 @@ namespace iText.Kernel.Utils {
         /// </remarks>
         /// <param name="pageRange">a String of page ranges</param>
         public PageRange(String pageRange) {
-            pageRange = iText.IO.Util.StringUtil.ReplaceAll(pageRange, "\\s+", "");
-            foreach (String pageRangePart in iText.IO.Util.StringUtil.Split(pageRange, ",")) {
+            pageRange = iText.Commons.Utils.StringUtil.ReplaceAll(pageRange, "\\s+", "");
+            foreach (String pageRangePart in iText.Commons.Utils.StringUtil.Split(pageRange, ",")) {
                 PageRange.IPageRangePart cond = GetRangeObject(pageRangePart);
                 if (cond != null) {
                     sequences.Add(cond);
@@ -100,7 +101,7 @@ namespace iText.Kernel.Utils {
         private static PageRange.IPageRangePart GetRangeObject(String rangeDef) {
             if (rangeDef.Contains("&")) {
                 IList<PageRange.IPageRangePart> conditions = new List<PageRange.IPageRangePart>();
-                foreach (String pageRangeCond in iText.IO.Util.StringUtil.Split(rangeDef, "&")) {
+                foreach (String pageRangeCond in iText.Commons.Utils.StringUtil.Split(rangeDef, "&")) {
                     PageRange.IPageRangePart cond = GetRangeObject(pageRangeCond);
                     if (cond != null) {
                         conditions.Add(cond);
@@ -114,20 +115,21 @@ namespace iText.Kernel.Utils {
                 }
             }
             else {
-                Match matcher;
-                if ((matcher = iText.IO.Util.StringUtil.Match(SEQUENCE_PATTERN, rangeDef)).Success) {
-                    int start = Convert.ToInt32(iText.IO.Util.StringUtil.Group(matcher, 1));
-                    if (iText.IO.Util.StringUtil.Group(matcher, 2) != null) {
-                        return new PageRange.PageRangePartSequence(start, Convert.ToInt32(iText.IO.Util.StringUtil.Group(matcher, 
-                            2)));
+                Matcher matcher;
+                if ((matcher = iText.Commons.Utils.Matcher.Match(SEQUENCE_PATTERN, rangeDef)).Matches()) {
+                    int start = Convert.ToInt32(matcher.Group(1), System.Globalization.CultureInfo.InvariantCulture);
+                    if (matcher.Group(2) != null) {
+                        return new PageRange.PageRangePartSequence(start, Convert.ToInt32(matcher.Group(2), System.Globalization.CultureInfo.InvariantCulture
+                            ));
                     }
                     else {
                         return new PageRange.PageRangePartAfter(start);
                     }
                 }
                 else {
-                    if ((matcher = iText.IO.Util.StringUtil.Match(SINGLE_PAGE_PATTERN, rangeDef)).Success) {
-                        return new PageRange.PageRangePartSingle(Convert.ToInt32(iText.IO.Util.StringUtil.Group(matcher, 1)));
+                    if ((matcher = iText.Commons.Utils.Matcher.Match(SINGLE_PAGE_PATTERN, rangeDef)).Matches()) {
+                        return new PageRange.PageRangePartSingle(Convert.ToInt32(matcher.Group(1), System.Globalization.CultureInfo.InvariantCulture
+                            ));
                     }
                     else {
                         if ("odd".EqualsIgnoreCase(rangeDef)) {
@@ -217,7 +219,11 @@ namespace iText.Kernel.Utils {
 
         /// <summary><inheritDoc/></summary>
         public override int GetHashCode() {
-            return sequences.GetHashCode();
+            int hashCode = 0;
+            foreach (PageRange.IPageRangePart part in sequences) {
+                hashCode += part.GetHashCode();
+            }
+            return hashCode;
         }
 
         /// <summary>Inner interface for range parts definition</summary>
@@ -441,7 +447,11 @@ namespace iText.Kernel.Utils {
 
             /// <summary><inheritDoc/></summary>
             public override int GetHashCode() {
-                return conditions.GetHashCode();
+                int hashCode = 0;
+                foreach (PageRange.IPageRangePart part in conditions) {
+                    hashCode += part.GetHashCode();
+                }
+                return hashCode;
             }
         }
     }

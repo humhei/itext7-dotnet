@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -72,6 +72,16 @@ namespace iText.Forms {
         }
 
         [NUnit.Framework.Test]
+        // The first message for the case when the FormField is null,
+        // the second message when the FormField is a indirect reference to null.
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.CANNOT_CREATE_FORMFIELD, Count = 2)]
+        public virtual void NullFormFieldTest() {
+            PdfDocument pdfDoc = new PdfDocument(new PdfReader(sourceFolder + "nullFormField.pdf"));
+            PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDoc, true);
+            pdfDoc.Close();
+        }
+
+        [NUnit.Framework.Test]
         public virtual void FormFieldTest01() {
             PdfDocument pdfDoc = new PdfDocument(new PdfReader(sourceFolder + "formFieldFile.pdf"));
             PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDoc, false);
@@ -133,6 +143,26 @@ namespace iText.Forms {
             CompareTool compareTool = new CompareTool();
             String errorMessage = compareTool.CompareByContent(filename, sourceFolder + "cmp_formFieldTest04.pdf", destinationFolder
                 , "diff_");
+            if (errorMessage != null) {
+                NUnit.Framework.Assert.Fail(errorMessage);
+            }
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void TextFieldLeadingSpacesAreNotTrimmedTest() {
+            String filename = destinationFolder + "textFieldLeadingSpacesAreNotTrimmed.pdf";
+            PdfDocument pdfDoc = new PdfDocument(new PdfWriter(filename));
+            pdfDoc.AddNewPage();
+            PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDoc, true);
+            PdfPage page = pdfDoc.GetFirstPage();
+            Rectangle rect = new Rectangle(210, 490, 300, 22);
+            PdfTextFormField field = PdfFormField.CreateText(pdfDoc, rect, "TestField", "        value with leading space"
+                );
+            form.AddField(field, page);
+            pdfDoc.Close();
+            CompareTool compareTool = new CompareTool();
+            String errorMessage = compareTool.CompareByContent(filename, sourceFolder + "cmp_textFieldLeadingSpacesAreNotTrimmed.pdf"
+                , destinationFolder, "diff_");
             if (errorMessage != null) {
                 NUnit.Framework.Assert.Fail(errorMessage);
             }
@@ -378,7 +408,7 @@ namespace iText.Forms {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.NO_FIELDS_IN_ACROFORM)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.NO_FIELDS_IN_ACROFORM)]
         public virtual void AcroFieldDictionaryNoFields() {
             String outPdf = destinationFolder + "acroFieldDictionaryNoFields.pdf";
             String cmpPdf = sourceFolder + "cmp_acroFieldDictionaryNoFields.pdf";
@@ -459,8 +489,8 @@ namespace iText.Forms {
             PdfFormField field = fields.Get("Text1");
             field.SetFont(PdfFontFactory.CreateFont(StandardFonts.COURIER));
             field.SetValue("New value size must be 8, but with different font.");
-            new Canvas(new PdfCanvas(pdfDoc.GetFirstPage()), pdfDoc, new Rectangle(30, 500, 500, 200)).Add(new Paragraph
-                ("The text font after modification it via PDF viewer (e.g. Acrobat) shall be preserved."));
+            new Canvas(new PdfCanvas(pdfDoc.GetFirstPage()), new Rectangle(30, 500, 500, 200)).Add(new Paragraph("The text font after modification it via PDF viewer (e.g. Acrobat) shall be preserved."
+                ));
             pdfDoc.Close();
             CompareTool compareTool = new CompareTool();
             String errorMessage = compareTool.CompareByContent(outPdf, cmpPdf, destinationFolder, "diff_");
@@ -501,9 +531,9 @@ namespace iText.Forms {
             PdfDocument pdfDoc = new PdfDocument(writer);
             Document document = new Document(pdfDoc);
             PdfFont hebrew = PdfFontFactory.CreateFont(sourceFolder + "OpenSansHebrew-Regular.ttf", PdfEncodings.IDENTITY_H
-                , true);
+                );
             hebrew.SetSubset(false);
-            PdfFont sileot = PdfFontFactory.CreateFont(sourceFolder + "SILEOT.ttf", PdfEncodings.IDENTITY_H, true);
+            PdfFont sileot = PdfFontFactory.CreateFont(sourceFolder + "SILEOT.ttf", PdfEncodings.IDENTITY_H);
             sileot.SetSubset(false);
             PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDoc, true);
             String text = "שלום וברכה";
@@ -527,9 +557,9 @@ namespace iText.Forms {
             PdfDocument pdfDoc = new PdfDocument(writer);
             Document document = new Document(pdfDoc);
             PdfFont hebrew = PdfFontFactory.CreateFont(sourceFolder + "OpenSansHebrew-Regular.ttf", PdfEncodings.IDENTITY_H
-                , true);
+                );
             hebrew.SetSubset(false);
-            PdfFont sileot = PdfFontFactory.CreateFont(sourceFolder + "SILEOT.ttf", PdfEncodings.IDENTITY_H, true);
+            PdfFont sileot = PdfFontFactory.CreateFont(sourceFolder + "SILEOT.ttf", PdfEncodings.IDENTITY_H);
             sileot.SetSubset(false);
             PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDoc, true);
             CreateAcroForm(pdfDoc, form, hebrew, null, 0);
@@ -555,9 +585,9 @@ namespace iText.Forms {
             PdfWriter writer = new PdfWriter(outPdf);
             PdfDocument pdfDoc = new PdfDocument(writer);
             PdfFont hebrew = PdfFontFactory.CreateFont(sourceFolder + "OpenSansHebrew-Regular.ttf", PdfEncodings.IDENTITY_H
-                , true);
+                );
             hebrew.SetSubset(false);
-            PdfFont sileot = PdfFontFactory.CreateFont(sourceFolder + "SILEOT.ttf", PdfEncodings.IDENTITY_H, true);
+            PdfFont sileot = PdfFontFactory.CreateFont(sourceFolder + "SILEOT.ttf", PdfEncodings.IDENTITY_H);
             sileot.SetSubset(false);
             PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDoc, true);
             String text = "שלום וברכה";
@@ -578,9 +608,9 @@ namespace iText.Forms {
             PdfWriter writer = new PdfWriter(baos);
             PdfDocument pdfDoc = new PdfDocument(writer);
             PdfFont hebrew = PdfFontFactory.CreateFont(sourceFolder + "OpenSansHebrew-Regular.ttf", PdfEncodings.IDENTITY_H
-                , true);
+                );
             hebrew.SetSubset(false);
-            PdfFont sileot = PdfFontFactory.CreateFont(sourceFolder + "SILEOT.ttf", PdfEncodings.IDENTITY_H, true);
+            PdfFont sileot = PdfFontFactory.CreateFont(sourceFolder + "SILEOT.ttf", PdfEncodings.IDENTITY_H);
             sileot.SetSubset(false);
             PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDoc, true);
             CreateAcroForm(pdfDoc, form, hebrew, null, 0);
@@ -651,7 +681,7 @@ namespace iText.Forms {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.COMB_FLAG_MAY_BE_SET_ONLY_IF_MAXLEN_IS_PRESENT, Count = 2)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.COMB_FLAG_MAY_BE_SET_ONLY_IF_MAXLEN_IS_PRESENT)]
         public virtual void NoMaxLenWithSetCombFlagTest() {
             String outPdf = destinationFolder + "noMaxLenWithSetCombFlagTest.pdf";
             String cmpPdf = sourceFolder + "cmp_noMaxLenWithSetCombFlagTest.pdf";
@@ -775,7 +805,7 @@ namespace iText.Forms {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.COMB_FLAG_MAY_BE_SET_ONLY_IF_MAXLEN_IS_PRESENT, Count = 2)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.COMB_FLAG_MAY_BE_SET_ONLY_IF_MAXLEN_IS_PRESENT, Count = 2)]
         public virtual void RegenerateMaxLenCombTest() {
             String srcPdf = sourceFolder + "regenerateMaxLenCombTest.pdf";
             String outPdf = destinationFolder + "regenerateMaxLenCombTest.pdf";
@@ -830,6 +860,7 @@ namespace iText.Forms {
         }
 
         [NUnit.Framework.Test]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.MULTIPLE_VALUES_ON_A_NON_MULTISELECT_FIELD)]
         public virtual void PdfWithDifferentFieldsTest() {
             String fileName = destinationFolder + "pdfWithDifferentFieldsTest.pdf";
             PdfDocument pdfDoc = new PdfDocument(new PdfWriter(fileName));
@@ -905,17 +936,20 @@ namespace iText.Forms {
             String testName = "testDaInAppendMode.pdf";
             String srcPdf = sourceFolder + testName;
             ByteArrayOutputStream outPdf = new ByteArrayOutputStream();
-            PdfDocument pdfDoc = new PdfDocument(new PdfReader(srcPdf), new PdfWriter(outPdf), new StampingProperties(
-                ).UseAppendMode());
-            PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDoc, false);
-            PdfFormField field = form.GetField("magenta");
-            field.SetDefaultAppearance("/F1 25 Tf");
-            int objectNumer = field.GetPdfObject().GetIndirectReference().GetObjNumber();
-            pdfDoc.Close();
-            pdfDoc = new PdfDocument(new PdfReader(new MemoryStream(outPdf.ToArray())));
-            PdfString da = ((PdfDictionary)pdfDoc.GetPdfObject(objectNumer)).GetAsString(PdfName.DA);
-            pdfDoc.Close();
-            NUnit.Framework.Assert.AreEqual("/F1 25 Tf", da.ToString());
+            int objectNumber;
+            using (PdfDocument pdfDoc = new PdfDocument(new PdfReader(srcPdf), new PdfWriter(outPdf), new StampingProperties
+                ().UseAppendMode())) {
+                PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDoc, false);
+                PdfFormField field = form.GetField("magenta");
+                field.SetFontSize(35);
+                field.UpdateDefaultAppearance();
+                objectNumber = field.GetPdfObject().GetIndirectReference().GetObjNumber();
+            }
+            PdfString da;
+            using (PdfDocument pdfDoc_1 = new PdfDocument(new PdfReader(new MemoryStream(outPdf.ToArray())))) {
+                da = ((PdfDictionary)pdfDoc_1.GetPdfObject(objectNumber)).GetAsString(PdfName.DA);
+            }
+            NUnit.Framework.Assert.AreEqual("/F1 35 Tf 1 0 1 rg", da.ToString());
         }
 
         [NUnit.Framework.Test]
@@ -951,25 +985,6 @@ namespace iText.Forms {
             PdfArray thirdPageAnnots = resPdf.GetPage(3).GetPdfObject().GetAsArray(PdfName.Annots);
             NUnit.Framework.Assert.AreEqual(1, thirdPageAnnots.Size());
             NUnit.Framework.Assert.AreEqual(field, thirdPageAnnots.Get(0));
-        }
-
-        [NUnit.Framework.Test]
-        public virtual void CreateFieldInAppendModeTest() {
-            //TODO update cmp-file after DEVSIX-3077 fixed
-            String file = destinationFolder + "blank.pdf";
-            PdfDocument document = new PdfDocument(new PdfWriter(file));
-            document.AddNewPage();
-            PdfAcroForm.GetAcroForm(document, true);
-            document.Close();
-            PdfReader reader = new PdfReader(file);
-            PdfWriter writer1 = new PdfWriter(destinationFolder + "createFieldInAppendModeTest.pdf");
-            PdfDocument doc = new PdfDocument(reader, writer1, new StampingProperties().UseAppendMode());
-            PdfFormField field = PdfFormField.CreateCheckBox(doc, new Rectangle(10, 10, 24, 24), "checkboxname", "On", 
-                PdfFormField.TYPE_CHECK);
-            PdfAcroForm.GetAcroForm(doc, true).AddField(field);
-            doc.Close();
-            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + "createFieldInAppendModeTest.pdf"
-                , sourceFolder + "cmp_" + "createFieldInAppendModeTest.pdf", destinationFolder, "diff_"));
         }
 
         private void CreateAcroForm(PdfDocument pdfDoc, PdfAcroForm form, PdfFont font, String text, int offSet) {
@@ -1022,13 +1037,10 @@ namespace iText.Forms {
 
         [NUnit.Framework.Test]
         public virtual void AppendModeAppearance() {
-            //TODO DEVSIX-2822
+            // Acrobat removes /NeedAppearances flag when document is opened and suggests to resave the document at once.
             String inputFile = "appendModeAppearance.pdf";
             String outputFile = "appendModeAppearance.pdf";
             String line1 = "ABC";
-            // borders in with or without append mode are different
-            //PdfDocument pdfDocument = new PdfDocument(new PdfReader(sourceFolder + inputFile),
-            //          new PdfWriter(destinationFolder + outputFile));
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(sourceFolder + inputFile), new PdfWriter(destinationFolder
                  + outputFile), new StampingProperties().UseAppendMode());
             PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDocument, false);
@@ -1045,15 +1057,14 @@ namespace iText.Forms {
 
         [NUnit.Framework.Test]
         public virtual void FillUnmergedTextFormField() {
-            // TODO update cmp-file after DEVSIX-2622 fixed
             String file = sourceFolder + "fillUnmergedTextFormField.pdf";
-            String outfile = destinationFolder + "outfile.pdf";
+            String outfile = destinationFolder + "fillUnmergedTextFormField.pdf";
             String text = "John";
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(file), new PdfWriter(outfile));
             FillAcroForm(pdfDocument, text);
             pdfDocument.Close();
-            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + "outfile.pdf", sourceFolder
-                 + "cmp_" + "fillUnmergedTextFormField.pdf", destinationFolder, "diff_"));
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + "fillUnmergedTextFormField.pdf"
+                , sourceFolder + "cmp_" + "fillUnmergedTextFormField.pdf", destinationFolder, "diff_"));
         }
 
         [NUnit.Framework.Test]
@@ -1125,6 +1136,23 @@ namespace iText.Forms {
             if (errorMessage != null) {
                 NUnit.Framework.Assert.Fail(errorMessage);
             }
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ReleaseAcroformTest() {
+            String srcFile = sourceFolder + "formFieldFile.pdf";
+            String outPureStamping = destinationFolder + "formFieldFileStamping.pdf";
+            String outStampingRelease = destinationFolder + "formFieldFileStampingRelease.pdf";
+            PdfDocument doc = new PdfDocument(new PdfReader(srcFile), new PdfWriter(outPureStamping));
+            // We open/close document to make sure that the results of release logic and simple overwriting coincide.
+            doc.Close();
+            using (PdfDocument stamperRelease = new PdfDocument(new PdfReader(srcFile), new PdfWriter(outStampingRelease
+                ))) {
+                PdfAcroForm form = PdfAcroForm.GetAcroForm(stamperRelease, false);
+                form.Release();
+            }
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outStampingRelease, outPureStamping, destinationFolder
+                ));
         }
     }
 }

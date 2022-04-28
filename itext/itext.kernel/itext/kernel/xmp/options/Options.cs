@@ -30,7 +30,7 @@
 using System;
 using System.Collections;
 using System.Text;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Kernel.XMP;
 
 namespace iText.Kernel.XMP.Options {
@@ -123,7 +123,7 @@ namespace iText.Kernel.XMP.Options {
         /// </remarks>
         /// <returns>
         /// Returns a String listing all options that are set to <c>true</c> by their name,
-        /// like &quot;option1 | option4&quot;.
+        /// like &amp;quot;option1 | option4&amp;quot;.
         /// </returns>
         public virtual String GetOptionsString() {
             if (options != 0) {

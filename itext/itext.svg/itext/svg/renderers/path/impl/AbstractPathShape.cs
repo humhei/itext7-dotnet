@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -79,11 +79,20 @@ namespace iText.Svg.Renderers.Path.Impl {
         }
 
         protected internal virtual Point CreatePoint(String coordX, String coordY) {
-            return new Point((double)CssUtils.ParseDouble(coordX), (double)CssUtils.ParseDouble(coordY));
+            return new Point((double)CssDimensionParsingUtils.ParseDouble(coordX), (double)CssDimensionParsingUtils.ParseDouble
+                (coordY));
         }
 
         public virtual Point GetEndingPoint() {
             return CreatePoint(coordinates[coordinates.Length - 2], coordinates[coordinates.Length - 1]);
+        }
+
+        /// <summary>Get bounding rectangle of the current path shape.</summary>
+        /// <param name="lastPoint">start point for this shape</param>
+        /// <returns>calculated rectangle</returns>
+        public virtual Rectangle GetPathShapeRectangle(Point lastPoint) {
+            return new Rectangle((float)CssUtils.ConvertPxToPts(GetEndingPoint().GetX()), (float)CssUtils.ConvertPxToPts
+                (GetEndingPoint().GetY()), 0, 0);
         }
 
         public abstract void Draw(PdfCanvas arg1);

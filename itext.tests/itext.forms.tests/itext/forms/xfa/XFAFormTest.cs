@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,10 +42,13 @@ address: sales@itextpdf.com
 */
 using System;
 using System.IO;
+using System.Xml;
+using System.Xml.Linq;
 using iText.Forms;
 using iText.Kernel.Pdf;
 using iText.Kernel.Utils;
 using iText.Test;
+using NUnit.Framework;
 
 namespace iText.Forms.Xfa {
     public class XFAFormTest : ExtendedITextTest {
@@ -105,8 +108,7 @@ namespace iText.Forms.Xfa {
         public virtual void ReadXFAFormTest() {
             String inFileName = sourceFolder + "formTemplate.pdf";
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(inFileName));
-            // Test that exception is not thrown
-            PdfAcroForm.GetAcroForm(pdfDocument, true);
+            Assert.DoesNotThrow(() => PdfAcroForm.GetAcroForm(pdfDocument, true));
         }
 
         [NUnit.Framework.Test]
@@ -128,6 +130,16 @@ namespace iText.Forms.Xfa {
             XfaForm xfaForm = acroForm.GetXfaForm();
             String name = xfaForm.FindFieldName("TextField1");
             NUnit.Framework.Assert.IsNull(name);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ExtractXFADataTest() {
+            String src = sourceFolder + "xfaFormWithDataSet.pdf";
+            PdfDocument pdfDocument = new PdfDocument(new PdfReader(src));
+            XfaForm xfa = new XfaForm(pdfDocument);
+            XElement node = (XElement) xfa.FindDatasetsNode("Number1");
+            NUnit.Framework.Assert.IsNotNull(node);
+            NUnit.Framework.Assert.AreEqual("Number1", node.Name.LocalName);
         }
     }
 }

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,7 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Kernel.Colors;
 using iText.Kernel.Font;
 using iText.Kernel.Geom;
@@ -176,6 +176,16 @@ namespace iText.Kernel.Pdf.Canvas {
         }
 
         /// <summary>Updates current transformation matrix.</summary>
+        /// <remarks>
+        /// Updates current transformation matrix.
+        /// The third column will always be [0 0 1]
+        /// </remarks>
+        /// <param name="a">element at (1,1) of the transformation matrix</param>
+        /// <param name="b">element at (1,2) of the transformation matrix</param>
+        /// <param name="c">element at (2,1) of the transformation matrix</param>
+        /// <param name="d">element at (2,2) of the transformation matrix</param>
+        /// <param name="e">element at (3,1) of the transformation matrix</param>
+        /// <param name="f">element at (3,2) of the transformation matrix</param>
         public virtual void UpdateCtm(float a, float b, float c, float d, float e, float f) {
             UpdateCtm(new Matrix(a, b, c, d, e, f));
         }

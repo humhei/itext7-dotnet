@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,11 +45,10 @@ using System.Collections.Generic;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Security;
 using iText.IO.Source;
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 
 namespace iText.Kernel.Pdf {
     internal class SmartModePdfObjectsSerializer {
-        [System.NonSerialized]
         private IDigest md5;
 
         private Dictionary<SerializedObjectContent, PdfIndirectReference> serializedContentToObj = new Dictionary<

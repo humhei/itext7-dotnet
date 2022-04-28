@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,7 +44,8 @@ address: sales@itextpdf.com
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using iText.IO.Util;
+using iText.Commons.Actions.Sequence;
+using iText.Commons.Utils;
 using iText.Kernel.Colors;
 using iText.Kernel.Font;
 using iText.Kernel.Pdf.Canvas;
@@ -63,7 +64,7 @@ namespace iText.Layout {
     /// implementations.
     /// </remarks>
     /// <typeparam name="T">this type</typeparam>
-    public abstract class ElementPropertyContainer<T> : IPropertyContainer
+    public abstract class ElementPropertyContainer<T> : AbstractIdentifiableElement, IPropertyContainer
         where T : IPropertyContainer {
         protected internal IDictionary<int, Object> properties = new Dictionary<int, Object>();
 
@@ -325,27 +326,6 @@ namespace iText.Layout {
             return this.SetFontFamily(fontFamilyNames.ToArray(new String[fontFamilyNames.Count]));
         }
 
-        /// <summary>Sets the font family of this Element.</summary>
-        /// <remarks>
-        /// Sets the font family of this Element. Note that
-        /// <see cref="iText.Layout.Font.FontProvider"/>
-        /// shall be set as well.
-        /// See
-        /// <see cref="RootElement{T}.SetFontProvider(iText.Layout.Font.FontProvider)"/>
-        /// </remarks>
-        /// <seealso cref="iText.IO.Font.Constants.StandardFontFamilies"/>
-        /// <param name="font">
-        /// a font name to fetch from
-        /// <see cref="iText.Layout.Font.FontProvider"/>
-        /// </param>
-        /// <returns>this Element.</returns>
-        [System.ObsoleteAttribute(@"This method will be removed in 7.2. Use ElementPropertyContainer{T}.SetFontFamily(System.String[]) instead."
-            )]
-        public virtual T SetFont(String font) {
-            SetProperty(Property.FONT, font);
-            return (T)(Object)this;
-        }
-
         /// <summary>Sets the font color of this Element.</summary>
         /// <param name="fontColor">
         /// a
@@ -475,6 +455,30 @@ namespace iText.Layout {
             float extraRight, float extraBottom) {
             SetProperty(Property.BACKGROUND, backgroundColor != null ? new Background(backgroundColor, opacity, extraLeft
                 , extraTop, extraRight, extraBottom) : null);
+            return (T)(Object)this;
+        }
+
+        /// <summary>Specifies a background image for the Element.</summary>
+        /// <param name="image">
+        /// 
+        /// <see cref="iText.Layout.Properties.BackgroundImage"/>
+        /// </param>
+        /// <returns>this Element.</returns>
+        public virtual T SetBackgroundImage(BackgroundImage image) {
+            IList<BackgroundImage> backgroundImages = new List<BackgroundImage>();
+            backgroundImages.Add(image);
+            SetProperty(Property.BACKGROUND_IMAGE, backgroundImages);
+            return (T)(Object)this;
+        }
+
+        /// <summary>Specifies a list of background images for the Element.</summary>
+        /// <param name="imagesList">
+        /// List of
+        /// <see cref="iText.Layout.Properties.BackgroundImage"/>
+        /// </param>
+        /// <returns>this Element.</returns>
+        public virtual T SetBackgroundImage(IList<BackgroundImage> imagesList) {
+            SetProperty(Property.BACKGROUND_IMAGE, imagesList);
             return (T)(Object)this;
         }
 

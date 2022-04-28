@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -127,7 +127,7 @@ namespace iText.Kernel.Pdf {
                     }
                     else {
                         if (PdfName.Author.Equals(key)) {
-                            foreach (String v in iText.IO.Util.StringUtil.Split(value, ",|;")) {
+                            foreach (String v in iText.Commons.Utils.StringUtil.Split(value, ",|;")) {
                                 if (v.Trim().Length > 0) {
                                     AppendArrayItemIfDoesNotExist(xmpMeta, XMPConst.NS_DC, PdfConst.Creator, v.Trim(), PropertyOptions.ARRAY_ORDERED
                                         );
@@ -141,7 +141,7 @@ namespace iText.Kernel.Pdf {
                             }
                             else {
                                 if (PdfName.Keywords.Equals(key)) {
-                                    foreach (String v in iText.IO.Util.StringUtil.Split(value, ",|;")) {
+                                    foreach (String v in iText.Commons.Utils.StringUtil.Split(value, ",|;")) {
                                         if (v.Trim().Length > 0) {
                                             AppendArrayItemIfDoesNotExist(xmpMeta, XMPConst.NS_DC, PdfConst.Subject, v.Trim(), PropertyOptions.ARRAY);
                                         }

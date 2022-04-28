@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System.Collections.Generic;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Kernel.Pdf;
 
 namespace iText.Kernel.Pdf.Filters {
@@ -75,6 +75,8 @@ namespace iText.Kernel.Pdf.Filters {
             map.Put(PdfName.CCITTFaxDecode, new CCITTFaxDecodeFilter());
             map.Put(PdfName.Crypt, new DoNothingFilter());
             map.Put(PdfName.RunLengthDecode, new RunLengthDecodeFilter());
+            map.Put(PdfName.DCTDecode, new DctDecodeFilter());
+            map.Put(PdfName.JPXDecode, new JpxDecodeFilter());
             defaults = JavaCollectionsUtil.UnmodifiableMap(map);
         }
 

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,14 +41,21 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
+using System.Collections.Generic;
 using System.IO;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
+using iText.Kernel.Pdf.Xobject;
+using iText.Layout.Font;
 using iText.StyledXmlParser.Node;
 using iText.StyledXmlParser.Node.Impl.Jsoup.Node;
+using iText.StyledXmlParser.Resolver.Resource;
 using iText.Svg.Dummy.Processors.Impl;
 using iText.Svg.Dummy.Renderers.Impl;
 using iText.Svg.Exceptions;
+using iText.Svg.Processors;
+using iText.Svg.Processors.Impl;
 using iText.Svg.Renderers;
 using iText.Svg.Renderers.Impl;
 using iText.Test;
@@ -214,7 +221,7 @@ namespace iText.Svg.Converter {
         public virtual void ProcessNode() {
             INode svg = new JsoupElementNode(new iText.StyledXmlParser.Jsoup.Nodes.Element(iText.StyledXmlParser.Jsoup.Parser.Tag
                 .ValueOf("svg"), ""));
-            IBranchSvgNodeRenderer node = (IBranchSvgNodeRenderer)SvgConverter.Process(svg).GetRootRenderer();
+            IBranchSvgNodeRenderer node = (IBranchSvgNodeRenderer)SvgConverter.Process(svg, null).GetRootRenderer();
             NUnit.Framework.Assert.IsTrue(node is SvgTagSvgNodeRenderer);
             NUnit.Framework.Assert.AreEqual(0, node.GetChildren().Count);
             NUnit.Framework.Assert.IsNull(node.GetParent());
@@ -283,11 +290,74 @@ namespace iText.Svg.Converter {
 
         [NUnit.Framework.Test]
         public virtual void CheckNullTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                SvgConverter.DrawOnDocument("test", null, 1);
+            Exception e = NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => SvgConverter.DrawOnDocument
+                ("test", null, 1));
+            NUnit.Framework.Assert.AreEqual(SvgExceptionMessageConstant.PARAMETER_CANNOT_BE_NULL, e.Message);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ResourceResolverInstanceTest() {
+            DummySvgConverterProperties properties = new DummySvgConverterProperties();
+            SvgProcessorContext context = new SvgProcessorContext(properties);
+            ResourceResolver initialResolver = context.GetResourceResolver();
+            SvgProcessorResult svgProcessorResult = new SvgProcessorResult(new Dictionary<String, ISvgNodeRenderer>(), 
+                new SvgTagSvgNodeRenderer(), context);
+            ResourceResolver currentResolver = SvgConverter.GetResourceResolver(svgProcessorResult, properties);
+            NUnit.Framework.Assert.AreEqual(initialResolver, currentResolver);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void CreateResourceResolverWithoutProcessorResultTest() {
+            ISvgConverterProperties props = new SvgConverterProperties();
+            NUnit.Framework.Assert.IsNotNull(SvgConverter.GetResourceResolver(null, props));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ResourceResolverInstanceCustomResolverTest() {
+            DummySvgConverterProperties properties = new DummySvgConverterProperties();
+            SvgConverterUnitTest.TestSvgProcessorResult testSvgProcessorResult = new SvgConverterUnitTest.TestSvgProcessorResult
+                ();
+            ResourceResolver currentResolver = SvgConverter.GetResourceResolver(testSvgProcessorResult, properties);
+            NUnit.Framework.Assert.IsNotNull(currentResolver);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ResourceResolverInstanceCustomResolverNullPropsTest() {
+            SvgConverterUnitTest.TestSvgProcessorResult testSvgProcessorResult = new SvgConverterUnitTest.TestSvgProcessorResult
+                ();
+            ResourceResolver currentResolver = SvgConverter.GetResourceResolver(testSvgProcessorResult, null);
+            NUnit.Framework.Assert.IsNotNull(currentResolver);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void NullBBoxInDrawTest() {
+            NUnit.Framework.Assert.Catch(typeof(PdfException), () => {
+                PdfFormXObject @object = SvgConverter.ConvertToXObject(content, doc);
+                ((PdfDictionary)@object.GetPdfObject()).Remove(PdfName.BBox);
+                SvgConverter.Draw(@object, new PdfCanvas(doc, 1), 0, 0);
             }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>().With.Message.EqualTo(SvgLogMessageConstant.PARAMETER_CANNOT_BE_NULL))
-;
+            );
+        }
+
+        private class TestSvgProcessorResult : ISvgProcessorResult {
+            public TestSvgProcessorResult() {
+            }
+
+            public virtual IDictionary<String, ISvgNodeRenderer> GetNamedObjects() {
+                return null;
+            }
+
+            public virtual ISvgNodeRenderer GetRootRenderer() {
+                return null;
+            }
+
+            public virtual FontProvider GetFontProvider() {
+                return null;
+            }
+
+            public virtual FontSet GetTempFonts() {
+                return null;
+            }
         }
     }
 }

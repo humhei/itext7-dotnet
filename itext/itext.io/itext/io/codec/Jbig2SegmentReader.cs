@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,10 +44,12 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
 using iText.IO.Source;
 
 namespace iText.IO.Codec {
+    //TODO DEVSIX-6406: add support for indeterminate-segment-size value of dataLength
     /// <summary>
     /// Class to read a JBIG2 file at a basic level: understand all the segments,
     /// understand what segments belong to which pages, how many pages there are,
@@ -61,7 +63,6 @@ namespace iText.IO.Codec {
     /// are any.  Or: the minimum required to be able to take a normal sequential
     /// or random-access organized file, and be able to embed JBIG2 pages as images
     /// in a PDF.
-    /// TODO: the indeterminate-segment-size value of dataLength, else?
     /// </remarks>
     public class Jbig2SegmentReader {
         //see 7.4.2.
@@ -289,8 +290,8 @@ namespace iText.IO.Codec {
 
         internal virtual void ReadSegment(Jbig2SegmentReader.Jbig2Segment s) {
             int ptr = (int)ra.GetPosition();
+            //TODO DEVSIX-6406 7.2.7 not supported
             if (s.dataLength == unchecked((long)(0xffffffffl))) {
-                // TODO figure this bit out, 7.2.7
                 return;
             }
             byte[] data = new byte[(int)s.dataLength];
@@ -304,8 +305,8 @@ namespace iText.IO.Codec {
                 ra.Seek(last);
                 Jbig2SegmentReader.Jbig2Page p = pages.Get(s.page);
                 if (p == null) {
-                    throw new iText.IO.IOException("Referring to widht or height of a page we haven't seen yet: {0}").SetMessageParams
-                        (s.page);
+                    throw new iText.IO.Exceptions.IOException("Referring to widht or height of a page we haven't seen yet: {0}"
+                        ).SetMessageParams(s.page);
                 }
                 p.pageBitmapWidth = page_bitmap_width;
                 p.pageBitmapHeight = page_bitmap_height;
@@ -357,7 +358,7 @@ namespace iText.IO.Codec {
                 }
                 else {
                     if (count_of_referred_to_segments == 5 || count_of_referred_to_segments == 6) {
-                        throw new iText.IO.IOException("Count of referred-to segments has forbidden value in the header for segment {0} starting at {1}"
+                        throw new iText.IO.Exceptions.IOException("Count of referred-to segments has forbidden value in the header for segment {0} starting at {1}"
                             ).SetMessageParams(segment_number, ptr);
                     }
                 }
@@ -375,7 +376,6 @@ namespace iText.IO.Codec {
                         referred_to_segment_numbers[i] = ra.ReadUnsignedShort();
                     }
                     else {
-                        // TODO wtf ack
                         referred_to_segment_numbers[i] = (int)ra.ReadUnsignedInt();
                     }
                 }
@@ -391,8 +391,8 @@ namespace iText.IO.Codec {
                 segment_page_association = ra.Read();
             }
             if (segment_page_association < 0) {
-                throw new iText.IO.IOException("Page {0} is invalid for segment {1} starting at {2}").SetMessageParams(segment_page_association
-                    , segment_number, ptr);
+                throw new iText.IO.Exceptions.IOException("Page {0} is invalid for segment {1} starting at {2}").SetMessageParams
+                    (segment_page_association, segment_number, ptr);
             }
             s.page = segment_page_association;
             // so we can change the page association at embedding time.
@@ -409,7 +409,7 @@ namespace iText.IO.Codec {
             }
             // 7.2.7
             long segment_data_length = ra.ReadUnsignedInt();
-            // TODO the 0xffffffff value that might be here, and how to understand those afflicted segments
+            //TODO DEVSIX-6406 the 0xffffffff value that might be here, and how to understand those afflicted segments
             s.dataLength = segment_data_length;
             int end_ptr = (int)ra.GetPosition();
             ra.Seek(ptr);
@@ -426,14 +426,15 @@ namespace iText.IO.Codec {
             byte[] refidstring = new byte[] { (byte)0x97, 0x4A, 0x42, 0x32, 0x0D, 0x0A, 0x1A, 0x0A };
             for (int i = 0; i < idstring.Length; i++) {
                 if (idstring[i] != refidstring[i]) {
-                    throw new iText.IO.IOException("File header idstring is not good at byte {0}").SetMessageParams(i);
+                    throw new iText.IO.Exceptions.IOException("File header idstring is not good at byte {0}").SetMessageParams
+                        (i);
                 }
             }
             int fileheaderflags = ra.Read();
             this.sequential = (fileheaderflags & 0x1) == 0x1;
             this.number_of_pages_known = (fileheaderflags & 0x2) == 0x0;
             if ((fileheaderflags & 0xfc) != 0x0) {
-                throw new iText.IO.IOException("File header flags bits from 2 to 7 should be 0, some not");
+                throw new iText.IO.Exceptions.IOException("File header flags bits from 2 to 7 should be 0, some not");
             }
             if (this.number_of_pages_known) {
                 this.number_of_pages = ra.ReadInt();
@@ -474,8 +475,8 @@ namespace iText.IO.Codec {
                 os.Dispose();
             }
             catch (System.IO.IOException e) {
-                ILog logger = LogManager.GetLogger(typeof(Jbig2SegmentReader));
-                logger.Debug(e.Message);
+                ILogger logger = ITextLogManager.GetLogger(typeof(Jbig2SegmentReader));
+                logger.LogDebug(e.Message);
             }
             return streamBytes;
         }

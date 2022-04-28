@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,8 +42,8 @@ address: sales@itextpdf.com
 */
 using System;
 using iText.IO.Image;
-using iText.Kernel;
 using iText.Kernel.Colors;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
@@ -51,6 +51,7 @@ using iText.Kernel.Pdf.Xobject;
 using iText.Kernel.Utils;
 using iText.Layout.Borders;
 using iText.Layout.Element;
+using iText.Layout.Exceptions;
 using iText.Layout.Properties;
 using iText.Test;
 using iText.Test.Attributes;
@@ -150,7 +151,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.CLIP_ELEMENT, Count = 1)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.CLIP_ELEMENT, Count = 1)]
         public virtual void FixedPositioningTest03() {
             String outFileName = destinationFolder + "fixedPositioningTest03.pdf";
             String cmpFileName = sourceFolder + "cmp_fixedPositioningTest03.pdf";
@@ -172,7 +173,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.CLIP_ELEMENT, Count = 1)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.CLIP_ELEMENT, Count = 1)]
         public virtual void FixedPositioningTest04() {
             String outFileName = destinationFolder + "fixedPositioningTest04.pdf";
             String cmpFileName = sourceFolder + "cmp_fixedPositioningTest04.pdf";
@@ -296,23 +297,22 @@ namespace iText.Layout {
 
         [NUnit.Framework.Test]
         public virtual void ShowTextAlignedOnFlushedPageTest01() {
-            NUnit.Framework.Assert.That(() =>  {
-                String outFileName = destinationFolder + "showTextAlignedOnFlushedPageTest01.pdf";
-                PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
-                Document doc = new Document(pdfDoc);
-                Paragraph p = new Paragraph();
-                for (int i = 0; i < 1000; ++i) {
-                    p.Add("abcdefghijklkmnopqrstuvwxyz");
+            String outFileName = destinationFolder + "showTextAlignedOnFlushedPageTest01.pdf";
+            using (PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName))) {
+                using (Document doc = new Document(pdfDoc)) {
+                    Paragraph p = new Paragraph();
+                    for (int i = 0; i < 1000; ++i) {
+                        p.Add("abcdefghijklkmnopqrstuvwxyz");
+                    }
+                    doc.Add(p);
+                    // First page will be flushed by now, because immediateFlush is set to false by default.
+                    int pageNumberToDrawTextOn = 1;
+                    Exception e = NUnit.Framework.Assert.Catch(typeof(PdfException), () => doc.ShowTextAligned(new Paragraph("Hello Bruno on page 1!"
+                        ), 36, 36, pageNumberToDrawTextOn, TextAlignment.LEFT, VerticalAlignment.TOP, 0));
+                    NUnit.Framework.Assert.AreEqual(LayoutExceptionMessageConstant.CANNOT_DRAW_ELEMENTS_ON_ALREADY_FLUSHED_PAGES
+                        , e.Message);
                 }
-                doc.Add(p);
-                // First page will be flushed by now, because immediateFlush is set to false by default.
-                int pageNumberToDrawTextOn = 1;
-                doc.ShowTextAligned(new Paragraph("Hello Bruno on page 1!"), 36, 36, pageNumberToDrawTextOn, TextAlignment
-                    .LEFT, VerticalAlignment.TOP, 0);
-                doc.Close();
             }
-            , NUnit.Framework.Throws.InstanceOf<PdfException>().With.Message.EqualTo(PdfException.CannotDrawElementsOnAlreadyFlushedPages))
-;
         }
 
         private void DrawCross(PdfCanvas canvas, float x, float y) {

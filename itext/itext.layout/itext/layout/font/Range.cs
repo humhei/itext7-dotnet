@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,16 +42,24 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using iText.IO.Util;
+using iText.Commons.Utils;
 
 namespace iText.Layout.Font {
     /// <summary>
-    /// Ordered range for
-    /// <see cref="FontInfo.GetFontUnicodeRange()"/>.
+    /// Class represents ordered list of
+    /// <see cref="SubRange"/>.
     /// </summary>
     /// <remarks>
-    /// Ordered range for
-    /// <see cref="FontInfo.GetFontUnicodeRange()"/>.
+    /// Class represents ordered list of
+    /// <see cref="SubRange"/>.
+    /// This class is used in
+    /// <see cref="FontInfo"/>
+    /// as internal field and in one of the overloads of
+    /// the
+    /// <see cref="FontProvider.AddFont(System.String, System.String, Range)"/>
+    /// method as range
+    /// of characters to be used in font.
+    /// <para />
     /// To create a custom Range instance
     /// <see cref="RangeBuilder"/>
     /// shall be used.
@@ -71,7 +79,8 @@ namespace iText.Layout.Font {
         }
 
         /// <summary>Binary search over ordered segments.</summary>
-        /// <param name="n"/>
+        /// <param name="n">numeric character reference based on the character's Unicode code point</param>
+        /// <returns>true if this Range contains the specified code point, otherwise false</returns>
         public virtual bool Contains(int n) {
             int low = 0;
             int high = ranges.Length - 1;

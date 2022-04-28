@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -63,9 +63,18 @@ namespace iText.Kernel.Pdf.Annot {
         }
 
         /// <summary>
-        /// see
-        /// <see cref="PdfAnnotation.MakeAnnotation(iText.Kernel.Pdf.PdfObject)"/>
+        /// Instantiates a new
+        /// <see cref="PdfFreeTextAnnotation"/>
+        /// instance based on
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// instance, that represents existing annotation object in the document.
         /// </summary>
+        /// <param name="pdfObject">
+        /// the
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// representing annotation object
+        /// </param>
+        /// <seealso cref="PdfAnnotation.MakeAnnotation(iText.Kernel.Pdf.PdfObject)"/>
         protected internal PdfFreeTextAnnotation(PdfDictionary pdfObject)
             : base(pdfObject) {
         }

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,9 +45,9 @@ using System.IO;
 using System.Text;
 using iText.Kernel.Font;
 using iText.Kernel.Pdf;
-using iText.Kernel.Utils;
 using iText.Layout;
 using iText.Layout.Element;
+using iText.Pdfa.Exceptions;
 using iText.Test;
 
 namespace iText.Pdfa {
@@ -69,29 +69,31 @@ namespace iText.Pdfa {
 
         [NUnit.Framework.Test]
         public virtual void RunTest() {
-            //TODO(DEVSIX-2978): Produces non-conforming PDF/A document
             String file = "pdfALongString.pdf";
             String filename = destinationFolder + file;
             using (Stream icm = new FileStream(sourceFolder + "sRGB Color Space Profile.icm", FileMode.Open, FileAccess.Read
                 )) {
-                using (PdfADocument pdf = new PdfADocument(new PdfWriter(new FileStream(filename, FileMode.Create)), PdfAConformanceLevel
-                    .PDF_A_3U, new PdfOutputIntent("Custom", "", "http://www.color.org", "sRGB ICC preference", icm))) {
-                    using (Document document = new Document(pdf)) {
-                        StringBuilder stringBuilder = new StringBuilder(LOREM_IPSUM);
-                        while (stringBuilder.Length < STRING_LENGTH_LIMIT) {
-                            stringBuilder.Append(stringBuilder.ToString());
-                        }
-                        PdfFontFactory.Register(sourceFolder + "FreeSans.ttf", sourceFolder + "FreeSans.ttf");
-                        PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", true);
-                        Paragraph p = new Paragraph(stringBuilder.ToString());
-                        p.SetMinWidth(1e6f);
-                        p.SetFont(font);
-                        document.Add(p);
+                using (FileStream fos = new FileStream(filename, FileMode.Create)) {
+                    Document document = new Document(new PdfADocument(new PdfWriter(fos), PdfAConformanceLevel.PDF_A_3U, new PdfOutputIntent
+                        ("Custom", "", "http://www.color.org", "sRGB ICC preference", icm)));
+                    StringBuilder stringBuilder = new StringBuilder(LOREM_IPSUM);
+                    while (stringBuilder.Length < STRING_LENGTH_LIMIT) {
+                        stringBuilder.Append(stringBuilder.ToString());
                     }
+                    PdfFontFactory.Register(sourceFolder + "FreeSans.ttf", sourceFolder + "FreeSans.ttf");
+                    PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", PdfFontFactory.EmbeddingStrategy.PREFER_EMBEDDED
+                        );
+                    Paragraph p = new Paragraph(stringBuilder.ToString());
+                    p.SetMinWidth(1e6f);
+                    p.SetFont(font);
+                    document.Add(p);
+                    // when document is closing, ISO conformance check is performed
+                    // this document contain a string which is longer than it is allowed
+                    // per specification. That is why conformance exception should be thrown
+                    Exception e = NUnit.Framework.Assert.Catch(typeof(PdfAConformanceException), () => document.Close());
+                    NUnit.Framework.Assert.AreEqual(PdfAConformanceException.PDF_STRING_IS_TOO_LONG, e.Message);
                 }
             }
-            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(filename, sourceFolder + "cmp_" + file, destinationFolder
-                , "diff_"));
         }
     }
 }

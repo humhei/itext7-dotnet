@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -60,12 +60,22 @@ namespace iText.Forms.Xfdf {
         }
 
         /// <summary>Gets a list of children fields</summary>
+        /// <returns>
+        /// 
+        /// <see cref="System.Collections.IList{E}"/>
+        /// containing all children
+        /// <see cref="FieldObject">field objects</see>
+        /// </returns>
         public virtual IList<FieldObject> GetFieldList() {
             return fieldList;
         }
 
         /// <summary>Adds a new field to the list.</summary>
         /// <param name="field">FieldObject containing the info about the form field.</param>
+        /// <returns>
+        /// current
+        /// <see cref="FieldsObject">fields object</see>
+        /// </returns>
         public virtual iText.Forms.Xfdf.FieldsObject AddField(FieldObject field) {
             this.fieldList.Add(field);
             return this;

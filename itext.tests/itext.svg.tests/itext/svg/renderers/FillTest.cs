@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,6 @@ address: sales@itextpdf.com
 using System;
 using iText.Svg.Exceptions;
 using iText.Test;
-using iText.Test.Attributes;
 
 namespace iText.Svg.Renderers {
     public class FillTest : SvgIntegrationTest {
@@ -78,7 +77,7 @@ namespace iText.Svg.Renderers {
             ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "eofill");
         }
 
-        /* This test should fail when RND-910 is resolved*/
+        /* This test should fail when DEVSIX-2251 is resolved*/
         [NUnit.Framework.Test]
         public virtual void EoFillTest01() {
             ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "eofill01");
@@ -104,7 +103,7 @@ namespace iText.Svg.Renderers {
             ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "eofillstroke");
         }
 
-        /* This test should fail when RND-1031 is resolved*/
+        /* This test should fail when DEVSIX-2251 is resolved*/
         [NUnit.Framework.Test]
         public virtual void NonZeroFillTest() {
             ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "nonzerofill");
@@ -115,14 +114,10 @@ namespace iText.Svg.Renderers {
             ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "opacityfill");
         }
 
-        /* This test should fail when RND-1108 is resolved*/
         [NUnit.Framework.Test]
         public virtual void EofillUnsuportedAtributeTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "eofillUnsuportedAtributeTest");
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>())
-;
+            NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER
+                , "eofillUnsuportedAtributeTest"));
         }
 
         [NUnit.Framework.Test]
@@ -136,7 +131,6 @@ namespace iText.Svg.Renderers {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(SvgLogMessageConstant.UNMAPPEDTAG)]
         public virtual void InvalidUrlFillTest() {
             //TODO update cmp file after DEVSIX-3365 will be fixed
             ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "invalidUrlFillTest");

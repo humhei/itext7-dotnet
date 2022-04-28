@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,6 +43,7 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.IO;
+using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
 using iText.Svg;
@@ -54,7 +55,7 @@ namespace iText.Svg.Renderers {
         [NUnit.Framework.Test]
         public virtual void NormalDrawTest() {
             byte[] expected = "1 0 0 1 7.5 0 cm\n0 0 0 rg\nf\n".GetBytes(System.Text.Encoding.UTF8);
-            ISvgNodeRenderer nodeRenderer = new _AbstractSvgNodeRenderer_69();
+            ISvgNodeRenderer nodeRenderer = new _AbstractSvgNodeRenderer_71();
             // do nothing
             IDictionary<String, String> attributeMap = new Dictionary<String, String>();
             attributeMap.Put(SvgConstants.Attributes.TRANSFORM, "translate(10)");
@@ -68,11 +69,15 @@ namespace iText.Svg.Renderers {
             NUnit.Framework.Assert.AreEqual(expected, actual);
         }
 
-        private sealed class _AbstractSvgNodeRenderer_69 : AbstractSvgNodeRenderer {
-            public _AbstractSvgNodeRenderer_69() {
+        private sealed class _AbstractSvgNodeRenderer_71 : AbstractSvgNodeRenderer {
+            public _AbstractSvgNodeRenderer_71() {
             }
 
             public override ISvgNodeRenderer CreateDeepCopy() {
+                return null;
+            }
+
+            public override Rectangle GetObjectBoundingBox(SvgDrawContext context) {
                 return null;
             }
 

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,8 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using iText.IO.Util;
+using System.IO;
+using iText.Commons.Utils;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf.Action;
 using iText.Kernel.Pdf.Annot;
@@ -51,6 +52,7 @@ using iText.Kernel.Pdf.Navigation;
 using iText.Kernel.Pdf.Tagging;
 using iText.Kernel.Utils;
 using iText.Test;
+using iText.Test.Attributes;
 
 namespace iText.Kernel.Pdf {
     public class PdfDestinationTest : ExtendedITextTest {
@@ -185,6 +187,23 @@ namespace iText.Kernel.Pdf {
         }
 
         [NUnit.Framework.Test]
+        public virtual void StructureDestinationWithoutRemoteIdTest() {
+            String srcFile = sourceFolder + "customRolesMappingPdf2.pdf";
+            PdfDocument document = new PdfDocument(new PdfReader(srcFile), new PdfWriter(new MemoryStream()));
+            PdfStructElem imgElement = new PdfStructElem((PdfDictionary)document.GetPdfObject(13));
+            try {
+                PdfAction.CreateGoToR(new PdfStringFS("Some fake destination"), PdfStructureDestination.CreateFit(imgElement
+                    ));
+                NUnit.Framework.Assert.Fail("Exception not thrown");
+            }
+            catch (ArgumentException e) {
+                NUnit.Framework.Assert.AreEqual("Structure destinations shall specify structure element ID in remote go-to actions. Structure element that has no ID is specified instead"
+                    , e.Message);
+            }
+            document.Close();
+        }
+
+        [NUnit.Framework.Test]
         public virtual void StructureDestination01Test() {
             String srcFile = sourceFolder + "customRolesMappingPdf2.pdf";
             String outFile = destinationFolder + "structureDestination01Test.pdf";
@@ -232,9 +251,9 @@ namespace iText.Kernel.Pdf {
         }
 
         [NUnit.Framework.Test]
-        public virtual void RemoteGoToDestinationTest() {
-            String cmpFile = sourceFolder + "cmp_remoteGoToDestinationTest.pdf";
-            String outFile = destinationFolder + "remoteGoToDestinationTest.pdf";
+        public virtual void RemoteGoToDestinationTest01() {
+            String cmpFile = sourceFolder + "cmp_remoteGoToDestinationTest01.pdf";
+            String outFile = destinationFolder + "remoteGoToDestinationTest01.pdf";
             PdfDocument @out = new PdfDocument(new PdfWriter(outFile));
             @out.AddNewPage();
             IList<PdfDestination> destinations = new List<PdfDestination>(7);
@@ -256,6 +275,100 @@ namespace iText.Kernel.Pdf {
             @out.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFile, cmpFile, destinationFolder, "diff_"
                 ));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void RemoteGoToDestinationTest02() {
+            String cmpFile = sourceFolder + "cmp_remoteGoToDestinationTest02.pdf";
+            String outFile = destinationFolder + "remoteGoToDestinationTest02.pdf";
+            PdfDocument @out = new PdfDocument(new PdfWriter(outFile));
+            @out.AddNewPage();
+            @out.AddNewPage();
+            PdfLinkAnnotation linkExplicitDest = new PdfLinkAnnotation(new Rectangle(35, 785, 160, 15));
+            PdfAction action = PdfAction.CreateGoToR(new PdfStringFS("Some fake destination"), PdfExplicitRemoteGoToDestination
+                .CreateFitR(2, 10, 10, 10, 10), true);
+            linkExplicitDest.SetAction(action);
+            @out.GetFirstPage().AddAnnotation(linkExplicitDest);
+            @out.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFile, cmpFile, destinationFolder, "diff_"
+                ));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void RemoteGoToRIllegalDestinationTest() {
+            String outFile = destinationFolder + "remoteGoToDestinationTest01.pdf";
+            PdfDocument document = new PdfDocument(new PdfWriter(outFile));
+            document.AddNewPage();
+            document.AddNewPage();
+            try {
+                PdfAction.CreateGoToR(new PdfStringFS("Some fake destination"), PdfExplicitDestination.CreateFitB(document
+                    .GetPage(1)));
+                NUnit.Framework.Assert.Fail("Exception not thrown");
+            }
+            catch (ArgumentException e) {
+                NUnit.Framework.Assert.AreEqual("Explicit destinations shall specify page number in remote go-to actions instead of page dictionary"
+                    , e.Message);
+            }
+            document.Close();
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void RemoteGoToRByIntDestinationTest() {
+            String cmpFile = sourceFolder + "cmp_remoteGoToRByIntDestinationTest.pdf";
+            String outFile = destinationFolder + "remoteGoToRByIntDestinationTest.pdf";
+            PdfDocument @out = new PdfDocument(new PdfWriter(outFile));
+            @out.AddNewPage();
+            @out.AddNewPage();
+            PdfLinkAnnotation linkExplicitDest = new PdfLinkAnnotation(new Rectangle(35, 785, 160, 15));
+            PdfAction action = PdfAction.CreateGoToR("Some fake destination", 2);
+            linkExplicitDest.SetAction(action);
+            @out.GetFirstPage().AddAnnotation(linkExplicitDest);
+            @out.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFile, cmpFile, destinationFolder, "diff_"
+                ));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void RemoteGoToRByStringDestinationTest() {
+            String cmpFile = sourceFolder + "cmp_remoteGoToRByStringDestinationTest.pdf";
+            String outFile = destinationFolder + "remoteGoToRByStringDestinationTest.pdf";
+            PdfDocument @out = new PdfDocument(new PdfWriter(outFile));
+            @out.AddNewPage();
+            PdfLinkAnnotation linkExplicitDest = new PdfLinkAnnotation(new Rectangle(35, 785, 160, 15));
+            PdfAction action = PdfAction.CreateGoToR("Some fake destination", "1");
+            linkExplicitDest.SetAction(action);
+            @out.GetFirstPage().AddAnnotation(linkExplicitDest);
+            @out.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFile, cmpFile, destinationFolder, "diff_"
+                ));
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.INVALID_DESTINATION_TYPE)]
+        public virtual void RemoteGoToNotValidExplicitDestinationTest() {
+            String cmpFile = sourceFolder + "cmp_remoteGoToNotValidExplicitDestinationTest.pdf";
+            String outFile = destinationFolder + "remoteGoToNotValidExplicitDestinationTest.pdf";
+            PdfDocument document = new PdfDocument(new PdfWriter(outFile));
+            document.AddNewPage();
+            PdfLinkAnnotation linkExplicitDest = new PdfLinkAnnotation(new Rectangle(35, 785, 160, 15));
+            linkExplicitDest.SetAction(PdfAction.CreateGoTo(PdfExplicitRemoteGoToDestination.CreateFit(1)));
+            document.GetFirstPage().AddAnnotation(linkExplicitDest);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFile, cmpFile, destinationFolder, "diff_"
+                ));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void CopyNullDestination() {
+            using (MemoryStream baos = new MemoryStream()) {
+                using (PdfDocument pdfDocument = new PdfDocument(new PdfWriter(baos))) {
+                    pdfDocument.AddNewPage();
+                    PdfDestination copiedDestination = pdfDocument.GetCatalog().CopyDestination(null, new Dictionary<PdfPage, 
+                        PdfPage>(), pdfDocument);
+                    // We expect null to be returned if the destination to be copied is null
+                    NUnit.Framework.Assert.IsNull(copiedDestination);
+                }
+            }
         }
     }
 }

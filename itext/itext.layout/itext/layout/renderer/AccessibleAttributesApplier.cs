@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,8 +43,9 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections;
-using Common.Logging;
-using iText.IO.Util;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.Kernel.Colors;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
@@ -138,7 +139,7 @@ namespace iText.Layout.Renderer {
             if (background != null && background.GetColor() is DeviceRgb) {
                 attributes.Put(PdfName.BackgroundColor, new PdfArray(background.GetColor().GetColorValue()));
             }
-            //TODO NOTE: applying border attributes for cells is temporarily turned off on purpose. Remove this 'if' in future.
+            //TODO DEVSIX-6255: applying border attributes for cells is temporarily turned off on purpose. Remove this 'if' in future.
             // The reason is that currently, we can't distinguish if all cells have same border style or not.
             // Therefore for every cell in every table we have to write the same border attributes, which creates lots of clutter.
             if (!(renderer.GetModelElement() is Cell)) {
@@ -156,14 +157,14 @@ namespace iText.Layout.Renderer {
             UnitValue[] margins = new UnitValue[] { renderer.GetPropertyAsUnitValue(Property.MARGIN_TOP), renderer.GetPropertyAsUnitValue
                 (Property.MARGIN_BOTTOM), renderer.GetPropertyAsUnitValue(Property.MARGIN_LEFT), renderer.GetPropertyAsUnitValue
                 (Property.MARGIN_RIGHT) };
-            //TODO set depending on writing direction
+            //TODO DEVSIX-4218 set depending on writing direction
             int[] marginsOrder = new int[] { 0, 1, 2, 3 };
             UnitValue spaceBefore = margins[marginsOrder[0]];
             if (spaceBefore != null) {
                 if (!spaceBefore.IsPointValue()) {
-                    ILog logger = LogManager.GetLogger(typeof(AccessibleAttributesApplier));
-                    logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED, Property
-                        .MARGIN_TOP));
+                    ILogger logger = ITextLogManager.GetLogger(typeof(AccessibleAttributesApplier));
+                    logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED
+                        , Property.MARGIN_TOP));
                 }
                 if (0 != spaceBefore.GetValue()) {
                     attributes.Put(PdfName.SpaceBefore, new PdfNumber(spaceBefore.GetValue()));
@@ -172,9 +173,9 @@ namespace iText.Layout.Renderer {
             UnitValue spaceAfter = margins[marginsOrder[1]];
             if (spaceAfter != null) {
                 if (!spaceAfter.IsPointValue()) {
-                    ILog logger = LogManager.GetLogger(typeof(AccessibleAttributesApplier));
-                    logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED, Property
-                        .MARGIN_BOTTOM));
+                    ILogger logger = ITextLogManager.GetLogger(typeof(AccessibleAttributesApplier));
+                    logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED
+                        , Property.MARGIN_BOTTOM));
                 }
                 if (0 != spaceAfter.GetValue()) {
                     attributes.Put(PdfName.SpaceAfter, new PdfNumber(spaceAfter.GetValue()));
@@ -183,9 +184,9 @@ namespace iText.Layout.Renderer {
             UnitValue startIndent = margins[marginsOrder[2]];
             if (startIndent != null) {
                 if (!startIndent.IsPointValue()) {
-                    ILog logger = LogManager.GetLogger(typeof(AccessibleAttributesApplier));
-                    logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED, Property
-                        .MARGIN_LEFT));
+                    ILogger logger = ITextLogManager.GetLogger(typeof(AccessibleAttributesApplier));
+                    logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED
+                        , Property.MARGIN_LEFT));
                 }
                 if (0 != startIndent.GetValue()) {
                     attributes.Put(PdfName.StartIndent, new PdfNumber(startIndent.GetValue()));
@@ -194,9 +195,9 @@ namespace iText.Layout.Renderer {
             UnitValue endIndent = margins[marginsOrder[3]];
             if (endIndent != null) {
                 if (!endIndent.IsPointValue()) {
-                    ILog logger = LogManager.GetLogger(typeof(AccessibleAttributesApplier));
-                    logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED, Property
-                        .MARGIN_RIGHT));
+                    ILogger logger = ITextLogManager.GetLogger(typeof(AccessibleAttributesApplier));
+                    logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED
+                        , Property.MARGIN_RIGHT));
                 }
                 if (0 != endIndent.GetValue()) {
                     attributes.Put(PdfName.EndIndent, new PdfNumber(endIndent.GetValue()));
@@ -256,9 +257,9 @@ namespace iText.Layout.Renderer {
             if (underlines != null) {
                 UnitValue fontSize = renderer.GetPropertyAsUnitValue(Property.FONT_SIZE);
                 if (!fontSize.IsPointValue()) {
-                    ILog logger = LogManager.GetLogger(typeof(AccessibleAttributesApplier));
-                    logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED, Property
-                        .FONT_SIZE));
+                    ILogger logger = ITextLogManager.GetLogger(typeof(AccessibleAttributesApplier));
+                    logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED
+                        , Property.FONT_SIZE));
                 }
                 Underline underline = null;
                 if (underlines is IList && ((IList)underlines).Count > 0 && ((IList)underlines)[0] is Underline) {
@@ -306,24 +307,24 @@ namespace iText.Layout.Renderer {
                 .GetPropertyAsUnitValue(Property.PADDING_RIGHT), renderer.GetPropertyAsUnitValue(Property.PADDING_BOTTOM
                 ), renderer.GetPropertyAsUnitValue(Property.PADDING_LEFT) };
             if (!paddingsUV[0].IsPointValue()) {
-                ILog logger = LogManager.GetLogger(typeof(AccessibleAttributesApplier));
-                logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED, Property
-                    .PADDING_TOP));
+                ILogger logger = ITextLogManager.GetLogger(typeof(AccessibleAttributesApplier));
+                logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED
+                    , Property.PADDING_TOP));
             }
             if (!paddingsUV[1].IsPointValue()) {
-                ILog logger = LogManager.GetLogger(typeof(AccessibleAttributesApplier));
-                logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED, Property
-                    .PADDING_RIGHT));
+                ILogger logger = ITextLogManager.GetLogger(typeof(AccessibleAttributesApplier));
+                logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED
+                    , Property.PADDING_RIGHT));
             }
             if (!paddingsUV[2].IsPointValue()) {
-                ILog logger = LogManager.GetLogger(typeof(AccessibleAttributesApplier));
-                logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED, Property
-                    .PADDING_BOTTOM));
+                ILogger logger = ITextLogManager.GetLogger(typeof(AccessibleAttributesApplier));
+                logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED
+                    , Property.PADDING_BOTTOM));
             }
             if (!paddingsUV[3].IsPointValue()) {
-                ILog logger = LogManager.GetLogger(typeof(AccessibleAttributesApplier));
-                logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED, Property
-                    .PADDING_LEFT));
+                ILogger logger = ITextLogManager.GetLogger(typeof(AccessibleAttributesApplier));
+                logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED
+                    , Property.PADDING_LEFT));
             }
             float[] paddings = new float[] { paddingsUV[0].GetValue(), paddingsUV[1].GetValue(), paddingsUV[2].GetValue
                 (), paddingsUV[3].GetValue() };
@@ -335,7 +336,7 @@ namespace iText.Layout.Renderer {
             }
             else {
                 PdfArray paddingArray = new PdfArray();
-                //TODO set depending on writing direction
+                //TODO DEVSIX-4218 set depending on writing direction
                 int[] paddingsOrder = new int[] { 0, 1, 2, 3 };
                 foreach (int i in paddingsOrder) {
                     paddingArray.Add(new PdfNumber(paddings[i]));
@@ -387,7 +388,7 @@ namespace iText.Layout.Renderer {
                         }
                     }
                 }
-                //TODO set depending on writing direction
+                //TODO DEVSIX-4218 set depending on writing direction
                 int[] borderOrder = new int[] { 0, 1, 2, 3 };
                 foreach (int i in borderOrder) {
                     if (borders[i] != null) {
@@ -441,7 +442,7 @@ namespace iText.Layout.Renderer {
         }
 
         private static PdfName TransformTextAlignmentValueToName(TextAlignment? textAlignment) {
-            //TODO set rightToLeft value according with actual text content if it is possible.
+            //TODO DEVSIX-4218 set rightToLeft value according with actual text content if it is possible.
             bool isLeftToRight = true;
             switch (textAlignment) {
                 case TextAlignment.LEFT: {
@@ -480,7 +481,7 @@ namespace iText.Layout.Renderer {
         }
 
         private static PdfName TransformBlockAlignToName(HorizontalAlignment? horizontalAlignment) {
-            //TODO set rightToLeft value according with actual text content if it is possible.
+            //TODO DEVSIX-4218 set rightToLeft value according with actual text content if it is possible.
             bool isLeftToRight = true;
             switch (horizontalAlignment) {
                 case HorizontalAlignment.LEFT: {

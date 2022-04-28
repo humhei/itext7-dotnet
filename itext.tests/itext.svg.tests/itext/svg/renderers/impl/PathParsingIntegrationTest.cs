@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,6 +42,7 @@ address: sales@itextpdf.com
 */
 using System;
 using iText.Svg.Exceptions;
+using iText.Svg.Logs;
 using iText.Svg.Renderers;
 using iText.Test;
 using iText.Test.Attributes;
@@ -91,26 +92,20 @@ namespace iText.Svg.Renderers.Impl {
 
         [NUnit.Framework.Test]
         public virtual void InvalidOperatorTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                ConvertAndCompare(sourceFolder, destinationFolder, "invalidOperator");
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>())
-;
+            NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => ConvertAndCompare(sourceFolder, destinationFolder
+                , "invalidOperator"));
         }
 
         [NUnit.Framework.Test]
         public virtual void InvalidOperatorCSensTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                ConvertAndCompare(sourceFolder, destinationFolder, "invalidOperatorCSens");
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>())
-;
+            NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => ConvertAndCompare(sourceFolder, destinationFolder
+                , "invalidOperatorCSens"));
         }
 
         [NUnit.Framework.Test]
         public virtual void MoreThanOneHParam() {
-            // TODO-2331 Update the cmp after the issue is resolved
-            // UPD: Seems to be fixed now, but leaving the TODO and issue open because the scope of the issue might be bigger than
+            // TODO DEVSIX-2331 Update the cmp after the issue is resolved
+            // UPD: Seems to be fixed now, but leaving the remark and issue open because the scope of the issue might be bigger than
             // this test
             ConvertAndCompare(sourceFolder, destinationFolder, "moreThanOneHParam");
         }
@@ -138,14 +133,14 @@ namespace iText.Svg.Renderers.Impl {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(SvgLogMessageConstant.UNMAPPEDTAG)]
+        [LogMessage(SvgLogMessageConstant.UNMAPPED_TAG)]
         public virtual void Text_path_Test() {
             //TODO: update cmp-file after DEVSIX-2255
             ConvertAndCompare(sourceFolder, destinationFolder, "textpath");
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(SvgLogMessageConstant.UNMAPPEDTAG)]
+        [LogMessage(SvgLogMessageConstant.UNMAPPED_TAG)]
         public virtual void TextPathExample() {
             //TODO: update when DEVSIX-2255 implemented
             ConvertAndCompare(sourceFolder, destinationFolder, "textPathExample");

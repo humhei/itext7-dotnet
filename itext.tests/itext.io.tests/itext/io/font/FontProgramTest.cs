@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,10 +41,8 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using System.Collections.Generic;
-using System.Reflection;
+using iText.Commons.Utils;
 using iText.IO.Font.Constants;
-using iText.IO.Util;
 using iText.Test;
 
 namespace iText.IO.Font {
@@ -53,11 +51,10 @@ namespace iText.IO.Font {
 
         [NUnit.Framework.Test]
         public virtual void ExceptionMessageTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                FontProgramFactory.CreateFont(notExistingFont);
-            }
-            , NUnit.Framework.Throws.InstanceOf<System.IO.IOException>().With.Message.EqualTo(MessageFormatUtil.Format(iText.IO.IOException._1NotFoundAsFileOrResource, notExistingFont)))
-;
+            Exception e = NUnit.Framework.Assert.Catch(typeof(System.IO.IOException), () => FontProgramFactory.CreateFont
+                (notExistingFont));
+            NUnit.Framework.Assert.AreEqual(MessageFormatUtil.Format(iText.IO.Exceptions.IOException._1NotFoundAsFileOrResource
+                , notExistingFont), e.Message);
         }
 
         [NUnit.Framework.Test]
@@ -70,39 +67,26 @@ namespace iText.IO.Font {
         }
 
         [NUnit.Framework.Test]
-        public virtual void FontCacheTest()
-        {
+        public virtual void RegisterDirectoryOpenTypeTest() {
             FontProgramFactory.ClearRegisteredFonts();
             FontProgramFactory.ClearRegisteredFontFamilies();
-            int cacheSize = -1;
-            try
-            {
-                FieldInfo f = typeof(FontCache).GetField("fontCache", BindingFlags.NonPublic | BindingFlags.Static);
-                IDictionary<FontCacheKey, FontProgram> cachedFonts = (IDictionary<FontCacheKey, FontProgram>)f.GetValue(null);
-                cachedFonts.Clear();
-                FontProgramFactory.RegisterFontDirectory(iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
-                                                             .CurrentContext.TestDirectory) + "/resources/itext/io/font/otf/");
-                cacheSize = cachedFonts.Count;
-            }
-            catch (Exception) { }
-
-            foreach (String s in FontProgramFactory.GetRegisteredFonts())
-                Console.WriteLine(s);
-
+            FontCache.ClearSavedFonts();
+            FontProgramFactory.RegisterFontDirectory(iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
+                .CurrentContext.TestDirectory) + "/resources/itext/io/font/otf/");
             NUnit.Framework.Assert.AreEqual(43, FontProgramFactory.GetRegisteredFonts().Count);
+            NUnit.Framework.Assert.IsNull(FontCache.GetFont(iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
+                .CurrentContext.TestDirectory) + "/resources/itext/io/font/otf/FreeSansBold.ttf"));
             NUnit.Framework.Assert.IsTrue(FontProgramFactory.GetRegisteredFonts().Contains("free sans lihavoitu"));
-            NUnit.Framework.Assert.AreEqual(0, cacheSize);
         }
 
         [NUnit.Framework.Test]
-        public void RegisterDirectoryType1Test()
-        {
+        public virtual void RegisterDirectoryType1Test() {
             FontProgramFactory.RegisterFontDirectory(iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
-                                                         .CurrentContext.TestDirectory) + "/resources/itext/io/font/type1/");
+                .CurrentContext.TestDirectory) + "/resources/itext/io/font/type1/");
             FontProgram computerModern = FontProgramFactory.CreateRegisteredFont("computer modern");
             FontProgram cmr10 = FontProgramFactory.CreateRegisteredFont("cmr10");
-            NUnit.Framework.Assert.NotNull(computerModern);
-            NUnit.Framework.Assert.NotNull(cmr10);
+            NUnit.Framework.Assert.IsNotNull(computerModern);
+            NUnit.Framework.Assert.IsNotNull(cmr10);
         }
     }
 }

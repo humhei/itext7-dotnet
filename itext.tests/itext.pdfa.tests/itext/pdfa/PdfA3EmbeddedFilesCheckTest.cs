@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,6 +42,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.IO;
+using iText.Commons.Utils;
 using iText.Kernel.Font;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
@@ -74,12 +75,13 @@ namespace iText.Pdfa {
                 , @is);
             PdfADocument pdfDocument = new PdfADocument(writer, PdfAConformanceLevel.PDF_A_3B, outputIntent);
             PdfPage page = pdfDocument.AddNewPage();
-            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", "WinAnsi", true);
+            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", "WinAnsi", PdfFontFactory.EmbeddingStrategy
+                .FORCE_EMBEDDED);
             PdfCanvas canvas = new PdfCanvas(page);
             canvas.SaveState().BeginText().MoveText(36, 700).SetFontAndSize(font, 36).ShowText("Hello World!").EndText
                 ().RestoreState();
             MemoryStream txt = new MemoryStream();
-            StreamWriter @out = new StreamWriter(txt);
+            FormattingStreamWriter @out = new FormattingStreamWriter(txt);
             @out.Write("<foo><foo2>Hello world</foo2></foo>");
             @out.Dispose();
             pdfDocument.AddAssociatedFile("foo file", PdfFileSpec.CreateEmbeddedFileSpec(pdfDocument, txt.ToArray(), "foo file"
@@ -98,12 +100,13 @@ namespace iText.Pdfa {
                 , @is);
             PdfADocument pdfDocument = new PdfADocument(writer, PdfAConformanceLevel.PDF_A_3B, outputIntent);
             PdfPage page = pdfDocument.AddNewPage();
-            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", "WinAnsi", true);
+            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", "WinAnsi", PdfFontFactory.EmbeddingStrategy
+                .FORCE_EMBEDDED);
             PdfCanvas canvas = new PdfCanvas(page);
             canvas.SaveState().BeginText().MoveText(36, 700).SetFontAndSize(font, 36).ShowText("Hello World!").EndText
                 ().RestoreState();
             MemoryStream txt = new MemoryStream();
-            StreamWriter @out = new StreamWriter(txt);
+            FormattingStreamWriter @out = new FormattingStreamWriter(txt);
             @out.Write("<foo><foo2>Hello world</foo2></foo>");
             @out.Dispose();
             pdfDocument.AddAssociatedFile("foo file", PdfFileSpec.CreateEmbeddedFileSpec(pdfDocument, txt.ToArray(), "foo file"
@@ -122,7 +125,8 @@ namespace iText.Pdfa {
                 , @is);
             PdfADocument pdfDocument = new PdfADocument(writer, PdfAConformanceLevel.PDF_A_3B, outputIntent);
             PdfPage page = pdfDocument.AddNewPage();
-            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", "WinAnsi", true);
+            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", "WinAnsi", PdfFontFactory.EmbeddingStrategy
+                .FORCE_EMBEDDED);
             PdfCanvas canvas = new PdfCanvas(page);
             canvas.SaveState().BeginText().MoveText(36, 700).SetFontAndSize(font, 36).ShowText("Hello World!").EndText
                 ().RestoreState();
@@ -143,12 +147,13 @@ namespace iText.Pdfa {
                 , @is);
             PdfADocument pdfDocument = new PdfADocument(writer, PdfAConformanceLevel.PDF_A_3B, outputIntent);
             PdfPage page = pdfDocument.AddNewPage();
-            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", "WinAnsi", true);
+            PdfFont font = PdfFontFactory.CreateFont(sourceFolder + "FreeSans.ttf", "WinAnsi", PdfFontFactory.EmbeddingStrategy
+                .FORCE_EMBEDDED);
             PdfCanvas canvas = new PdfCanvas(page);
             canvas.SaveState().BeginText().MoveText(36, 700).SetFontAndSize(font, 36).ShowText("Hello World!").EndText
                 ().RestoreState();
             MemoryStream txt = new MemoryStream();
-            StreamWriter @out = new StreamWriter(txt);
+            FormattingStreamWriter @out = new FormattingStreamWriter(txt);
             @out.Write("<foo><foo2>Hello world</foo2></foo>");
             @out.Dispose();
             pdfDocument.AddAssociatedFile("foo file", PdfFileSpec.CreateEmbeddedFileSpec(pdfDocument, txt.ToArray(), "foo file"

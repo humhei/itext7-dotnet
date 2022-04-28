@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using iText.IO.Util;
+using iText.Commons.Utils;
 
 namespace iText.Layout.Properties {
     /// <summary>A specialized class that holds a value and the unit it is measured in.</summary>
@@ -70,7 +70,7 @@ namespace iText.Layout.Properties {
         }
 
         /// <summary>Creates a copy of UnitValue object.</summary>
-        /// <param name="unitValue"/>
+        /// <param name="unitValue">the value to be stored</param>
         public UnitValue(iText.Layout.Properties.UnitValue unitValue)
             : this(unitValue.unitType, unitValue.value) {
         }

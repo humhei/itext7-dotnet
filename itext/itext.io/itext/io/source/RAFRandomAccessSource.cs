@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -72,7 +72,6 @@ namespace iText.IO.Source {
 
         /// <summary><inheritDoc/></summary>
         public virtual int Get(long position) {
-            // TODO: test to make sure we are handling the length properly (i.e. is raf.length() the last byte in the file, or one past the last byte?)
             if (position > length) {
                 return -1;
             }

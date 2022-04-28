@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,8 +43,8 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.Text;
+using iText.Commons.Utils;
 using iText.IO.Source;
-using iText.IO.Util;
 using iText.Kernel.Colors;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
@@ -117,7 +117,8 @@ namespace iText.Forms.Xfdf {
 
         /// <summary>Converts float value to string with UTF-8 encoding.</summary>
         internal static String ConvertFloatToString(float coord) {
-            return iText.IO.Util.JavaUtil.GetStringForBytes(ByteUtils.GetIsoBytes(coord), System.Text.Encoding.UTF8);
+            return iText.Commons.Utils.JavaUtil.GetStringForBytes(ByteUtils.GetIsoBytes(coord), System.Text.Encoding.UTF8
+                );
         }
 
         /// <summary>Converts a string containing 4 float values into a float array, representing quadPoints.</summary>
@@ -152,7 +153,8 @@ namespace iText.Forms.Xfdf {
         }
 
         private static String FloatToPaddedString(float number) {
-            return iText.IO.Util.JavaUtil.GetStringForBytes(ByteUtils.GetIsoBytes(number), System.Text.Encoding.UTF8);
+            return iText.Commons.Utils.JavaUtil.GetStringForBytes(ByteUtils.GetIsoBytes(number), System.Text.Encoding.
+                UTF8);
         }
 
         /// <summary>

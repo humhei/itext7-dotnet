@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -51,10 +51,19 @@ namespace iText.Kernel.Pdf.Canvas.Parser {
             .CurrentContext.TestDirectory) + "/resources/itext/kernel/parser/TextExtractIllegalDifferencesTest/";
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.DOCFONT_HAS_ILLEGAL_DIFFERENCES, Count = 1)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCFONT_HAS_ILLEGAL_DIFFERENCES)]
         public virtual void IllegalDifference() {
-            PdfDocument pdf = new PdfDocument(new PdfReader(sourceFolder + "illegalDifference.pdf"));
-            PdfTextExtractor.GetTextFromPage(pdf.GetFirstPage());
+            using (PdfDocument pdf = new PdfDocument(new PdfReader(sourceFolder + "illegalDifference.pdf"))) {
+                NUnit.Framework.Assert.DoesNotThrow(() => PdfTextExtractor.GetTextFromPage(pdf.GetFirstPage()));
+            }
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.DOCFONT_HAS_ILLEGAL_DIFFERENCES, Count = 2)]
+        public virtual void IllegalDifferenceType3Font() {
+            using (PdfDocument pdf = new PdfDocument(new PdfReader(sourceFolder + "illegalDifferenceType3Font.pdf"))) {
+                NUnit.Framework.Assert.DoesNotThrow(() => PdfTextExtractor.GetTextFromPage(pdf.GetFirstPage()));
+            }
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -57,20 +57,18 @@ namespace iText.Svg.Utils {
 
         [NUnit.Framework.Test]
         public virtual void NoSkewYValuesTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                TransformUtils.ParseTransform("skewY()");
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>().With.Message.EqualTo(SvgLogMessageConstant.TRANSFORM_INCORRECT_NUMBER_OF_VALUES))
-;
+            Exception e = NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => TransformUtils.ParseTransform
+                ("skewY()"));
+            NUnit.Framework.Assert.AreEqual(SvgExceptionMessageConstant.TRANSFORM_INCORRECT_NUMBER_OF_VALUES, e.Message
+                );
         }
 
         [NUnit.Framework.Test]
         public virtual void TwoSkewYValuesTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                TransformUtils.ParseTransform("skewY(1 2)");
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>().With.Message.EqualTo(SvgLogMessageConstant.TRANSFORM_INCORRECT_NUMBER_OF_VALUES))
-;
+            Exception e = NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => TransformUtils.ParseTransform
+                ("skewY(1 2)"));
+            NUnit.Framework.Assert.AreEqual(SvgExceptionMessageConstant.TRANSFORM_INCORRECT_NUMBER_OF_VALUES, e.Message
+                );
         }
 
         [NUnit.Framework.Test]

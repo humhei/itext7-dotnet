@@ -40,7 +40,7 @@ namespace iText.Kernel.XMP {
     /// </remarks>
     /// <since>20.01.2006</since>
     public interface XMPMeta
-#if !NETSTANDARD1_6
+#if !NETSTANDARD2_0
  : ICloneable
 #endif
  {
@@ -48,12 +48,12 @@ namespace iText.Kernel.XMP {
         // Basic property manipulation functions
         /// <summary>
         /// The property value getter-methods all take a property specification: the first two parameters
-        /// are always the top level namespace URI (the &quot;schema&quot; namespace) and the basic name
+        /// are always the top level namespace URI (the &amp;quot;schema&amp;quot; namespace) and the basic name
         /// of the property being referenced.
         /// </summary>
         /// <remarks>
         /// The property value getter-methods all take a property specification: the first two parameters
-        /// are always the top level namespace URI (the &quot;schema&quot; namespace) and the basic name
+        /// are always the top level namespace URI (the &amp;quot;schema&amp;quot; namespace) and the basic name
         /// of the property being referenced. See the introductory discussion of path expression usage
         /// for more information.
         /// <para />

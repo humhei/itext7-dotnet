@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -61,25 +61,14 @@ namespace iText.StyledXmlParser.Css.Page {
         /// </summary>
         /// <param name="ruleName">the rule name</param>
         public CssMarginRule(String ruleName)
-            : this(ruleName, "") {
-        }
-
-        /// <summary>
-        /// Creates a new
-        /// <see cref="CssMarginRule"/>
-        /// instance.
-        /// </summary>
-        /// <param name="ruleName">the rule name</param>
-        /// <param name="ruleParameters">the rule parameters</param>
-        [System.ObsoleteAttribute(@"Will be removed in 7.2. Use CssMarginRule(System.String) instead")]
-        public CssMarginRule(String ruleName, String ruleParameters)
-            : base(ruleName, ruleParameters) {
+            : base(ruleName, "") {
         }
 
         /* (non-Javadoc)
         * @see com.itextpdf.styledxmlparser.css.CssNestedAtRule#addBodyCssDeclarations(java.util.List)
         */
         public override void AddBodyCssDeclarations(IList<CssDeclaration> cssDeclarations) {
+            // TODO DEVSIX-6364 Fix the body declarations duplication for each pageSelector part
             foreach (ICssSelector pageSelector in pageSelectors) {
                 this.body.Add(new CssNonStandardRuleSet(new CssPageMarginBoxSelector(GetRuleName(), pageSelector), cssDeclarations
                     ));

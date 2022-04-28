@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,8 +41,6 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
-using System;
-
 namespace iText.Layout.Properties {
     /// <summary>
     /// An enum of property names that are used for graphical properties of layout
@@ -59,10 +57,13 @@ namespace iText.Layout.Properties {
     /// as its potential keys.
     /// </remarks>
     public sealed class Property {
-        private Property() {
-        }
-
         public const int ACTION = 1;
+
+        public const int ALIGN_CONTENT = 130;
+
+        public const int ALIGN_ITEMS = 134;
+
+        public const int ALIGN_SELF = 129;
 
         public const int APPEARANCE_STREAM_LAYOUT = 82;
 
@@ -126,6 +127,14 @@ namespace iText.Layout.Properties {
 
         public const int FIRST_LINE_INDENT = 18;
 
+        public const int FLEX_BASIS = 131;
+
+        public const int FLEX_GROW = 132;
+
+        public const int FLEX_SHRINK = 127;
+
+        public const int FLEX_WRAP = 128;
+
         public const int FLOAT = 99;
 
         public const int FLUSH_ON_DRAW = 19;
@@ -187,11 +196,15 @@ namespace iText.Layout.Properties {
 
         public const int HYPHENATION = 30;
 
+        public const int ID = 126;
+
         public const int IGNORE_FOOTER = 96;
 
         public const int IGNORE_HEADER = 97;
 
         public const int ITALIC_SIMULATION = 31;
+
+        public const int JUSTIFY_CONTENT = 133;
 
         public const int KEEP_TOGETHER = 32;
 
@@ -202,6 +215,8 @@ namespace iText.Layout.Properties {
         public const int LEFT = 34;
 
         public const int LINE_DRAWER = 35;
+
+        public const int LINE_HEIGHT = 124;
 
         public const int LINK_ANNOTATION = 88;
 
@@ -235,21 +250,25 @@ namespace iText.Layout.Properties {
 
         public const int MAX_WIDTH = 79;
 
+        public const int META_INFO = 135;
+
         public const int MIN_HEIGHT = 85;
 
         public const int MIN_WIDTH = 80;
 
         public const int NO_SOFT_WRAP_INLINE = 118;
 
+        public const int OBJECT_FIT = 125;
+
         public const int OPACITY = 92;
+
+        public const int ORPHANS_CONTROL = 121;
 
         public const int OUTLINE = 106;
 
         public const int OUTLINE_OFFSET = 107;
 
-        [System.ObsoleteAttribute(@"Use OVERFLOW_X and/or OVERFLOW_Y instead. The OVERFLOW property doesn't have any affect and will be removed in iText 7.2"
-            )]
-        public const int OVERFLOW = 102;
+        public const int OVERFLOW_WRAP = 102;
 
         public const int OVERFLOW_X = 103;
 
@@ -266,6 +285,8 @@ namespace iText.Layout.Properties {
         public const int PAGE_NUMBER = 51;
 
         public const int POSITION = 52;
+
+        public const int RENDERING_MODE = 123;
 
         public const int RIGHT = 54;
 
@@ -330,6 +351,8 @@ namespace iText.Layout.Properties {
         /// <summary>Value of 1 is equivalent to no scaling</summary>
         public const int VERTICAL_SCALING = 76;
 
+        public const int WIDOWS_CONTROL = 122;
+
         public const int WIDTH = 77;
 
         public const int WORD_SPACING = 78;
@@ -349,7 +372,7 @@ namespace iText.Layout.Properties {
         /// </remarks>
         private static readonly bool[] INHERITED_PROPERTIES;
 
-        private const int MAX_INHERITED_PROPERTY_ID = 119;
+        private const int MAX_INHERITED_PROPERTY_ID = 135;
 
         static Property() {
             INHERITED_PROPERTIES = new bool[MAX_INHERITED_PROPERTY_ID + 1];
@@ -375,6 +398,7 @@ namespace iText.Layout.Properties {
             INHERITED_PROPERTIES[iText.Layout.Properties.Property.KEEP_TOGETHER] = true;
             INHERITED_PROPERTIES[iText.Layout.Properties.Property.LEADING] = true;
             INHERITED_PROPERTIES[iText.Layout.Properties.Property.NO_SOFT_WRAP_INLINE] = true;
+            INHERITED_PROPERTIES[iText.Layout.Properties.Property.ORPHANS_CONTROL] = true;
             INHERITED_PROPERTIES[iText.Layout.Properties.Property.SPACING_RATIO] = true;
             INHERITED_PROPERTIES[iText.Layout.Properties.Property.SPLIT_CHARACTERS] = true;
             INHERITED_PROPERTIES[iText.Layout.Properties.Property.STROKE_COLOR] = true;
@@ -383,9 +407,17 @@ namespace iText.Layout.Properties {
             INHERITED_PROPERTIES[iText.Layout.Properties.Property.TEXT_RENDERING_MODE] = true;
             INHERITED_PROPERTIES[iText.Layout.Properties.Property.TEXT_RISE] = true;
             INHERITED_PROPERTIES[iText.Layout.Properties.Property.UNDERLINE] = true;
+            INHERITED_PROPERTIES[iText.Layout.Properties.Property.WIDOWS_CONTROL] = true;
             INHERITED_PROPERTIES[iText.Layout.Properties.Property.WORD_SPACING] = true;
             INHERITED_PROPERTIES[iText.Layout.Properties.Property.TAGGING_HELPER] = true;
             INHERITED_PROPERTIES[iText.Layout.Properties.Property.TYPOGRAPHY_CONFIG] = true;
+            INHERITED_PROPERTIES[iText.Layout.Properties.Property.RENDERING_MODE] = true;
+            INHERITED_PROPERTIES[iText.Layout.Properties.Property.LINE_HEIGHT] = true;
+            INHERITED_PROPERTIES[iText.Layout.Properties.Property.OVERFLOW_WRAP] = true;
+            INHERITED_PROPERTIES[iText.Layout.Properties.Property.META_INFO] = true;
+        }
+
+        private Property() {
         }
 
         /// <summary>

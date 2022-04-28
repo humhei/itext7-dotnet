@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -73,6 +73,10 @@ namespace iText.IO.Font.Otf {
                 }
             }
             switch (lookupType) {
+                case 1: {
+                    return new GposLookupType1(this, lookupFlag, subTableLocations);
+                }
+
                 case 2: {
                     return new GposLookupType2(this, lookupFlag, subTableLocations);
                 }
@@ -87,6 +91,14 @@ namespace iText.IO.Font.Otf {
 
                 case 6: {
                     return new GposLookupType6(this, lookupFlag, subTableLocations);
+                }
+
+                case 7: {
+                    return new GposLookupType7(this, lookupFlag, subTableLocations);
+                }
+
+                case 8: {
+                    return new GposLookupType8(this, lookupFlag, subTableLocations);
                 }
 
                 default: {

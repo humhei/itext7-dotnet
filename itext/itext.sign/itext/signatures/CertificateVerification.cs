@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,17 +43,24 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
 using Org.BouncyCastle.Ocsp;
 using Org.BouncyCastle.Tsp;
 using Org.BouncyCastle.X509;
-using iText.IO.Util;
+using iText.Commons;
+using iText.Commons.Utils;
+using iText.Signatures.Exceptions;
+using iText.Signatures.Logs;
 
 namespace iText.Signatures {
     /// <summary>This class consists of some methods that allow you to verify certificates.</summary>
     public class CertificateVerification {
+        public const String HAS_UNSUPPORTED_EXTENSIONS = "Has unsupported critical extension";
+
+        public const String CERTIFICATE_REVOKED = "Certificate revoked";
+
         /// <summary>The Logger instance.</summary>
-        private static readonly ILog LOGGER = LogManager.GetLogger(typeof(CrlClientOnline));
+        private static readonly ILogger LOGGER = ITextLogManager.GetLogger(typeof(CertificateVerification));
 
         /// <summary>Verifies a single certificate for the current date.</summary>
         /// <param name="cert">the certificate to verify</param>
@@ -76,7 +83,7 @@ namespace iText.Signatures {
         /// </returns>
         public static String VerifyCertificate(X509Certificate cert, ICollection<X509Crl> crls, DateTime calendar) {
             if (SignUtils.HasUnsupportedCriticalExtension(cert)) {
-                return "Has unsupported critical extension";
+                return CertificateVerification.HAS_UNSUPPORTED_EXTENSIONS;
             }
             try {
                 cert.CheckValidity(calendar.ToUniversalTime());
@@ -87,7 +94,7 @@ namespace iText.Signatures {
             if (crls != null) {
                 foreach (X509Crl crl in crls) {
                     if (crl.IsRevoked(cert)) {
-                        return "Certificate revoked";
+                        return CertificateVerification.CERTIFICATE_REVOKED;
                     }
                 }
             }
@@ -138,7 +145,6 @@ namespace iText.Signatures {
                                 return result;
                             }
                             catch (Exception) {
-                                continue;
                             }
                         }
                         catch (Exception) {
@@ -147,6 +153,9 @@ namespace iText.Signatures {
                 }
                 catch (Exception) {
                 }
+                // do nothing and continue
+                // Do nothing.
+                // Do nothing.
                 int j;
                 for (j = 0; j < certs.Length; ++j) {
                     if (j == k) {
@@ -160,13 +169,14 @@ namespace iText.Signatures {
                     catch (Exception) {
                     }
                 }
+                // Do nothing.
                 if (j == certs.Length) {
-                    result.Add(new VerificationException(cert, "Cannot be verified against the KeyStore or the certificate chain"
+                    result.Add(new VerificationException(cert, SignExceptionMessageConstant.CANNOT_BE_VERIFIED_CERTIFICATE_CHAIN
                         ));
                 }
             }
             if (result.Count == 0) {
-                result.Add(new VerificationException((X509Certificate)null, "Invalid state. Possible circular certificate chain"
+                result.Add(new VerificationException((X509Certificate)null, SignExceptionMessageConstant.INVALID_STATE_WHILE_CHECKING_CERT_CHAIN
                     ));
             }
             return result;
@@ -208,7 +218,9 @@ namespace iText.Signatures {
             try {
                 foreach (X509Certificate certStoreX509 in SignUtils.GetCertificates(keystore)) {
                     try {
-                        return SignUtils.IsSignatureValid(ocsp, certStoreX509);
+                        if (SignUtils.IsSignatureValid(ocsp, certStoreX509)) {
+                            return true;
+                        }
                     }
                     catch (Exception ex) {
                         exceptionsThrown.Add(ex);
@@ -218,9 +230,7 @@ namespace iText.Signatures {
             catch (Exception e) {
                 exceptionsThrown.Add(e);
             }
-            foreach (Exception ex in exceptionsThrown) {
-                LOGGER.Error(ex.Message, ex);
-            }
+            LogExceptionMessages(exceptionsThrown);
             return false;
         }
 
@@ -244,10 +254,14 @@ namespace iText.Signatures {
             catch (Exception e) {
                 exceptionsThrown.Add(e);
             }
-            foreach (Exception ex in exceptionsThrown) {
-                LOGGER.Error(ex.Message, ex);
-            }
+            LogExceptionMessages(exceptionsThrown);
             return false;
+        }
+
+        private static void LogExceptionMessages(IList<Exception> exceptionsThrown) {
+            foreach (Exception ex in exceptionsThrown) {
+                LOGGER.LogError(ex, ex.Message == null ? SignLogMessageConstant.EXCEPTION_WITHOUT_MESSAGE : ex.Message);
+            }
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,10 +43,13 @@ address: sales@itextpdf.com
 using System;
 using iText.IO.Image;
 using iText.Kernel.Colors;
+using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
+using iText.Kernel.Pdf.Canvas;
 using iText.Kernel.Utils;
 using iText.Layout.Borders;
 using iText.Layout.Element;
+using iText.Layout.Logs;
 using iText.Test;
 using iText.Test.Attributes;
 
@@ -98,6 +101,27 @@ namespace iText.Layout {
             list.Add(roundDotsBorderItem);
             doc.Add(list);
             CloseDocumentAndCompareOutputs(doc);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void DrawBordersByRectangleTest() {
+            String outPdf = destinationFolder + "drawBordersByRectangle.pdf";
+            String cmpPdf = sourceFolder + "cmp_drawBordersByRectangle.pdf";
+            using (PdfDocument pdfDocument = new PdfDocument(new PdfWriter(outPdf))) {
+                PdfPage page = pdfDocument.AddNewPage();
+                PdfCanvas canvas = new PdfCanvas(page);
+                new SolidBorder(DeviceRgb.GREEN, 5).Draw(canvas, new Rectangle(50, 700, 100, 100));
+                new DashedBorder(DeviceRgb.GREEN, 5).Draw(canvas, new Rectangle(200, 700, 100, 100));
+                new DottedBorder(DeviceRgb.GREEN, 5).Draw(canvas, new Rectangle(350, 700, 100, 100));
+                new DoubleBorder(DeviceRgb.GREEN, 5).Draw(canvas, new Rectangle(50, 550, 100, 100));
+                new GrooveBorder(new DeviceRgb(0, 255, 0), 5).Draw(canvas, new Rectangle(200, 550, 100, 100));
+                new InsetBorder(new DeviceRgb(0, 255, 0), 5).Draw(canvas, new Rectangle(350, 550, 100, 100));
+                new OutsetBorder(new DeviceRgb(0, 255, 0), 5).Draw(canvas, new Rectangle(50, 400, 100, 100));
+                new RidgeBorder(new DeviceRgb(0, 255, 0), 5).Draw(canvas, new Rectangle(200, 400, 100, 100));
+                new RoundDotsBorder(DeviceRgb.GREEN, 5).Draw(canvas, new Rectangle(350, 400, 100, 100));
+            }
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outPdf, cmpPdf, destinationFolder, "diff"
+                ));
         }
 
         [NUnit.Framework.Test]
@@ -215,7 +239,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA, Count = 1)]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA, Count = 1)]
         public virtual void RotatedBordersTest() {
             fileName = "rotatedBordersTest.pdf";
             Document doc = CreateDocument();
@@ -250,44 +274,14 @@ namespace iText.Layout {
             }
         }
 
-        //When 7.2 release is in progress, remove the underlying code. It's here to pass A SQ line coverage quality gate and tests deprecated protected methods
-        public class TestDashedBorder : DashedBorder {
-            public TestDashedBorder(BorderTest _enclosing, float width)
+        private class TestBorder : DashedBorder {
+            public TestBorder(float width)
                 : base(width) {
-                this._enclosing = _enclosing;
             }
 
             public virtual float PublicGetDotsGap(double distance, float initialGap) {
-                return this.GetDotsGap(distance, initialGap);
+                return GetDotsGap(distance, initialGap);
             }
-
-            private readonly BorderTest _enclosing;
-        }
-
-        public class TestDottedBorder : DottedBorder {
-            public TestDottedBorder(BorderTest _enclosing, float width)
-                : base(width) {
-                this._enclosing = _enclosing;
-            }
-
-            public virtual float PublicGetDotsGap(double distance, float initialGap) {
-                return this.GetDotsGap(distance, initialGap);
-            }
-
-            private readonly BorderTest _enclosing;
-        }
-
-        public class TestRoundDotsBorder : RoundDotsBorder {
-            public TestRoundDotsBorder(BorderTest _enclosing, float width)
-                : base(width) {
-                this._enclosing = _enclosing;
-            }
-
-            public virtual float PublicGetDotsGap(double distance, float initialGap) {
-                return this.GetDotsGap(distance, initialGap);
-            }
-
-            private readonly BorderTest _enclosing;
         }
 
         [NUnit.Framework.Test]
@@ -295,15 +289,9 @@ namespace iText.Layout {
             float expected = 0.2f;
             double distance = 0.2;
             float initialGap = 0.2f;
-            BorderTest.TestDashedBorder db = new BorderTest.TestDashedBorder(this, 1f);
-            BorderTest.TestDottedBorder dotb = new BorderTest.TestDottedBorder(this, 1f);
-            BorderTest.TestRoundDotsBorder rdb = new BorderTest.TestRoundDotsBorder(this, 1f);
-            float dbActual = db.PublicGetDotsGap(distance, initialGap);
-            float dotbActual = dotb.PublicGetDotsGap(distance, initialGap);
-            float rdbActual = rdb.PublicGetDotsGap(distance, initialGap);
-            NUnit.Framework.Assert.AreEqual(expected, dbActual, 0.0001f);
-            NUnit.Framework.Assert.AreEqual(expected, dotbActual, 0.0001f);
-            NUnit.Framework.Assert.AreEqual(expected, rdbActual, 0.0001f);
+            BorderTest.TestBorder border = new BorderTest.TestBorder(1f);
+            float actual = border.PublicGetDotsGap(distance, initialGap);
+            NUnit.Framework.Assert.AreEqual(expected, actual, 0.0001f);
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -48,7 +48,7 @@ using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Ocsp;
 using Org.BouncyCastle.Security.Certificates;
 using Org.BouncyCastle.X509;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Signatures;
 using iText.Signatures.Testutils;
 using iText.Signatures.Testutils.Builder;
@@ -132,9 +132,9 @@ namespace iText.Signatures.Verify {
 
         [NUnit.Framework.Test]
         public virtual void ExpiredAuthorizedOCSPResponderTest_atValidPeriod() {
-            DateTime ocspResponderCertStartDate = DateTimeUtil.ParseSimpleFormat("15/10/2005", "dd/MM/yyyy");
-            DateTime ocspResponderCertEndDate = DateTimeUtil.ParseSimpleFormat("15/10/2010", "dd/MM/yyyy");
-            DateTime checkDate = DateTimeUtil.ParseSimpleFormat("15/10/2008", "dd/MM/yyyy");
+            DateTime ocspResponderCertStartDate = DateTimeUtil.Parse("15/10/2005", "dd/MM/yyyy");
+            DateTime ocspResponderCertEndDate = DateTimeUtil.Parse("15/10/2010", "dd/MM/yyyy");
+            DateTime checkDate = DateTimeUtil.Parse("15/10/2008", "dd/MM/yyyy");
             bool verifyRes = VerifyAuthorizedOCSPResponderTest(ocspResponderCertStartDate, ocspResponderCertEndDate, checkDate
                 );
             NUnit.Framework.Assert.IsTrue(verifyRes);
@@ -142,19 +142,15 @@ namespace iText.Signatures.Verify {
 
         [NUnit.Framework.Test]
         public virtual void ExpiredAuthorizedOCSPResponderTest_now() {
-            NUnit.Framework.Assert.That(() =>  {
-                DateTime ocspResponderCertStartDate = DateTimeUtil.ParseSimpleFormat("15/10/2005", "dd/MM/yyyy");
-                DateTime ocspResponderCertEndDate = DateTimeUtil.ParseSimpleFormat("15/10/2010", "dd/MM/yyyy");
-                DateTime checkDate = DateTimeUtil.GetCurrentUtcTime();
-                bool verifyRes = VerifyAuthorizedOCSPResponderTest(ocspResponderCertStartDate, ocspResponderCertEndDate, checkDate
-                    );
-                // Not getting here because of exception
-                NUnit.Framework.Assert.IsFalse(verifyRes);
-            }
-            , NUnit.Framework.Throws.InstanceOf<CertificateExpiredException>())
-;
+            DateTime ocspResponderCertStartDate = DateTimeUtil.Parse("15/10/2005", "dd/MM/yyyy");
+            DateTime ocspResponderCertEndDate = DateTimeUtil.Parse("15/10/2010", "dd/MM/yyyy");
+            DateTime checkDate = DateTimeUtil.GetCurrentUtcTime();
+            NUnit.Framework.Assert.Catch(typeof(CertificateExpiredException), () => VerifyAuthorizedOCSPResponderTest(
+                ocspResponderCertStartDate, ocspResponderCertEndDate, checkDate));
         }
 
+        // Not getting here because of exception
+        //Assert.assertFalse(verifyRes);
         private bool VerifyTest(TestOcspResponseBuilder rootRsaOcspBuilder) {
             return VerifyTest(rootRsaOcspBuilder, certsSrc + "signCertRsa01.p12", DateTimeUtil.GetCurrentUtcTime());
         }

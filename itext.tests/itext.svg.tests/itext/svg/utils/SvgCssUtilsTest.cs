@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -133,23 +133,6 @@ namespace iText.Svg.Utils {
         }
 
         [NUnit.Framework.Test]
-        public virtual void NormalConvertPtsToPxTest() {
-            float[] input = new float[] { -1f, 0f, 1f };
-            float[] expected = new float[] { -0.75f, 0f, 0.75f };
-            for (int i = 0; i < input.Length; i++) {
-                float actual = SvgCssUtils.ConvertPtsToPx(input[i]);
-                NUnit.Framework.Assert.AreEqual(expected[i], actual, 0f);
-            }
-        }
-
-        [NUnit.Framework.Test]
-        public virtual void ConvertFloatMaximumToPdfTest() {
-            float expected = 2.5521175E38f;
-            float actual = SvgCssUtils.ConvertPtsToPx(float.MaxValue);
-            NUnit.Framework.Assert.AreEqual(expected, actual, 0f);
-        }
-
-        [NUnit.Framework.Test]
         public virtual void ConvertFloatToStringTest() {
             String expected = "0.5";
             String actual = SvgCssUtils.ConvertFloatToString(0.5f);
@@ -161,14 +144,6 @@ namespace iText.Svg.Utils {
             String expected = "0.1234567";
             String actual = SvgCssUtils.ConvertFloatToString(0.1234567f);
             NUnit.Framework.Assert.AreEqual(expected, actual);
-        }
-
-        [NUnit.Framework.Ignore("TODO: Check autoport for failing float comparisons. Blocked by RND-882\n")]
-        [NUnit.Framework.Test]
-        public virtual void ConvertFloatMinimumToPdfTest() {
-            float expected = 1.4E-45f;
-            float actual = SvgCssUtils.ConvertPtsToPx(float.MinValue);
-            NUnit.Framework.Assert.AreEqual(expected, actual, 0f);
         }
     }
 }

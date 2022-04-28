@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,6 +43,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.IO;
+using iText.Commons.Utils;
 using iText.IO.Source;
 
 namespace iText.IO.Util {
@@ -131,7 +132,7 @@ namespace iText.IO.Util {
                 outputStream.Write(buf.GetInternalBuffer(), 0, buf.Size());
             }
             catch (System.IO.IOException e) {
-                throw new iText.IO.IOException(iText.IO.IOException.CannotWriteBytes, e);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.CannotWriteBytes, e);
             }
         }
 
@@ -141,7 +142,7 @@ namespace iText.IO.Util {
                 outputStream.Write(buf.GetInternalBuffer(), 0, buf.Size());
             }
             catch (System.IO.IOException e) {
-                throw new iText.IO.IOException(iText.IO.IOException.CannotWriteBytes, e);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.CannotWriteBytes, e);
             }
         }
 

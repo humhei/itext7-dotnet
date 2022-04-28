@@ -1,7 +1,7 @@
 /*
 *
 * This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 * Authors: Bruno Lowagie, Paulo Soares, et al.
 *
 * This program is free software; you can redistribute it and/or modify
@@ -44,20 +44,20 @@ Copyright (c) 1998-2019 iText Group NV
 using System;
 using System.IO;
 using System.Text;
+using iText.Commons.Utils;
 using iText.IO.Source;
-using iText.IO.Util;
 
 namespace iText.IO.Font {
     /// <summary>Converts a PFM file into an AFM file.</summary>
     public sealed class Pfm2afm {
         private RandomAccessFileOrArray input;
 
-        private StreamWriter output;
+        private FormattingStreamWriter output;
 
         /// <summary>Creates a new instance of Pfm2afm</summary>
         private Pfm2afm(RandomAccessFileOrArray input, Stream output) {
             this.input = input;
-            this.output = FileUtil.CreatePrintWriter(output, "ISO-8859-1");
+            this.output = (FormattingStreamWriter)FileUtil.CreatePrintWriter(output, "ISO-8859-1");
         }
 
         /// <summary>Converts a PFM file into an AFM file.</summary>
@@ -82,7 +82,7 @@ namespace iText.IO.Font {
                     break;
                 }
             }
-            return iText.IO.Util.JavaUtil.GetStringForBytes(b, 0, k, "ISO-8859-1");
+            return iText.Commons.Utils.JavaUtil.GetStringForBytes(b, 0, k, "ISO-8859-1");
         }
 
         private String ReadString() {

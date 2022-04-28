@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,8 +43,9 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Text;
-using iText.Kernel;
+using iText.Barcodes.Exceptions;
 using iText.Kernel.Colors;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Font;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
@@ -139,7 +140,7 @@ namespace iText.Barcodes {
         public static byte[] GetBarsInter25(String text) {
             text = KeepNumbers(text);
             if ((text.Length & 1) != 0) {
-                throw new PdfException(PdfException.TextMustBeEven);
+                throw new PdfException(BarcodeExceptionMessageConstant.TEXT_MUST_BE_EVEN);
             }
             byte[] bars = new byte[text.Length * 5 + 7];
             int pb = 0;

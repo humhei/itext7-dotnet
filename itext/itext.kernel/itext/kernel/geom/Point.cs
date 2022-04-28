@@ -19,11 +19,12 @@
 *  That's why we imported the code into iText.
 */
 using System;
+using iText.Commons.Utils;
 using iText.IO.Util;
 
 namespace iText.Kernel.Geom {
     public class Point
-#if !NETSTANDARD1_6
+#if !NETSTANDARD2_0
  : ICloneable
 #endif
  {

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,8 +43,9 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
-using iText.Kernel;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Annot;
 
@@ -71,6 +72,11 @@ namespace iText.Kernel.Pdf.Action {
         /// object by the underlying dictionary.
         /// </summary>
         /// <param name="pdfObject">the underlying dictionary object</param>
+        /// <returns>
+        /// a new
+        /// <see cref="PdfTarget"/>
+        /// object by the underlying dictionary
+        /// </returns>
         public static iText.Kernel.Pdf.Action.PdfTarget Create(PdfDictionary pdfObject) {
             return new iText.Kernel.Pdf.Action.PdfTarget(pdfObject);
         }
@@ -178,11 +184,19 @@ namespace iText.Kernel.Pdf.Action {
             PdfDocument pdfDocument) {
             PdfPage page = pdfAnnotation.GetPage();
             if (null == page) {
-                throw new PdfException(PdfException.AnnotationShallHaveReferenceToPage);
+                throw new PdfException(KernelExceptionMessageConstant.ANNOTATION_SHALL_HAVE_REFERENCE_TO_PAGE);
             }
             else {
-                Put(PdfName.P, new PdfNumber(pdfDocument.GetPageNumber(page)));
-                Put(PdfName.A, new PdfNumber(page.GetAnnotations().IndexOf(pdfAnnotation)));
+                Put(PdfName.P, new PdfNumber(pdfDocument.GetPageNumber(page) - 1));
+                int indexOfAnnotation = -1;
+                IList<PdfAnnotation> annots = page.GetAnnotations();
+                for (int i = 0; i < annots.Count; i++) {
+                    if (annots[i] != null && pdfAnnotation.GetPdfObject().Equals(annots[i].GetPdfObject())) {
+                        indexOfAnnotation = i;
+                        break;
+                    }
+                }
+                Put(PdfName.A, new PdfNumber(indexOfAnnotation));
             }
             return this;
         }
@@ -234,8 +248,8 @@ namespace iText.Kernel.Pdf.Action {
                 }
             }
             if (null == resultAnnotation) {
-                ILog logger = LogManager.GetLogger(typeof(iText.Kernel.Pdf.Action.PdfTarget));
-                logger.Error(iText.IO.LogMessageConstant.SOME_TARGET_FIELDS_ARE_NOT_SET_OR_INCORRECT);
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.Action.PdfTarget));
+                logger.LogError(iText.IO.Logs.IoLogMessageConstant.SOME_TARGET_FIELDS_ARE_NOT_SET_OR_INCORRECT);
             }
             return resultAnnotation;
         }

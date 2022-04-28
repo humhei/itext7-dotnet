@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -74,7 +74,7 @@ namespace iText.StyledXmlParser.Css {
             ruleDeclaration = ruleDeclaration.Trim();
             String ruleName = ExtractRuleNameFromDeclaration(ruleDeclaration);
             String ruleParameters = ruleDeclaration.Substring(ruleName.Length).Trim();
-            //TODO (RND-863) consider media rules in SVG
+            //TODO: DEVSIX-2263 consider media rules in SVG
             switch (ruleName) {
                 case CssRuleName.MEDIA: {
                     return new CssMediaRule(ruleParameters);

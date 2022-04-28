@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,8 +44,8 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.Text;
+using iText.Commons.Utils;
 using iText.IO.Source;
-using iText.IO.Util;
 
 namespace iText.Kernel.Pdf {
     public class PdfName : PdfPrimitiveObject, IComparable<iText.Kernel.Pdf.PdfName> {
@@ -233,6 +233,8 @@ namespace iText.Kernel.Pdf {
         public static readonly iText.Kernel.Pdf.PdfName BaseEncoding = CreateDirectName("BaseEncoding");
 
         public static readonly iText.Kernel.Pdf.PdfName BaselineShift = CreateDirectName("BaselineShift");
+
+        public static readonly iText.Kernel.Pdf.PdfName BaseState = CreateDirectName("BaseState");
 
         public static readonly iText.Kernel.Pdf.PdfName BaseVersion = CreateDirectName("BaseVersion");
 
@@ -1980,7 +1982,8 @@ namespace iText.Kernel.Pdf {
 
         public override String ToString() {
             if (content != null) {
-                return "/" + iText.IO.Util.JavaUtil.GetStringForBytes(content, iText.IO.Util.EncodingUtil.ISO_8859_1);
+                return "/" + iText.Commons.Utils.JavaUtil.GetStringForBytes(content, iText.Commons.Utils.EncodingUtil.ISO_8859_1
+                    );
             }
             else {
                 return "/" + GetValue();

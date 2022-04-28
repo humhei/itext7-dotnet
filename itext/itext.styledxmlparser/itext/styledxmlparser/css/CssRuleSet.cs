@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,7 +44,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.StyledXmlParser.Css.Media;
 using iText.StyledXmlParser.Css.Selector;
 using iText.StyledXmlParser.Node;
@@ -53,7 +53,7 @@ namespace iText.StyledXmlParser.Css {
     /// <summary>Class to store a CSS rule set.</summary>
     public class CssRuleSet : CssStatement {
         /// <summary>Pattern to match "important" in a rule declaration.</summary>
-        private static readonly Regex importantMatcher = iText.IO.Util.StringUtil.RegexCompile(".*!\\s*important$"
+        private static readonly Regex importantMatcher = iText.Commons.Utils.StringUtil.RegexCompile(".*!\\s*important$"
             );
 
         /// <summary>The CSS selector.</summary>
@@ -159,8 +159,8 @@ namespace iText.StyledXmlParser.Css {
             > normalDeclarations, IList<CssDeclaration> importantDeclarations) {
             foreach (CssDeclaration declaration in declarations) {
                 int exclIndex = declaration.GetExpression().IndexOf('!');
-                if (exclIndex > 0 && iText.IO.Util.StringUtil.Match(importantMatcher, declaration.GetExpression()).Success
-                    ) {
+                if (exclIndex > 0 && iText.Commons.Utils.Matcher.Match(importantMatcher, declaration.GetExpression()).Matches
+                    ()) {
                     importantDeclarations.Add(new CssDeclaration(declaration.GetProperty(), declaration.GetExpression().JSubstring
                         (0, exclIndex).Trim()));
                 }

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -77,11 +77,8 @@ namespace iText.Svg.Renderers.Impl {
 
         [NUnit.Framework.Test]
         public virtual void TSpanRelativeMoveInvalidXTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "textspan-relativeMove-invalidX");
-            }
-            , NUnit.Framework.Throws.InstanceOf<StyledXMLParserException>())
-;
+            NUnit.Framework.Assert.Catch(typeof(StyledXMLParserException), () => ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER
+                , "textspan-relativeMove-invalidX"));
         }
 
         [NUnit.Framework.Test]
@@ -101,11 +98,8 @@ namespace iText.Svg.Renderers.Impl {
 
         [NUnit.Framework.Test]
         public virtual void TSpanRelativeMoveInvalidYTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "textspan-relativeMove-invalidY");
-            }
-            , NUnit.Framework.Throws.InstanceOf<StyledXMLParserException>())
-;
+            NUnit.Framework.Assert.Catch(typeof(StyledXMLParserException), () => ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER
+                , "textspan-relativeMove-invalidY"));
         }
 
         [NUnit.Framework.Test]
@@ -131,11 +125,8 @@ namespace iText.Svg.Renderers.Impl {
 
         [NUnit.Framework.Test]
         public virtual void TSpanAbsolutePositionInvalidXTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "textspan-absolutePosition-invalidX");
-            }
-            , NUnit.Framework.Throws.InstanceOf<StyledXMLParserException>())
-;
+            NUnit.Framework.Assert.Catch(typeof(StyledXMLParserException), () => ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER
+                , "textspan-absolutePosition-invalidX"));
         }
 
         [NUnit.Framework.Test]
@@ -155,11 +146,8 @@ namespace iText.Svg.Renderers.Impl {
 
         [NUnit.Framework.Test]
         public virtual void TSpanAbsolutePositionInvalidYTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "textspan-absolutePosition-invalidY");
-            }
-            , NUnit.Framework.Throws.InstanceOf<StyledXMLParserException>())
-;
+            NUnit.Framework.Assert.Catch(typeof(StyledXMLParserException), () => ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER
+                , "textspan-absolutePosition-invalidY"));
         }
 
         [NUnit.Framework.Test]
@@ -192,14 +180,16 @@ namespace iText.Svg.Renderers.Impl {
 
         [NUnit.Framework.Test]
         //TODO: update after DEVSIX-2507 and DEVSIX-3005 fix
-        [LogMessage(iText.StyledXmlParser.LogMessageConstant.UNKNOWN_ABSOLUTE_METRIC_LENGTH_PARSED)]
+        [LogMessage(iText.StyledXmlParser.Logs.StyledXmlParserLogMessageConstant.UNKNOWN_ABSOLUTE_METRIC_LENGTH_PARSED
+            )]
         public virtual void TspanBasicExample() {
             ConvertAndCompareSinglePage(SOURCE_FOLDER, DESTINATION_FOLDER, "tspanBasicExample");
         }
 
         [NUnit.Framework.Test]
         //TODO: update after DEVSIX-2507 and DEVSIX-3005 fix
-        [LogMessage(iText.StyledXmlParser.LogMessageConstant.UNKNOWN_ABSOLUTE_METRIC_LENGTH_PARSED)]
+        [LogMessage(iText.StyledXmlParser.Logs.StyledXmlParserLogMessageConstant.UNKNOWN_ABSOLUTE_METRIC_LENGTH_PARSED
+            )]
         public virtual void TspanNestedExample() {
             ConvertAndCompareSinglePage(SOURCE_FOLDER, DESTINATION_FOLDER, "tspanNestedExample");
         }
@@ -208,6 +198,36 @@ namespace iText.Svg.Renderers.Impl {
         public virtual void Text_decoration_Test() {
             //TODO: update cmp-file after DEVSIX-2270 fixed
             ConvertAndCompareSinglePage(SOURCE_FOLDER, DESTINATION_FOLDER, "text_decoration");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void TspanDefaultFontSizeTest() {
+            ConvertAndCompareSinglePage(SOURCE_FOLDER, DESTINATION_FOLDER, "tspanDefaultFontSize");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void TspanInheritTextFontSizeTest() {
+            ConvertAndCompareSinglePage(SOURCE_FOLDER, DESTINATION_FOLDER, "tspanInheritTextFontSize");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void TspanInheritAncestorsTspanFontSizeTest() {
+            ConvertAndCompareSinglePage(SOURCE_FOLDER, DESTINATION_FOLDER, "tspanInheritAncestorsTspanFontSize");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void TspanNestedWithOffsets() {
+            ConvertAndCompareSinglePage(SOURCE_FOLDER, DESTINATION_FOLDER, "tspanNestedWithOffsets");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void TspanNestedRelativeOffsets() {
+            ConvertAndCompareSinglePage(SOURCE_FOLDER, DESTINATION_FOLDER, "tspanNestedRelativeOffsets");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void SimpleNestedTspanTest() {
+            ConvertAndCompareSinglePage(SOURCE_FOLDER, DESTINATION_FOLDER, "simpleNestedTspan");
         }
     }
 }

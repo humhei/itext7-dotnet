@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -51,6 +51,7 @@ using iText.Kernel.Pdf.Xobject;
 using iText.Kernel.Utils;
 using iText.Layout.Borders;
 using iText.Layout.Element;
+using iText.Layout.Logs;
 using iText.Layout.Properties;
 using iText.Test;
 using iText.Test.Attributes;
@@ -188,7 +189,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
         public virtual void ImageTest07() {
             String outFileName = destinationFolder + "imageTest07.pdf";
             String cmpFileName = sourceFolder + "cmp_imageTest07.pdf";
@@ -206,7 +207,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
         public virtual void ImageTest08() {
             String outFileName = destinationFolder + "imageTest08.pdf";
             String cmpFileName = sourceFolder + "cmp_imageTest08.pdf";
@@ -225,7 +226,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
         public virtual void ImageTest09() {
             String outFileName = destinationFolder + "imageTest09.pdf";
             String cmpFileName = sourceFolder + "cmp_imageTest09.pdf";
@@ -322,7 +323,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
         public virtual void ImageTest15() {
             String outFileName = destinationFolder + "imageTest15.pdf";
             String cmpFileName = sourceFolder + "cmp_imageTest15.pdf";
@@ -357,7 +358,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA, Count = 50)]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA, Count = 50)]
         public virtual void ImageTest17() {
             String outFileName = destinationFolder + "imageTest17.pdf";
             String cmpFileName = sourceFolder + "cmp_imageTest17.pdf";
@@ -474,7 +475,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA, Count = 1)]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA, Count = 1)]
         public virtual void ImageTest22() {
             String cmpFileName = sourceFolder + "cmp_imageTest22.pdf";
             String outFile = destinationFolder + "imageTest22.pdf";
@@ -638,7 +639,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.CLIP_ELEMENT, Count = 2)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.CLIP_ELEMENT, Count = 2)]
         public virtual void ImageInTableTest01() {
             String outFileName = destinationFolder + "imageInTableTest01.pdf";
             String cmpFileName = sourceFolder + "cmp_imageInTableTest01.pdf";
@@ -666,7 +667,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.CLIP_ELEMENT, Count = 2)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.CLIP_ELEMENT, Count = 2)]
         public virtual void ImageInTableTest02() {
             String outFileName = destinationFolder + "imageInTableTest02.pdf";
             String cmpFileName = sourceFolder + "cmp_imageInTableTest02.pdf";
@@ -745,7 +746,7 @@ namespace iText.Layout {
             PdfPage page = pdfDoc.AddNewPage();
             PdfCanvas currentPdfCanvas = new PdfCanvas(page);
             Rectangle rc = new Rectangle(56.6929131f, 649.13385f, 481.889771f, 136.062988f);
-            iText.Layout.Canvas canvas = new iText.Layout.Canvas(currentPdfCanvas, pdfDoc, rc);
+            iText.Layout.Canvas canvas = new iText.Layout.Canvas(currentPdfCanvas, rc);
             Table table = new Table(UnitValue.CreatePointArray(new float[] { 158f }));
             table.SetTextAlignment(TextAlignment.LEFT);
             iText.Layout.Element.Image logoImage = new iText.Layout.Element.Image(ImageDataFactory.Create(imageFileName
@@ -776,6 +777,39 @@ namespace iText.Layout {
             doc.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
                 , "diff"));
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA, Count = 3)]
+        public virtual void CreateTiffImageTest() {
+            String outFileName = destinationFolder + "createTiffImageTest.pdf";
+            String cmpFileName = sourceFolder + "cmp_createTiffImageTest.pdf";
+            String imgPath = sourceFolder + "group4Compression.tif";
+            PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
+            Document document = new Document(pdfDoc);
+            ImageData id = ImageDataFactory.Create(imgPath);
+            ImageData idAsTiff = ImageDataFactory.CreateTiff(UrlUtil.ToURL(imgPath), true, 1, true);
+            ImageData idAsTiffFalse = ImageDataFactory.CreateTiff(UrlUtil.ToURL(imgPath), false, 1, false);
+            document.Add(new iText.Layout.Element.Image(id));
+            document.Add(new iText.Layout.Element.Image(idAsTiff));
+            document.Add(new iText.Layout.Element.Image(idAsTiffFalse));
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                ));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void TiffImageWithoutCompressionTest() {
+            String outFileName = destinationFolder + "tiffImageWithoutCompression.pdf";
+            String cmpFileName = sourceFolder + "cmp_tiffImageWithoutCompression.pdf";
+            String imgPath = sourceFolder + "no-compression-tag.tiff";
+            PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFileName));
+            Document document = new Document(pdfDoc);
+            ImageData id = ImageDataFactory.Create(imgPath);
+            document.Add(new iText.Layout.Element.Image(id));
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFileName, cmpFileName, destinationFolder
+                , "diff02_"));
         }
     }
 }

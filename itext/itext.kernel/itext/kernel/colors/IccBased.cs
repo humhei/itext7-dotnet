@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,13 +42,12 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System.IO;
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf.Colorspace;
 
 namespace iText.Kernel.Colors {
     public class IccBased : Color {
         public IccBased(PdfCieBasedCs.IccBased cs)
-            // TODO if zero is outside of the Range, default value should be the nearest to the zero valid value
             : this(cs, new float[cs.GetNumberOfComponents()]) {
         }
 
@@ -76,7 +75,7 @@ namespace iText.Kernel.Colors {
         public IccBased(Stream iccStream, float[] range, float[] value)
             : this(new PdfCieBasedCs.IccBased(iccStream, range), value) {
             if (GetNumberOfComponents() * 2 != range.Length) {
-                throw new PdfException(PdfException.InvalidRangeArray, this);
+                throw new PdfException(KernelExceptionMessageConstant.INVALID_RANGE_ARRAY, this);
             }
         }
     }

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -109,15 +109,18 @@ namespace iText.Signatures {
         /// <returns>
         /// a
         /// <see cref="iText.Kernel.Pdf.PdfName"/>
-        /// that identifies type of the wrapped dictionary, returns null if it is not explicitly specified.
+        /// that identifies type of the wrapped dictionary,
+        /// returns null if it is not explicitly specified.
         /// </returns>
         public virtual PdfName GetType() {
             return GetPdfObject().GetAsName(PdfName.Type);
         }
 
         /// <summary>Sets the /ByteRange.</summary>
-        /// <param name="range">an array of pairs of integers that specifies the byte range used in the digest calculation. A pair consists of the starting byte offset and the length
-        ///     </param>
+        /// <param name="range">
+        /// an array of pairs of integers that specifies the byte range used in the digest calculation.
+        /// A pair consists of the starting byte offset and the length
+        /// </param>
         public virtual void SetByteRange(int[] range) {
             PdfArray array = new PdfArray();
             for (int k = 0; k < range.Length; ++k) {
@@ -127,8 +130,10 @@ namespace iText.Signatures {
         }
 
         /// <summary>Gets the /ByteRange.</summary>
-        /// <returns>an array of pairs of integers that specifies the byte range used in the digest calculation. A pair consists of the starting byte offset and the length.
-        ///     </returns>
+        /// <returns>
+        /// an array of pairs of integers that specifies the byte range used in the digest calculation.
+        /// A pair consists of the starting byte offset and the length.
+        /// </returns>
         public virtual PdfArray GetByteRange() {
             return GetPdfObject().GetAsArray(PdfName.ByteRange);
         }
@@ -142,6 +147,11 @@ namespace iText.Signatures {
         }
 
         /// <summary>Gets the /Contents entry value.</summary>
+        /// <remarks>
+        /// Gets the /Contents entry value.
+        /// See ISO 32000-1 12.8.1, Table 252 – Entries in a signature dictionary.
+        /// </remarks>
+        /// <returns>the signature content</returns>
         public virtual PdfString GetContents() {
             return GetPdfObject().GetAsString(PdfName.Contents);
         }
@@ -153,8 +163,30 @@ namespace iText.Signatures {
         }
 
         /// <summary>Gets the /Cert entry value of this signature.</summary>
+        /// <remarks>
+        /// Gets the /Cert entry value of this signature.
+        /// See ISO 32000-1 12.8.1, Table 252 – Entries in a signature dictionary.
+        /// </remarks>
+        /// <returns>the signature cert</returns>
         public virtual PdfString GetCert() {
             return GetPdfObject().GetAsString(PdfName.Cert);
+        }
+
+        /// <summary>Gets the /Cert entry value of this signature.</summary>
+        /// <remarks>
+        /// Gets the /Cert entry value of this signature.
+        /// /Cert entry required when SubFilter is adbe.x509.rsa_sha1. May be array or byte string.
+        /// </remarks>
+        /// <returns>the signature cert value</returns>
+        public virtual PdfObject GetCertObject() {
+            PdfString certAsStr = GetPdfObject().GetAsString(PdfName.Cert);
+            PdfArray certAsArray = GetPdfObject().GetAsArray(PdfName.Cert);
+            if (certAsStr != null) {
+                return certAsStr;
+            }
+            else {
+                return certAsArray;
+            }
         }
 
         /// <summary>Sets the /Name of the person signing the document.</summary>

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,8 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
 using iText.IO.Font;
 using iText.Kernel.Colors;
 using iText.Kernel.Geom;
@@ -1363,7 +1364,7 @@ namespace iText.Kernel.Pdf.Annot {
         /// <returns>
         /// 
         /// <see cref="iText.Kernel.Pdf.PdfString"/>
-        /// which value is an annotation title or null if it isn't specifed.
+        /// which value is an annotation title or null if it isn't specified.
         /// </returns>
         public virtual PdfString GetTitle() {
             return GetPdfObject().GetAsString(PdfName.T);
@@ -1572,8 +1573,8 @@ namespace iText.Kernel.Pdf.Annot {
         /// <param name="fs">file specification dictionary of associated file</param>
         public virtual void AddAssociatedFile(PdfFileSpec fs) {
             if (null == ((PdfDictionary)fs.GetPdfObject()).Get(PdfName.AFRelationship)) {
-                ILog logger = LogManager.GetLogger(typeof(iText.Kernel.Pdf.Annot.PdfAnnotation));
-                logger.Error(iText.IO.LogMessageConstant.ASSOCIATED_FILE_SPEC_SHALL_INCLUDE_AFRELATIONSHIP);
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.Annot.PdfAnnotation));
+                logger.LogError(iText.IO.Logs.IoLogMessageConstant.ASSOCIATED_FILE_SPEC_SHALL_INCLUDE_AFRELATIONSHIP);
             }
             PdfArray afArray = GetPdfObject().GetAsArray(PdfName.AF);
             if (afArray == null) {
@@ -1584,8 +1585,8 @@ namespace iText.Kernel.Pdf.Annot {
         }
 
         /// <summary>Returns files associated with PDF annotation.</summary>
-        /// <param name="create">iText will create AF array if it doesn't exist and create value is true</param>
-        /// <returns>associated files array.</returns>
+        /// <param name="create">defines whether AF arrays will be created if it doesn't exist</param>
+        /// <returns>associated files array</returns>
         public virtual PdfArray GetAssociatedFiles(bool create) {
             PdfArray afArray = GetPdfObject().GetAsArray(PdfName.AF);
             if (afArray == null && create) {

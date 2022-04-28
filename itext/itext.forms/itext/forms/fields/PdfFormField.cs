@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,16 +45,18 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
+using iText.Forms.Exceptions;
+using iText.Forms.Fields.Borders;
 using iText.Forms.Util;
-using iText.IO.Codec;
 using iText.IO.Font;
 using iText.IO.Font.Constants;
 using iText.IO.Image;
 using iText.IO.Source;
-using iText.IO.Util;
-using iText.Kernel;
 using iText.Kernel.Colors;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Font;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
@@ -63,6 +65,7 @@ using iText.Kernel.Pdf.Annot;
 using iText.Kernel.Pdf.Canvas;
 using iText.Kernel.Pdf.Xobject;
 using iText.Layout;
+using iText.Layout.Borders;
 using iText.Layout.Element;
 using iText.Layout.Layout;
 using iText.Layout.Properties;
@@ -92,22 +95,6 @@ namespace iText.Forms.Fields {
 
         /// <summary>Flag that designates, if set, that the field's contents must be obfuscated.</summary>
         public static readonly int FF_PASSWORD = MakeFieldFlag(14);
-
-        /// <summary>Size of text in form fields when font size is not explicitly set.</summary>
-        [System.ObsoleteAttribute(@"Will be made package-private in iText 7.2.")]
-        public const int DEFAULT_FONT_SIZE = 12;
-
-        [System.ObsoleteAttribute(@"Will be made package-private in iText 7.2.")]
-        public const int MIN_FONT_SIZE = 4;
-
-        [System.ObsoleteAttribute(@"Will be made package-private in iText 7.2.")]
-        public const int DA_FONT = 0;
-
-        [System.ObsoleteAttribute(@"Will be made package-private in iText 7.2.")]
-        public const int DA_SIZE = 1;
-
-        [System.ObsoleteAttribute(@"Will be made package-private in iText 7.2.")]
-        public const int DA_COLOR = 2;
 
         public const int ALIGN_LEFT = 0;
 
@@ -147,10 +134,26 @@ namespace iText.Forms.Fields {
 
         public static readonly int FF_NO_EXPORT = MakeFieldFlag(3);
 
-        [System.ObsoleteAttribute(@"Will be made package-private in iText 7.2.")]
-        public const float X_OFFSET = 2;
+        /// <summary>Default padding X offset</summary>
+        internal const float X_OFFSET = 2;
 
-        protected internal static String[] typeChars = new String[] { "4", "l", "8", "u", "n", "H" };
+        /// <summary>Size of text in form fields when font size is not explicitly set.</summary>
+        internal const int DEFAULT_FONT_SIZE = 12;
+
+        /// <summary>Minimal size of text in form fields</summary>
+        internal const int MIN_FONT_SIZE = 4;
+
+        /// <summary>Index of font value in default appearance element</summary>
+        internal const int DA_FONT = 0;
+
+        /// <summary>Index of font size value in default appearance element</summary>
+        internal const int DA_SIZE = 1;
+
+        /// <summary>Index of color value in default appearance element</summary>
+        internal const int DA_COLOR = 2;
+
+        private static readonly String[] CHECKBOX_TYPE_ZAPFDINGBATS_CODE = new String[] { "4", "l", "8", "u", "n", 
+            "H" };
 
         protected internal String text;
 
@@ -609,8 +612,8 @@ namespace iText.Forms.Fields {
             }
             ((iText.Forms.Fields.PdfFormField)field).UpdateFontAndFontSize(font, fontSize);
             field.SetMultiline(multiline);
-            field.SetValue(value);
             field.SetFieldName(name);
+            field.SetValue(value);
             return field;
         }
 
@@ -918,12 +921,12 @@ namespace iText.Forms.Fields {
             field.Put(PdfName.Opt, options);
             field.SetFieldFlags(flags);
             field.SetFieldName(name);
-            field.Put(PdfName.V, new PdfString(value, PdfEncodings.UNICODE_BIG));
+            ((PdfChoiceFormField)field).SetListSelected(new String[] { value }, false);
             if ((flags & PdfChoiceFormField.FF_COMBO) == 0) {
                 value = OptionsArrayToString(options);
             }
             PdfFormXObject xObject = new PdfFormXObject(new Rectangle(0, 0, rect.GetWidth(), rect.GetHeight()));
-            field.DrawChoiceAppearance(rect, field.fontSize, value, xObject);
+            field.DrawChoiceAppearance(rect, field.fontSize, value, xObject, 0);
             annot.SetNormalAppearance(xObject.GetPdfObject());
             return (PdfChoiceFormField)field;
         }
@@ -1687,45 +1690,59 @@ namespace iText.Forms.Fields {
         /// <see cref="iText.Kernel.Pdf.PdfName"/>
         /// </returns>
         public virtual PdfName GetFormType() {
-            return GetTypeFromParent(GetPdfObject());
+            PdfName formType = GetPdfObject().GetAsName(PdfName.FT);
+            if (formType == null) {
+                return GetTypeFromParent(GetPdfObject());
+            }
+            return formType;
         }
 
         /// <summary>Sets a value to the field and generating field appearance if needed.</summary>
         /// <param name="value">of the field</param>
         /// <returns>the field</returns>
         public virtual iText.Forms.Fields.PdfFormField SetValue(String value) {
-            PdfName ft = GetFormType();
-            if (ft == null || !ft.Equals(PdfName.Btn)) {
-                PdfArray kids = GetKids();
-                if (kids != null) {
-                    for (int i = 0; i < kids.Size(); i++) {
-                        PdfObject kid = kids.Get(i);
-                        iText.Forms.Fields.PdfFormField field = new iText.Forms.Fields.PdfFormField((PdfDictionary)kid);
-                        if (field.GetDefaultAppearance() == null) {
-                            field.font = this.font;
-                            field.fontSize = this.fontSize;
-                            field.color = this.color;
-                        }
-                        field.SetValue(value);
-                    }
-                }
-            }
-            return SetValue(value, true);
+            PdfName formType = GetFormType();
+            bool autoGenerateAppearance = !(PdfName.Btn.Equals(formType) && GetFieldFlag(PdfButtonFormField.FF_RADIO));
+            return SetValue(value, autoGenerateAppearance);
         }
 
-        /// <summary>Sets a value to the field and generating field appearance if needed.</summary>
+        /// <summary>Sets a value to the field and generates field appearance if needed.</summary>
         /// <param name="value">of the field</param>
-        /// <param name="generateAppearance">set this flat to false if you want to keep the appearance of the field generated before
-        ///     </param>
+        /// <param name="generateAppearance">if false, appearance won't be regenerated</param>
         /// <returns>the field</returns>
         public virtual iText.Forms.Fields.PdfFormField SetValue(String value, bool generateAppearance) {
             PdfName formType = GetFormType();
-            if (PdfName.Tx.Equals(formType) || PdfName.Ch.Equals(formType)) {
-                Put(PdfName.V, new PdfString(value, PdfEncodings.UNICODE_BIG));
+            if (formType == null || !PdfName.Btn.Equals(formType)) {
+                PdfArray kids = GetKids();
+                if (kids != null) {
+                    foreach (PdfObject kid in kids) {
+                        if (kid.IsDictionary() && ((PdfDictionary)kid).GetAsString(PdfName.T) != null) {
+                            iText.Forms.Fields.PdfFormField field = new iText.Forms.Fields.PdfFormField((PdfDictionary)kid);
+                            field.SetValue(value);
+                            if (field.GetDefaultAppearance() == null) {
+                                field.font = this.font;
+                                field.fontSize = this.fontSize;
+                                field.color = this.color;
+                            }
+                        }
+                    }
+                }
+                if (PdfName.Ch.Equals(formType)) {
+                    if (this is PdfChoiceFormField) {
+                        ((PdfChoiceFormField)this).SetListSelected(new String[] { value }, false);
+                    }
+                    else {
+                        PdfChoiceFormField choice = new PdfChoiceFormField(this.GetPdfObject());
+                        choice.SetListSelected(new String[] { value }, false);
+                    }
+                }
+                else {
+                    Put(PdfName.V, new PdfString(value, PdfEncodings.UNICODE_BIG));
+                }
             }
             else {
                 if (PdfName.Btn.Equals(formType)) {
-                    if ((GetFieldFlags() & PdfButtonFormField.FF_PUSH_BUTTON) != 0) {
+                    if (GetFieldFlag(PdfButtonFormField.FF_PUSH_BUTTON)) {
                         try {
                             img = ImageDataFactory.Create(Convert.FromBase64String(value));
                         }
@@ -1735,16 +1752,17 @@ namespace iText.Forms.Fields {
                     }
                     else {
                         Put(PdfName.V, new PdfName(value));
-                        foreach (String @as in GetAppearanceStates()) {
-                            if (@as.Equals(value)) {
-                                Put(PdfName.AS, new PdfName(value));
-                                break;
+                        foreach (PdfWidgetAnnotation widget in GetWidgets()) {
+                            IList<String> states = JavaUtil.ArraysAsList(new iText.Forms.Fields.PdfFormField(widget.GetPdfObject()).GetAppearanceStates
+                                ());
+                            if (states.Contains(value)) {
+                                widget.SetAppearanceState(new PdfName(value));
+                            }
+                            else {
+                                widget.SetAppearanceState(new PdfName("Off"));
                             }
                         }
                     }
-                }
-                else {
-                    Put(PdfName.V, new PdfString(value, PdfEncodings.UNICODE_BIG));
                 }
             }
             if (generateAppearance) {
@@ -1795,21 +1813,16 @@ namespace iText.Forms.Fields {
             }
             SetValue(display, true);
             PdfName formType = GetFormType();
-            if (PdfName.Tx.Equals(formType) || PdfName.Ch.Equals(formType)) {
-                Put(PdfName.V, new PdfString(value, PdfEncodings.UNICODE_BIG));
-            }
-            else {
-                if (PdfName.Btn.Equals(formType)) {
-                    if ((GetFieldFlags() & PdfButtonFormField.FF_PUSH_BUTTON) != 0) {
-                        text = value;
-                    }
-                    else {
-                        Put(PdfName.V, new PdfName(value));
-                    }
+            if (PdfName.Btn.Equals(formType)) {
+                if ((GetFieldFlags() & PdfButtonFormField.FF_PUSH_BUTTON) != 0) {
+                    text = value;
                 }
                 else {
-                    Put(PdfName.V, new PdfString(value, PdfEncodings.UNICODE_BIG));
+                    Put(PdfName.V, new PdfName(value));
                 }
+            }
+            else {
+                Put(PdfName.V, new PdfString(value, PdfEncodings.UNICODE_BIG));
             }
             return this;
         }
@@ -2079,6 +2092,9 @@ namespace iText.Forms.Fields {
         /// <see cref="iText.Kernel.Pdf.PdfObject"/>
         /// </returns>
         public virtual PdfObject GetValue() {
+            if (GetPdfObject().Get(PdfName.T) == null && GetParent() != null) {
+                return GetParent().Get(PdfName.V);
+            }
             return GetPdfObject().Get(PdfName.V);
         }
 
@@ -2094,7 +2110,8 @@ namespace iText.Forms.Fields {
             }
             else {
                 if (value is PdfStream) {
-                    return iText.IO.Util.JavaUtil.GetStringForBytes(((PdfStream)value).GetBytes(), System.Text.Encoding.UTF8);
+                    return iText.Commons.Utils.JavaUtil.GetStringForBytes(((PdfStream)value).GetBytes(), System.Text.Encoding.
+                        UTF8);
                 }
                 else {
                     if (value is PdfName) {
@@ -2224,24 +2241,6 @@ namespace iText.Forms.Fields {
                 defaultAppearance = (PdfString)GetAcroFormKey(PdfName.DA, PdfObject.STRING);
             }
             return defaultAppearance;
-        }
-
-        /// <summary>
-        /// Sets default appearance string containing a sequence of valid page-content graphics or text state operators that
-        /// define such properties as the field's text size and color.
-        /// </summary>
-        /// <param name="defaultAppearance">a valid sequence of PDF content stream syntax</param>
-        /// <returns>the edited field</returns>
-        [System.ObsoleteAttribute(@"use UpdateDefaultAppearance() instead.")]
-        public virtual iText.Forms.Fields.PdfFormField SetDefaultAppearance(String defaultAppearance) {
-            byte[] b = defaultAppearance.GetBytes(System.Text.Encoding.UTF8);
-            for (int k = 0; k < b.Length; ++k) {
-                if (b[k] == '\n') {
-                    b[k] = 32;
-                }
-            }
-            Put(PdfName.DA, new PdfString(iText.IO.Util.JavaUtil.GetStringForBytes(b, System.Text.Encoding.UTF8)));
-            return this;
         }
 
         /// <summary>Updates DA for Variable text, Push button and choice form fields.</summary>
@@ -2430,24 +2429,6 @@ namespace iText.Forms.Fields {
         /// <param name="font">The new font to be set</param>
         /// <param name="fontSize">The new font size to be set</param>
         /// <returns>The edited PdfFormField</returns>
-        [System.ObsoleteAttribute(@"use SetFontAndSize(iText.Kernel.Font.PdfFont, float) instead.")]
-        public virtual iText.Forms.Fields.PdfFormField SetFontAndSize(PdfFont font, int fontSize) {
-            UpdateFontAndFontSize(font, fontSize);
-            RegenerateField();
-            return this;
-        }
-
-        /// <summary>
-        /// Combined setter for the <c>font</c> and <c>fontSize</c>
-        /// properties.
-        /// </summary>
-        /// <remarks>
-        /// Combined setter for the <c>font</c> and <c>fontSize</c>
-        /// properties. Regenerates the field appearance after setting the new value.
-        /// </remarks>
-        /// <param name="font">The new font to be set</param>
-        /// <param name="fontSize">The new font size to be set</param>
-        /// <returns>The edited PdfFormField</returns>
         public virtual iText.Forms.Fields.PdfFormField SetFontAndSize(PdfFont font, float fontSize) {
             UpdateFontAndFontSize(font, fontSize);
             RegenerateField();
@@ -2546,7 +2527,7 @@ namespace iText.Forms.Fields {
                 checkType = TYPE_CROSS;
             }
             this.checkType = checkType;
-            text = typeChars[checkType - 1];
+            text = CHECKBOX_TYPE_ZAPFDINGBATS_CODE[checkType - 1];
             if (pdfAConformanceLevel != null) {
                 return this;
             }
@@ -2598,220 +2579,14 @@ namespace iText.Forms.Fields {
         /// </remarks>
         /// <returns>whether or not the regeneration was successful.</returns>
         public virtual bool RegenerateField() {
-            PdfName type = GetFormType();
-            String value = GetValueAsString();
-            PdfPage page = null;
-            IList<PdfWidgetAnnotation> widgets = GetWidgets();
-            if (widgets.Count > 0) {
-                page = widgets[0].GetPage();
+            bool result = true;
+            UpdateDefaultAppearance();
+            foreach (PdfWidgetAnnotation widget in GetWidgets()) {
+                iText.Forms.Fields.PdfFormField field = new iText.Forms.Fields.PdfFormField(widget.GetPdfObject());
+                CopyParamsToKids(field);
+                result &= field.RegenerateWidget(this.GetValueAsString());
             }
-            if (PdfName.Tx.Equals(type) || PdfName.Ch.Equals(type)) {
-                PdfArray bBox = GetBBox();
-                //Apply Page rotation
-                int pageRotation = 0;
-                if (page != null) {
-                    pageRotation = page.GetRotation();
-                    //Clockwise, so negative
-                    pageRotation *= -1;
-                }
-                PdfArray matrix;
-                if (pageRotation % 90 == 0) {
-                    //Cast angle to [-360, 360]
-                    double angle = pageRotation % 360;
-                    //Get angle in radians
-                    angle = DegreeToRadians(angle);
-                    Rectangle initialBboxRectangle = bBox.ToRectangle();
-                    //rotate the bounding box
-                    Rectangle rect = initialBboxRectangle.Clone();
-                    //Calculate origin offset
-                    double translationWidth = 0;
-                    double translationHeight = 0;
-                    if (angle >= -1 * Math.PI && angle <= -1 * Math.PI / 2) {
-                        translationWidth = rect.GetWidth();
-                    }
-                    if (angle <= -1 * Math.PI) {
-                        translationHeight = rect.GetHeight();
-                    }
-                    //Store rotation and translation in the matrix
-                    matrix = new PdfArray(new double[] { Math.Cos(angle), -Math.Sin(angle), Math.Sin(angle), Math.Cos(angle), 
-                        translationWidth, translationHeight });
-                    //If the angle is a multiple of 90 and not a multiple of 180, height and width of the bounding box need to be switched
-                    if (angle % (Math.PI / 2) == 0 && angle % (Math.PI) != 0) {
-                        rect.SetWidth(initialBboxRectangle.GetHeight());
-                        rect.SetHeight(initialBboxRectangle.GetWidth());
-                    }
-                    // Adapt origin
-                    rect.SetX(rect.GetX() + (float)translationWidth);
-                    rect.SetY(rect.GetY() + (float)translationHeight);
-                    //Copy Bounding box
-                    bBox = new PdfArray(rect);
-                }
-                else {
-                    //Avoid NPE when handling corrupt pdfs
-                    ILog logger = LogManager.GetLogger(typeof(iText.Forms.Fields.PdfFormField));
-                    logger.Error(iText.IO.LogMessageConstant.INCORRECT_PAGEROTATION);
-                    matrix = new PdfArray(new double[] { 1, 0, 0, 1, 0, 0 });
-                }
-                //Apply field rotation
-                float fieldRotation = 0;
-                if (this.GetPdfObject().GetAsDictionary(PdfName.MK) != null && this.GetPdfObject().GetAsDictionary(PdfName
-                    .MK).Get(PdfName.R) != null) {
-                    fieldRotation = (float)this.GetPdfObject().GetAsDictionary(PdfName.MK).GetAsFloat(PdfName.R);
-                    //Get relative field rotation
-                    fieldRotation += pageRotation;
-                }
-                if (fieldRotation % 90 == 0) {
-                    Rectangle initialBboxRectangle = bBox.ToRectangle();
-                    //Cast angle to [-360, 360]
-                    double angle = fieldRotation % 360;
-                    //Get angle in radians
-                    angle = DegreeToRadians(angle);
-                    //Calculate origin offset
-                    double translationWidth = CalculateTranslationWidthAfterFieldRot(initialBboxRectangle, DegreeToRadians(pageRotation
-                        ), angle);
-                    double translationHeight = CalculateTranslationHeightAfterFieldRot(initialBboxRectangle, DegreeToRadians(pageRotation
-                        ), angle);
-                    //Concatenate rotation and translation into the matrix
-                    Matrix currentMatrix = new Matrix(matrix.GetAsNumber(0).FloatValue(), matrix.GetAsNumber(1).FloatValue(), 
-                        matrix.GetAsNumber(2).FloatValue(), matrix.GetAsNumber(3).FloatValue(), matrix.GetAsNumber(4).FloatValue
-                        (), matrix.GetAsNumber(5).FloatValue());
-                    Matrix toConcatenate = new Matrix((float)Math.Cos(angle), (float)(-Math.Sin(angle)), (float)(Math.Sin(angle
-                        )), (float)(Math.Cos(angle)), (float)translationWidth, (float)translationHeight);
-                    currentMatrix = currentMatrix.Multiply(toConcatenate);
-                    matrix = new PdfArray(new float[] { currentMatrix.Get(0), currentMatrix.Get(1), currentMatrix.Get(3), currentMatrix
-                        .Get(4), currentMatrix.Get(6), currentMatrix.Get(7) });
-                    //Construct bounding box
-                    Rectangle rect = initialBboxRectangle.Clone();
-                    //If the angle is a multiple of 90 and not a multiple of 180, height and width of the bounding box need to be switched
-                    if (angle % (Math.PI / 2) == 0 && angle % (Math.PI) != 0) {
-                        rect.SetWidth(initialBboxRectangle.GetHeight());
-                        rect.SetHeight(initialBboxRectangle.GetWidth());
-                    }
-                    rect.SetX(rect.GetX() + (float)translationWidth);
-                    rect.SetY(rect.GetY() + (float)translationHeight);
-                    //Copy Bounding box
-                    bBox = new PdfArray(rect);
-                }
-                //Create appearance
-                Rectangle bboxRectangle = bBox.ToRectangle();
-                PdfFormXObject appearance = new PdfFormXObject(new Rectangle(0, 0, bboxRectangle.GetWidth(), bboxRectangle
-                    .GetHeight()));
-                appearance.Put(PdfName.Matrix, matrix);
-                //Create text appearance
-                if (PdfName.Tx.Equals(type)) {
-                    if (IsMultiline()) {
-                        DrawMultiLineTextAppearance(bboxRectangle, this.font, value, appearance);
-                    }
-                    else {
-                        DrawTextAppearance(bboxRectangle, this.font, GetFontSize(bBox, value), value, appearance);
-                    }
-                }
-                else {
-                    if (!GetFieldFlag(PdfChoiceFormField.FF_COMBO)) {
-                        PdfNumber topIndex = this.GetPdfObject().GetAsNumber(PdfName.TI);
-                        PdfArray options = GetOptions();
-                        if (null != options) {
-                            PdfArray visibleOptions = null != topIndex ? new PdfArray(options.SubList(topIndex.IntValue(), options.Size
-                                () - 1)) : (PdfArray)options.Clone();
-                            value = OptionsArrayToString(visibleOptions);
-                        }
-                    }
-                    DrawChoiceAppearance(bboxRectangle, GetFontSize(bBox, value), value, appearance);
-                    GetPdfObject().Remove(PdfName.DA);
-                }
-                PdfDictionary ap = new PdfDictionary();
-                ap.Put(PdfName.N, appearance.GetPdfObject());
-                ap.SetModified();
-                Put(PdfName.AP, ap);
-                UpdateDefaultAppearance();
-                return true;
-            }
-            else {
-                if (PdfName.Btn.Equals(type)) {
-                    int ff = GetFieldFlags();
-                    if ((ff & PdfButtonFormField.FF_PUSH_BUTTON) != 0) {
-                        value = text;
-                        PdfDictionary widget = GetPdfObject();
-                        PdfFormXObject appearance;
-                        Rectangle rect = GetRect(GetPdfObject());
-                        PdfDictionary apDic = GetPdfObject().GetAsDictionary(PdfName.AP);
-                        if (apDic == null) {
-                            if (widgets.Count == 1) {
-                                widget = widgets[0].GetPdfObject();
-                                apDic = widget.GetAsDictionary(PdfName.AP);
-                            }
-                        }
-                        if (apDic == null) {
-                            Put(PdfName.AP, apDic = new PdfDictionary());
-                            widget = GetPdfObject();
-                        }
-                        appearance = DrawPushButtonAppearance(rect.GetWidth(), rect.GetHeight(), value, this.font, GetFontSize(GetBBox
-                            (), value));
-                        apDic.Put(PdfName.N, appearance.GetPdfObject());
-                        if (pdfAConformanceLevel != null) {
-                            CreatePushButtonAppearanceState(widget);
-                        }
-                    }
-                    else {
-                        if ((ff & PdfButtonFormField.FF_RADIO) != 0) {
-                            if (IsRadioButton()) {
-                                // TODO DEVSIX-2536
-                                // Actually only radio group has FF_RADIO type.
-                                // This means that only radio group shall have regeneration functionality.
-                                Rectangle rect = GetRect(GetPdfObject());
-                                value = GetRadioButtonValue(value);
-                                if (rect != null && !"".Equals(value)) {
-                                    DrawRadioAppearance(rect.GetWidth(), rect.GetHeight(), value);
-                                }
-                            }
-                            else {
-                                if (GetKids() != null) {
-                                    foreach (PdfObject kid in GetKids()) {
-                                        iText.Forms.Fields.PdfFormField field = new iText.Forms.Fields.PdfFormField((PdfDictionary)kid);
-                                        PdfWidgetAnnotation widget = field.GetWidgets()[0];
-                                        PdfDictionary apStream = field.GetPdfObject().GetAsDictionary(PdfName.AP);
-                                        if (apStream == null) {
-                                            //widget annotation was not merged
-                                            apStream = widget.GetPdfObject().GetAsDictionary(PdfName.AP);
-                                        }
-                                        PdfName state;
-                                        if (null != apStream && null != GetValueFromAppearance(apStream.Get(PdfName.N), new PdfName(value))) {
-                                            state = new PdfName(value);
-                                        }
-                                        else {
-                                            state = new PdfName("Off");
-                                        }
-                                        widget.SetAppearanceState(state);
-                                    }
-                                }
-                            }
-                        }
-                        else {
-                            Rectangle rect = GetRect(GetPdfObject());
-                            SetCheckType(checkType);
-                            PdfWidgetAnnotation widget = GetWidgets()[0];
-                            if (pdfAConformanceLevel != null) {
-                                DrawPdfA2CheckAppearance(rect.GetWidth(), rect.GetHeight(), "Off".Equals(value) ? "Yes" : value, checkType
-                                    );
-                                widget.SetFlag(PdfAnnotation.PRINT);
-                            }
-                            else {
-                                DrawCheckAppearance(rect.GetWidth(), rect.GetHeight(), "Off".Equals(value) ? "Yes" : value);
-                            }
-                            if (widget.GetNormalAppearanceObject() != null && widget.GetNormalAppearanceObject().ContainsKey(new PdfName
-                                (value))) {
-                                widget.SetAppearanceState(new PdfName(value));
-                            }
-                            else {
-                                widget.SetAppearanceState(new PdfName("Off"));
-                            }
-                        }
-                    }
-                    UpdateDefaultAppearance();
-                    return true;
-                }
-            }
-            return false;
+            return result;
         }
 
         /// <summary>Gets the border width for the field.</summary>
@@ -2842,14 +2617,11 @@ namespace iText.Forms.Fields {
             return this;
         }
 
+        /// <summary>Sets the border style for the field.</summary>
+        /// <param name="style">the new border style.</param>
+        /// <returns>the edited field</returns>
         public virtual iText.Forms.Fields.PdfFormField SetBorderStyle(PdfDictionary style) {
-            //PdfDictionary bs = getWidgets().get(0).getBorderStyle();
             GetWidgets()[0].SetBorderStyle(style);
-            //        if (bs == null) {
-            //            bs = new PdfDictionary();
-            //            put(PdfName.BS, bs);
-            //        }
-            //        bs.put(PdfName.S, style);
             RegenerateField();
             return this;
         }
@@ -3041,8 +2813,44 @@ namespace iText.Forms.Fields {
             return this;
         }
 
+        /// <summary>
+        /// Inserts the value into the
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// of this field and associates it with the specified key.
+        /// </summary>
+        /// <remarks>
+        /// Inserts the value into the
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// of this field and associates it with the specified key.
+        /// If the key is already present in this field dictionary,
+        /// this method will override the old value with the specified one.
+        /// </remarks>
+        /// <param name="key">key to insert or to override</param>
+        /// <param name="value">the value to associate with the specified key</param>
+        /// <returns>
+        /// this
+        /// <see cref="PdfFormField"/>
+        /// instance
+        /// </returns>
         public virtual iText.Forms.Fields.PdfFormField Put(PdfName key, PdfObject value) {
             GetPdfObject().Put(key, value);
+            SetModified();
+            return this;
+        }
+
+        /// <summary>
+        /// Removes the specified key from the
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// of this field.
+        /// </summary>
+        /// <param name="key">key to be removed</param>
+        /// <returns>
+        /// this
+        /// <see cref="PdfFormField"/>
+        /// instance
+        /// </returns>
+        public virtual iText.Forms.Fields.PdfFormField Remove(PdfName key) {
+            GetPdfObject().Remove(key);
             SetModified();
             return this;
         }
@@ -3063,22 +2871,55 @@ namespace iText.Forms.Fields {
             return true;
         }
 
+        /// <summary>
+        /// Gets the
+        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
+        /// that owns that form field.
+        /// </summary>
+        /// <returns>
+        /// the
+        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
+        /// that owns that form field.
+        /// </returns>
         protected internal virtual PdfDocument GetDocument() {
             return GetPdfObject().GetIndirectReference().GetDocument();
         }
 
+        /// <summary>
+        /// Gets a
+        /// <see cref="iText.Kernel.Geom.Rectangle"/>
+        /// that matches the current size and position of this form field.
+        /// </summary>
+        /// <param name="field">current form field.</param>
+        /// <returns>
+        /// a
+        /// <see cref="iText.Kernel.Geom.Rectangle"/>
+        /// that matches the current size and position of this form field.
+        /// </returns>
         protected internal virtual Rectangle GetRect(PdfDictionary field) {
             PdfArray rect = field.GetAsArray(PdfName.Rect);
             if (rect == null) {
                 PdfArray kids = field.GetAsArray(PdfName.Kids);
                 if (kids == null) {
-                    throw new PdfException(PdfException.WrongFormFieldAddAnnotationToTheField);
+                    throw new PdfException(FormsExceptionMessageConstant.WRONG_FORM_FIELD_ADD_ANNOTATION_TO_THE_FIELD);
                 }
                 rect = ((PdfDictionary)kids.Get(0)).GetAsArray(PdfName.Rect);
             }
             return rect != null ? rect.ToRectangle() : null;
         }
 
+        /// <summary>
+        /// Convert
+        /// <see cref="System.String"/>
+        /// multidimensional array of combo box or list options to
+        /// <see cref="iText.Kernel.Pdf.PdfArray"/>.
+        /// </summary>
+        /// <param name="options">Two-dimensional array of options.</param>
+        /// <returns>
+        /// a
+        /// <see cref="iText.Kernel.Pdf.PdfArray"/>
+        /// that contains all the options.
+        /// </returns>
         protected internal static PdfArray ProcessOptions(String[][] options) {
             PdfArray array = new PdfArray();
             foreach (String[] option in options) {
@@ -3089,47 +2930,24 @@ namespace iText.Forms.Fields {
             return array;
         }
 
+        /// <summary>
+        /// Convert
+        /// <see cref="System.String"/>
+        /// array of combo box or list options to
+        /// <see cref="iText.Kernel.Pdf.PdfArray"/>.
+        /// </summary>
+        /// <param name="options">array of options.</param>
+        /// <returns>
+        /// a
+        /// <see cref="iText.Kernel.Pdf.PdfArray"/>
+        /// that contains all the options.
+        /// </returns>
         protected internal static PdfArray ProcessOptions(String[] options) {
             PdfArray array = new PdfArray();
             foreach (String option in options) {
                 array.Add(new PdfString(option, PdfEncodings.UNICODE_BIG));
             }
             return array;
-        }
-
-        /// <summary>Generate default appearance, /DA key.</summary>
-        /// <param name="font">
-        /// preferred font. If
-        /// <see cref="GetFont()"/>
-        /// is not null, it will be used instead.
-        /// </param>
-        /// <param name="fontSize">
-        /// preferred font size. If
-        /// <see cref="fontSize"/>
-        /// is valid,
-        /// it will be used instead.
-        /// </param>
-        /// <param name="color">color for the DA</param>
-        /// <param name="res">resources</param>
-        /// <returns>generated string</returns>
-        [System.ObsoleteAttribute(@"use UpdateDefaultAppearance() instead.")]
-        protected internal virtual String GenerateDefaultAppearanceString(PdfFont font, float fontSize, Color color
-            , PdfResources res) {
-            PdfStream stream = new PdfStream();
-            PdfCanvas canvas = new PdfCanvas(stream, res, GetDocument());
-            canvas.SetFontAndSize(font, fontSize);
-            if (color != null) {
-                canvas.SetColor(color, true);
-            }
-            return iText.IO.Util.JavaUtil.GetStringForBytes(stream.GetBytes(), System.Text.Encoding.UTF8);
-        }
-
-        /// <summary>Gets font and font size.</summary>
-        /// <param name="asNormal">normal appearance, will be ignored.</param>
-        /// <returns>array where first index is PdfFont and the second is font name.</returns>
-        [System.ObsoleteAttribute(@"use GetFont() and GetFontSize() instead.")]
-        protected internal virtual Object[] GetFontAndSize(PdfDictionary asNormal) {
-            return new Object[] { GetFont(), GetFontSize() };
         }
 
         protected internal static Object[] SplitDAelements(String da) {
@@ -3240,9 +3058,10 @@ namespace iText.Forms.Fields {
                     x = rect.GetWidth() / 2;
                 }
             }
-            iText.Layout.Canvas modelCanvas = new iText.Layout.Canvas(canvas, GetDocument(), new Rectangle(0, -height, 
-                0, 2 * height));
+            iText.Layout.Canvas modelCanvas = new iText.Layout.Canvas(canvas, new Rectangle(0, -height, 0, 2 * height)
+                );
             modelCanvas.SetProperty(Property.APPEARANCE_STREAM_LAYOUT, true);
+            SetMetaInfoToCanvas(modelCanvas);
             Style paragraphStyle = new Style().SetFont(font).SetFontSize(fontSize);
             paragraphStyle.SetProperty(Property.LEADING, new Leading(Leading.MULTIPLIED, 1));
             if (color != null) {
@@ -3278,31 +3097,15 @@ namespace iText.Forms.Fields {
             }
             else {
                 if (this.GetFieldFlag(PdfTextFormField.FF_COMB)) {
-                    ILog logger = LogManager.GetLogger(typeof(iText.Forms.Fields.PdfFormField));
-                    logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.COMB_FLAG_MAY_BE_SET_ONLY_IF_MAXLEN_IS_PRESENT
+                    ILogger logger = ITextLogManager.GetLogger(typeof(iText.Forms.Fields.PdfFormField));
+                    logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.COMB_FLAG_MAY_BE_SET_ONLY_IF_MAXLEN_IS_PRESENT
                         ));
                 }
-                modelCanvas.ShowTextAligned(new Paragraph(value).AddStyle(paragraphStyle).SetPaddings(0, X_OFFSET, 0, X_OFFSET
-                    ), x, rect.GetHeight() / 2, textAlignment, VerticalAlignment.MIDDLE);
+                modelCanvas.ShowTextAligned(CreateParagraphForTextFieldValue(value).AddStyle(paragraphStyle).SetPaddings(0
+                    , X_OFFSET, 0, X_OFFSET), x, rect.GetHeight() / 2, textAlignment, VerticalAlignment.MIDDLE);
             }
             canvas.RestoreState().EndVariableText();
             appearance.GetPdfObject().SetData(stream.GetBytes());
-        }
-
-        /// <summary>Draws the visual appearance of multiline text in a form field.</summary>
-        /// <param name="rect">The location on the page for the list field</param>
-        /// <param name="font">
-        /// a
-        /// <see cref="iText.Kernel.Font.PdfFont"/>
-        /// </param>
-        /// <param name="fontSize">The size of the font, will be ignored</param>
-        /// <param name="value">The initial value</param>
-        /// <param name="appearance">The appearance</param>
-        [System.ObsoleteAttribute(@"use DrawMultiLineTextAppearance(iText.Kernel.Geom.Rectangle, iText.Kernel.Font.PdfFont, System.String, iText.Kernel.Pdf.Xobject.PdfFormXObject) instead."
-            )]
-        protected internal virtual void DrawMultiLineTextAppearance(Rectangle rect, PdfFont font, float fontSize, 
-            String value, PdfFormXObject appearance) {
-            DrawMultiLineTextAppearance(rect, font, value, appearance);
         }
 
         protected internal virtual void DrawMultiLineTextAppearance(Rectangle rect, PdfFont font, String value, PdfFormXObject
@@ -3315,10 +3118,11 @@ namespace iText.Forms.Fields {
             DrawBorder(canvas, appearance, width, height);
             canvas.BeginVariableText();
             Rectangle areaRect = new Rectangle(0, 0, width, height);
-            iText.Layout.Canvas modelCanvas = new iText.Layout.Canvas(canvas, GetDocument(), areaRect);
+            iText.Layout.Canvas modelCanvas = new iText.Layout.Canvas(canvas, areaRect);
             modelCanvas.SetProperty(Property.APPEARANCE_STREAM_LAYOUT, true);
-            Paragraph paragraph = new Paragraph(value).SetFont(font).SetMargin(0).SetPadding(3).SetMultipliedLeading(1
-                );
+            SetMetaInfoToCanvas(modelCanvas);
+            Paragraph paragraph = CreateParagraphForTextFieldValue(value).SetFont(font).SetMargin(0).SetPadding(3).SetMultipliedLeading
+                (1);
             if (fontSize == 0) {
                 paragraph.SetFontSize(ApproximateFontSizeToFitMultiLine(paragraph, areaRect, modelCanvas.GetRenderer()));
             }
@@ -3344,7 +3148,8 @@ namespace iText.Forms.Fields {
         /// <param name="rect">The location on the page for the list field</param>
         /// <param name="value">The initial value</param>
         /// <param name="appearance">The appearance</param>
-        private void DrawChoiceAppearance(Rectangle rect, float fontSize, String value, PdfFormXObject appearance) {
+        private void DrawChoiceAppearance(Rectangle rect, float fontSize, String value, PdfFormXObject appearance, 
+            int topIndex) {
             PdfStream stream = (PdfStream)new PdfStream().MakeIndirect(GetDocument());
             PdfResources resources = appearance.GetResources();
             PdfCanvas canvas = new PdfCanvas(stream, resources, GetDocument());
@@ -3356,9 +3161,15 @@ namespace iText.Forms.Fields {
             DrawBorder(canvas, appearance, width, height);
             canvas.BeginVariableText().SaveState().Rectangle(3, 3, width - widthBorder, height - heightBorder).Clip().
                 EndPath();
-            iText.Layout.Canvas modelCanvas = new iText.Layout.Canvas(canvas, GetDocument(), new Rectangle(3, 0, Math.
-                Max(0, width - widthBorder), Math.Max(0, height - heightBorder)));
+            iText.Layout.Canvas modelCanvas = new iText.Layout.Canvas(canvas, new Rectangle(3, 0, Math.Max(0, width - 
+                widthBorder), Math.Max(0, height - heightBorder)));
             modelCanvas.SetProperty(Property.APPEARANCE_STREAM_LAYOUT, true);
+            SetMetaInfoToCanvas(modelCanvas);
+            Div div = new Div();
+            if (GetFieldFlag(PdfChoiceFormField.FF_COMBO)) {
+                div.SetVerticalAlignment(VerticalAlignment.MIDDLE);
+            }
+            div.SetHeight(Math.Max(0, height - heightBorder));
             for (int index = 0; index < strings.Count; index++) {
                 bool? isFull = modelCanvas.GetRenderer().GetPropertyAsBoolean(Property.FULL);
                 if (true.Equals(isFull)) {
@@ -3371,20 +3182,26 @@ namespace iText.Forms.Fields {
                 if (color != null) {
                     paragraph.SetFontColor(color);
                 }
-                PdfArray indices = GetPdfObject().GetAsArray(PdfName.I);
-                if (indices != null && indices.Size() > 0) {
-                    foreach (PdfObject ind in indices) {
-                        if (!ind.IsNumber()) {
-                            continue;
-                        }
-                        if (((PdfNumber)ind).GetValue() == index) {
-                            paragraph.SetBackgroundColor(new DeviceRgb(10, 36, 106));
-                            paragraph.SetFontColor(ColorConstants.LIGHT_GRAY);
+                if (!this.GetFieldFlag(PdfChoiceFormField.FF_COMBO)) {
+                    PdfArray indices = GetPdfObject().GetAsArray(PdfName.I);
+                    if (indices == null && this.GetKids() == null && this.GetParent() != null) {
+                        indices = this.GetParent().GetAsArray(PdfName.I);
+                    }
+                    if (indices != null && indices.Size() > 0) {
+                        foreach (PdfObject ind in indices) {
+                            if (!ind.IsNumber()) {
+                                continue;
+                            }
+                            if (((PdfNumber)ind).GetValue() == index + topIndex) {
+                                paragraph.SetBackgroundColor(new DeviceRgb(10, 36, 106));
+                                paragraph.SetFontColor(ColorConstants.LIGHT_GRAY);
+                            }
                         }
                     }
                 }
-                modelCanvas.Add(paragraph);
+                div.Add(paragraph);
             }
+            modelCanvas.Add(div);
             canvas.RestoreState().EndVariableText();
             appearance.GetPdfObject().SetData(stream.GetBytes());
         }
@@ -3412,18 +3229,15 @@ namespace iText.Forms.Fields {
             if (borderWidth > 0 && borderColor != null) {
                 borderWidth = Math.Max(1, borderWidth);
                 canvas.SetStrokeColor(borderColor).SetLineWidth(borderWidth);
-                if (bs != null) {
-                    PdfName borderType = bs.GetAsName(PdfName.S);
-                    if (borderType != null && borderType.Equals(PdfName.D)) {
-                        PdfArray dashArray = bs.GetAsArray(PdfName.D);
-                        int unitsOn = dashArray != null ? (dashArray.Size() > 0 ? (dashArray.GetAsNumber(0) != null ? dashArray.GetAsNumber
-                            (0).IntValue() : 3) : 3) : 3;
-                        int unitsOff = dashArray != null ? (dashArray.Size() > 1 ? (dashArray.GetAsNumber(1) != null ? dashArray.GetAsNumber
-                            (1).IntValue() : unitsOn) : unitsOn) : unitsOn;
-                        canvas.SetLineDash(unitsOn, unitsOff, 0);
-                    }
+                Border border = FormBorderFactory.GetBorder(bs, borderWidth, borderColor, backgroundColor);
+                if (border != null) {
+                    float borderWidthX2 = borderWidth + borderWidth;
+                    border.Draw(canvas, new Rectangle(borderWidth, borderWidth, width - borderWidthX2, height - borderWidthX2)
+                        );
                 }
-                canvas.Rectangle(0, 0, width, height).Stroke();
+                else {
+                    canvas.Rectangle(0, 0, width, height).Stroke();
+                }
             }
             ApplyRotation(xObject, height, width);
             canvas.RestoreState();
@@ -3459,13 +3273,15 @@ namespace iText.Forms.Fields {
             PdfWidgetAnnotation widget = GetWidgets()[0];
             widget.SetNormalAppearance(new PdfDictionary());
             //On state
-            PdfStream streamOn = (PdfStream)new PdfStream().MakeIndirect(GetDocument());
-            PdfCanvas canvasOn = new PdfCanvas(streamOn, new PdfResources(), GetDocument());
             PdfFormXObject xObjectOn = new PdfFormXObject(rect);
-            DrawRadioBorder(canvasOn, xObjectOn, width, height);
-            DrawRadioField(canvasOn, width, height, true);
-            xObjectOn.GetPdfObject().GetOutputStream().WriteBytes(streamOn.GetBytes());
-            widget.GetNormalAppearanceObject().Put(new PdfName(value), xObjectOn.GetPdfObject());
+            if (value != null) {
+                PdfStream streamOn = (PdfStream)new PdfStream().MakeIndirect(GetDocument());
+                PdfCanvas canvasOn = new PdfCanvas(streamOn, new PdfResources(), GetDocument());
+                DrawRadioBorder(canvasOn, xObjectOn, width, height);
+                DrawRadioField(canvasOn, width, height, true);
+                xObjectOn.GetPdfObject().GetOutputStream().WriteBytes(streamOn.GetBytes());
+                widget.GetNormalAppearanceObject().Put(new PdfName(value), xObjectOn.GetPdfObject());
+            }
             //Off state
             PdfStream streamOff = (PdfStream)new PdfStream().MakeIndirect(GetDocument());
             PdfCanvas canvasOff = new PdfCanvas(streamOff, new PdfResources(), GetDocument());
@@ -3473,30 +3289,11 @@ namespace iText.Forms.Fields {
             DrawRadioBorder(canvasOff, xObjectOff, width, height);
             xObjectOff.GetPdfObject().GetOutputStream().WriteBytes(streamOff.GetBytes());
             widget.GetNormalAppearanceObject().Put(new PdfName("Off"), xObjectOff.GetPdfObject());
-            if (pdfAConformanceLevel != null && (pdfAConformanceLevel.GetPart().Equals("2") || pdfAConformanceLevel.GetPart
-                ().Equals("3"))) {
+            if (pdfAConformanceLevel != null && ("2".Equals(pdfAConformanceLevel.GetPart()) || "3".Equals(pdfAConformanceLevel
+                .GetPart()))) {
                 xObjectOn.GetResources();
                 xObjectOff.GetResources();
             }
-        }
-
-        /// <summary>Draws the appearance of a radio button with a specified value.</summary>
-        /// <param name="width">the width of the radio button to draw</param>
-        /// <param name="height">the height of the radio button to draw</param>
-        /// <param name="value">the value of the button</param>
-        [System.ObsoleteAttribute(@"Please, use DrawRadioAppearance(float, float, System.String) instead.")]
-        protected internal virtual void DrawPdfA1RadioAppearance(float width, float height, String value) {
-            PdfStream stream = (PdfStream)new PdfStream().MakeIndirect(GetDocument());
-            PdfCanvas canvas = new PdfCanvas(stream, new PdfResources(), GetDocument());
-            Rectangle rect = new Rectangle(0, 0, width, height);
-            PdfFormXObject xObject = new PdfFormXObject(rect);
-            DrawBorder(canvas, xObject, width, height);
-            DrawRadioField(canvas, rect.GetWidth(), rect.GetHeight(), !"Off".Equals(value));
-            PdfDictionary normalAppearance = new PdfDictionary();
-            normalAppearance.Put(new PdfName(value), xObject.GetPdfObject());
-            PdfWidgetAnnotation widget = GetWidgets()[0];
-            xObject.GetPdfObject().GetOutputStream().WriteBytes(stream.GetBytes());
-            widget.SetNormalAppearance(normalAppearance);
         }
 
         /// <summary>Draws a radio button.</summary>
@@ -3527,14 +3324,13 @@ namespace iText.Forms.Fields {
             PdfCanvas canvasOn = new PdfCanvas(streamOn, new PdfResources(), GetDocument());
             PdfFormXObject xObjectOn = new PdfFormXObject(rect);
             DrawBorder(canvasOn, xObjectOn, width, height);
-            DrawCheckBox(canvasOn, width, height, fontSize, true);
+            DrawCheckBox(canvasOn, width, height, fontSize);
             xObjectOn.GetPdfObject().GetOutputStream().WriteBytes(streamOn.GetBytes());
             xObjectOn.GetResources().AddFont(GetDocument(), GetFont());
             PdfStream streamOff = (PdfStream)new PdfStream().MakeIndirect(GetDocument());
             PdfCanvas canvasOff = new PdfCanvas(streamOff, new PdfResources(), GetDocument());
             PdfFormXObject xObjectOff = new PdfFormXObject(rect);
             DrawBorder(canvasOff, xObjectOff, width, height);
-            DrawCheckBox(canvasOff, width, height, fontSize, false);
             xObjectOff.GetPdfObject().GetOutputStream().WriteBytes(streamOff.GetBytes());
             xObjectOff.GetResources().AddFont(GetDocument(), GetFont());
             PdfDictionary normalAppearance = new PdfDictionary();
@@ -3557,17 +3353,17 @@ namespace iText.Forms.Fields {
         /// <param name="onStateName">name that corresponds to the "On" state of the checkbox</param>
         /// <param name="checkType">
         /// the type that determines how the checkbox will look like. Allowed values are
-        /// <value>TYPE_CHECK</value>
+        /// <see cref="TYPE_CHECK"/>
         /// ,
-        /// <value>TYPE_CIRCLE</value>
+        /// <see cref="TYPE_CIRCLE"/>
         /// ,
-        /// <value>TYPE_CROSS</value>
+        /// <see cref="TYPE_CROSS"/>
         /// ,
-        /// <value>TYPE_DIAMOND</value>
+        /// <see cref="TYPE_DIAMOND"/>
         /// ,
-        /// <value>TYPE_SQUARE</value>
+        /// <see cref="TYPE_SQUARE"/>
         /// ,
-        /// <value>TYPE_STAR</value>
+        /// <see cref="TYPE_STAR"/>
         /// </param>
         protected internal virtual void DrawPdfA2CheckAppearance(float width, float height, String onStateName, int
              checkType) {
@@ -3596,46 +3392,6 @@ namespace iText.Forms.Fields {
             widget.SetNormalAppearance(normalAppearance);
         }
 
-        /// <param name="width">width of the checkbox</param>
-        /// <param name="height">height of the checkbox</param>
-        /// <param name="selectedValue">the selected value of the checkbox which determines the appearance of the checkbox
-        ///     </param>
-        /// <param name="checkType">
-        /// the type that determines how the checkbox will look like. Allowed values are
-        /// <value>TYPE_CHECK</value>
-        /// ,
-        /// <value>TYPE_CIRCLE</value>
-        /// ,
-        /// <value>TYPE_CROSS</value>
-        /// ,
-        /// <value>TYPE_DIAMOND</value>
-        /// ,
-        /// <value>TYPE_SQUARE</value>
-        /// ,
-        /// <value>TYPE_STAR</value>
-        /// </param>
-        [System.ObsoleteAttribute(@"use DrawPdfA2CheckAppearance(float, float, System.String, int) instead.")]
-        protected internal virtual void DrawPdfA1CheckAppearance(float width, float height, String selectedValue, 
-            int checkType) {
-            // TODO when removing the method: check {@link #drawCheckBox(PdfCanvas, float, float, float, boolean)} and consider
-            //  removing last redundant "on" parameter
-            PdfStream stream = (PdfStream)new PdfStream().MakeIndirect(GetDocument());
-            PdfCanvas canvas = new PdfCanvas(stream, new PdfResources(), GetDocument());
-            Rectangle rect = new Rectangle(0, 0, width, height);
-            PdfFormXObject xObject = new PdfFormXObject(rect);
-            this.checkType = checkType;
-            DrawBorder(canvas, xObject, width, height);
-            DrawPdfACheckBox(canvas, width, height, !"Off".Equals(selectedValue));
-            xObject.GetPdfObject().GetOutputStream().WriteBytes(stream.GetBytes());
-            PdfDictionary normalAppearance = new PdfDictionary();
-            normalAppearance.Put(new PdfName(selectedValue), xObject.GetPdfObject());
-            PdfDictionary mk = new PdfDictionary();
-            mk.Put(PdfName.CA, new PdfString(text));
-            PdfWidgetAnnotation widget = GetWidgets()[0];
-            widget.Put(PdfName.MK, mk);
-            widget.SetNormalAppearance(normalAppearance);
-        }
-
         /// <summary>Draws the appearance for a push button.</summary>
         /// <param name="width">the width of the pushbutton</param>
         /// <param name="height">the width of the pushbutton</param>
@@ -3657,14 +3413,14 @@ namespace iText.Forms.Fields {
             DrawBorder(canvas, xObject, width, height);
             if (img != null) {
                 PdfImageXObject imgXObj = new PdfImageXObject(img);
-                canvas.AddXObject(imgXObj, width - borderWidth, 0, 0, height - borderWidth, borderWidth / 2, borderWidth /
-                     2);
+                canvas.AddXObjectWithTransformationMatrix(imgXObj, width - borderWidth, 0, 0, height - borderWidth, borderWidth
+                     / 2, borderWidth / 2);
                 xObject.GetResources().AddImage(imgXObj);
             }
             else {
                 if (form != null) {
-                    canvas.AddXObject(form, (height - borderWidth) / form.GetHeight(), 0, 0, (height - borderWidth) / form.GetHeight
-                        (), borderWidth / 2, borderWidth / 2);
+                    canvas.AddXObjectWithTransformationMatrix(form, (height - borderWidth) / form.GetHeight(), 0, 0, (height -
+                         borderWidth) / form.GetHeight(), borderWidth / 2, borderWidth / 2);
                     xObject.GetResources().AddForm(form);
                 }
                 else {
@@ -3674,27 +3430,6 @@ namespace iText.Forms.Fields {
             }
             xObject.GetPdfObject().GetOutputStream().WriteBytes(stream.GetBytes());
             return xObject;
-        }
-
-        /// <summary>Draws the appearance for a push button.</summary>
-        /// <param name="width">the width of the pushbutton</param>
-        /// <param name="height">the width of the pushbutton</param>
-        /// <param name="text">the text to display on the button</param>
-        /// <param name="font">
-        /// a
-        /// <see cref="iText.Kernel.Font.PdfFont"/>
-        /// </param>
-        /// <param name="fontName">will be ignored.</param>
-        /// <param name="fontSize">the size of the font</param>
-        /// <returns>
-        /// a new
-        /// <see cref="iText.Kernel.Pdf.Xobject.PdfFormXObject"/>
-        /// </returns>
-        [System.ObsoleteAttribute(@"use DrawPushButtonAppearance(float, float, System.String, iText.Kernel.Font.PdfFont, float) instead."
-            )]
-        protected internal virtual PdfFormXObject DrawPushButtonAppearance(float width, float height, String text, 
-            PdfFont font, PdfName fontName, float fontSize) {
-            return DrawPushButtonAppearance(width, height, text, font, fontSize);
         }
 
         /// <summary>Performs the low-level drawing operations to draw a button object.</summary>
@@ -3723,9 +3458,10 @@ namespace iText.Forms.Fields {
             }
             Paragraph paragraph = new Paragraph(text).SetFont(font).SetFontSize(fontSize).SetMargin(0).SetMultipliedLeading
                 (1).SetVerticalAlignment(VerticalAlignment.MIDDLE);
-            iText.Layout.Canvas modelCanvas = new iText.Layout.Canvas(canvas, GetDocument(), new Rectangle(0, -height, 
-                width, 2 * height));
+            iText.Layout.Canvas modelCanvas = new iText.Layout.Canvas(canvas, new Rectangle(0, -height, width, 2 * height
+                ));
             modelCanvas.SetProperty(Property.APPEARANCE_STREAM_LAYOUT, true);
+            SetMetaInfoToCanvas(modelCanvas);
             modelCanvas.ShowTextAligned(paragraph, width / 2, height / 2, TextAlignment.CENTER, VerticalAlignment.MIDDLE
                 );
         }
@@ -3739,12 +3475,7 @@ namespace iText.Forms.Fields {
         /// <param name="width">the width of the button</param>
         /// <param name="height">the width of the button</param>
         /// <param name="fontSize">the size of the font</param>
-        /// <param name="on">the boolean value of the checkbox</param>
-        protected internal virtual void DrawCheckBox(PdfCanvas canvas, float width, float height, float fontSize, 
-            bool on) {
-            if (!on) {
-                return;
-            }
+        protected internal virtual void DrawCheckBox(PdfCanvas canvas, float width, float height, float fontSize) {
             if (checkType == TYPE_CROSS) {
                 DrawingUtil.DrawCross(canvas, width, height, borderWidth);
                 return;
@@ -3796,105 +3527,20 @@ namespace iText.Forms.Fields {
             }
         }
 
-        private static PdfString GenerateDefaultAppearance(PdfName font, float fontSize, Color textColor) {
-            System.Diagnostics.Debug.Assert(font != null);
-            MemoryStream output = new MemoryStream();
-            PdfOutputStream pdfStream = new PdfOutputStream(new OutputStream<Stream>(output));
-            byte[] g = new byte[] { (byte)'g' };
-            byte[] rg = new byte[] { (byte)'r', (byte)'g' };
-            byte[] k = new byte[] { (byte)'k' };
-            byte[] Tf = new byte[] { (byte)'T', (byte)'f' };
-            pdfStream.Write(font).WriteSpace().WriteFloat(fontSize).WriteSpace().WriteBytes(Tf);
-            if (textColor != null) {
-                if (textColor is DeviceGray) {
-                    pdfStream.WriteSpace().WriteFloats(textColor.GetColorValue()).WriteSpace().WriteBytes(g);
-                }
-                else {
-                    if (textColor is DeviceRgb) {
-                        pdfStream.WriteSpace().WriteFloats(textColor.GetColorValue()).WriteSpace().WriteBytes(rg);
-                    }
-                    else {
-                        if (textColor is DeviceCmyk) {
-                            pdfStream.WriteSpace().WriteFloats(textColor.GetColorValue()).WriteSpace().WriteBytes(k);
-                        }
-                        else {
-                            ILog logger = LogManager.GetLogger(typeof(iText.Forms.Fields.PdfFormField));
-                            logger.Error(iText.IO.LogMessageConstant.UNSUPPORTED_COLOR_IN_DA);
-                        }
-                    }
-                }
-            }
-            return new PdfString(output.ToArray());
-        }
-
-        private static bool IsWidgetAnnotation(PdfDictionary pdfObject) {
-            return pdfObject != null && PdfName.Widget.Equals(pdfObject.GetAsName(PdfName.Subtype));
-        }
-
-        private static void CreatePushButtonAppearanceState(PdfDictionary widget) {
-            PdfDictionary appearances = widget.GetAsDictionary(PdfName.AP);
-            PdfStream normalAppearanceStream = appearances.GetAsStream(PdfName.N);
-            if (normalAppearanceStream != null) {
-                PdfName stateName = widget.GetAsName(PdfName.AS);
-                if (stateName == null) {
-                    stateName = new PdfName("push");
-                }
-                widget.Put(PdfName.AS, stateName);
-                PdfDictionary normalAppearance = new PdfDictionary();
-                normalAppearance.Put(stateName, normalAppearanceStream);
-                appearances.Put(PdfName.N, normalAppearance);
+        internal static void SetMetaInfoToCanvas(iText.Layout.Canvas canvas) {
+            MetaInfoContainer metaInfo = FormsMetaInfoStaticContainer.GetMetaInfoForLayout();
+            if (metaInfo != null) {
+                canvas.SetProperty(Property.META_INFO, metaInfo);
             }
         }
 
-        private PdfArray GetBBox() {
-            PdfArray bBox = GetPdfObject().GetAsArray(PdfName.Rect);
-            if (bBox == null) {
-                PdfArray kids = GetKids();
-                if (kids == null) {
-                    throw new PdfException(PdfException.WrongFormFieldAddAnnotationToTheField);
-                }
-                bBox = ((PdfDictionary)kids.Get(0)).GetAsArray(PdfName.Rect);
-            }
-            return bBox;
-        }
-
-        // TODO DEVSIX-2536
-        // Actually this entire method is a mess,
-        // because only radio group has FF_RADIO type and there is no RadioButton at all.
-        // So the goal of that method is just to save backward compatibility until refactoring.
-        private bool IsRadioButton() {
-            if (IsWidgetAnnotation(GetPdfObject())) {
-                return true;
-            }
-            else {
-                if (GetPdfObject().GetAsName(PdfName.V) != null) {
-                    return false;
-                }
-                else {
-                    if (GetKids() != null) {
-                        return IsWidgetAnnotation(GetKids().GetAsDictionary(0));
-                    }
-                    else {
-                        return false;
-                    }
+        private String GetRadioButtonValue() {
+            foreach (String state in GetAppearanceStates()) {
+                if (!"Off".Equals(state)) {
+                    return state;
                 }
             }
-        }
-
-        private String GetRadioButtonValue(String value) {
-            //Otherwise something wrong with getValueAsString().
-            System.Diagnostics.Debug.Assert(value != null);
-            if ("".Equals(value)) {
-                //let it as default value
-                value = "Yes";
-                foreach (String state in GetAppearanceStates()) {
-                    if (!"Off".Equals(state)) {
-                        value = state;
-                        break;
-                    }
-                }
-            }
-            return value;
+            return null;
         }
 
         private float GetFontSize(PdfArray bBox, String value) {
@@ -4196,30 +3842,6 @@ namespace iText.Forms.Fields {
             }
         }
 
-        private static String OptionsArrayToString(PdfArray options) {
-            StringBuilder sb = new StringBuilder();
-            foreach (PdfObject obj in options) {
-                if (obj.IsString()) {
-                    sb.Append(((PdfString)obj).ToUnicodeString()).Append('\n');
-                }
-                else {
-                    if (obj.IsArray()) {
-                        PdfObject element = ((PdfArray)obj).Get(1);
-                        if (element.IsString()) {
-                            sb.Append(((PdfString)element).ToUnicodeString()).Append('\n');
-                        }
-                    }
-                }
-            }
-            // last '\n'
-            sb.DeleteCharAt(sb.Length - 1);
-            return sb.ToString();
-        }
-
-        private static double DegreeToRadians(double angle) {
-            return Math.PI * angle / 180.0;
-        }
-
         private PdfObject GetValueFromAppearance(PdfObject appearanceDict, PdfName key) {
             if (appearanceDict is PdfDictionary) {
                 return ((PdfDictionary)appearanceDict).Get(key);
@@ -4293,6 +3915,324 @@ namespace iText.Forms.Fields {
                 }
             }
             return null;
+        }
+
+        private void RegeneratePushButtonField() {
+            PdfDictionary widget = GetPdfObject();
+            PdfFormXObject appearance;
+            Rectangle rect = GetRect(widget);
+            PdfDictionary apDic = widget.GetAsDictionary(PdfName.AP);
+            if (apDic == null) {
+                Put(PdfName.AP, apDic = new PdfDictionary());
+            }
+            appearance = DrawPushButtonAppearance(rect.GetWidth(), rect.GetHeight(), this.text, this.font, GetFontSize
+                (widget.GetAsArray(PdfName.Rect), this.text));
+            apDic.Put(PdfName.N, appearance.GetPdfObject());
+            if (pdfAConformanceLevel != null) {
+                CreatePushButtonAppearanceState(widget);
+            }
+        }
+
+        private void RegenerateRadioButtonField() {
+            Rectangle rect = GetRect(GetPdfObject());
+            String value = GetRadioButtonValue();
+            if (rect != null && !"".Equals(value)) {
+                DrawRadioAppearance(rect.GetWidth(), rect.GetHeight(), value);
+            }
+        }
+
+        private void RegenerateCheckboxField(String value) {
+            Rectangle rect = GetRect(GetPdfObject());
+            SetCheckType(checkType);
+            PdfWidgetAnnotation widget = (PdfWidgetAnnotation)PdfAnnotation.MakeAnnotation(GetPdfObject());
+            if (pdfAConformanceLevel != null) {
+                DrawPdfA2CheckAppearance(rect.GetWidth(), rect.GetHeight(), "Off".Equals(value) ? "Yes" : value, checkType
+                    );
+                widget.SetFlag(PdfAnnotation.PRINT);
+            }
+            else {
+                DrawCheckAppearance(rect.GetWidth(), rect.GetHeight(), "Off".Equals(value) ? "Yes" : value);
+            }
+            if (widget.GetNormalAppearanceObject() != null && widget.GetNormalAppearanceObject().ContainsKey(new PdfName
+                (value))) {
+                widget.SetAppearanceState(new PdfName(value));
+            }
+            else {
+                widget.SetAppearanceState(new PdfName("Off"));
+            }
+        }
+
+        private bool RegenerateTextAndChoiceField(String value, PdfName type) {
+            PdfPage page = PdfWidgetAnnotation.MakeAnnotation(GetPdfObject()).GetPage();
+            PdfArray bBox = GetPdfObject().GetAsArray(PdfName.Rect);
+            //Apply Page rotation
+            int pageRotation = 0;
+            if (page != null) {
+                pageRotation = page.GetRotation();
+                //Clockwise, so negative
+                pageRotation *= -1;
+            }
+            PdfArray matrix;
+            if (pageRotation % 90 == 0) {
+                //Cast angle to [-360, 360]
+                double angle = pageRotation % 360;
+                //Get angle in radians
+                angle = DegreeToRadians(angle);
+                Rectangle initialBboxRectangle = bBox.ToRectangle();
+                //rotate the bounding box
+                Rectangle rect = initialBboxRectangle.Clone();
+                //Calculate origin offset
+                double translationWidth = 0;
+                double translationHeight = 0;
+                if (angle >= -1 * Math.PI && angle <= -1 * Math.PI / 2) {
+                    translationWidth = rect.GetWidth();
+                }
+                if (angle <= -1 * Math.PI) {
+                    translationHeight = rect.GetHeight();
+                }
+                //Store rotation and translation in the matrix
+                matrix = new PdfArray(new double[] { Math.Cos(angle), -Math.Sin(angle), Math.Sin(angle), Math.Cos(angle), 
+                    translationWidth, translationHeight });
+                //If the angle is a multiple of 90 and not a multiple of 180, height and width of the bounding box need to be switched
+                if (angle % (Math.PI / 2) == 0 && angle % (Math.PI) != 0) {
+                    rect.SetWidth(initialBboxRectangle.GetHeight());
+                    rect.SetHeight(initialBboxRectangle.GetWidth());
+                }
+                // Adapt origin
+                rect.SetX(rect.GetX() + (float)translationWidth);
+                rect.SetY(rect.GetY() + (float)translationHeight);
+                //Copy Bounding box
+                bBox = new PdfArray(rect);
+            }
+            else {
+                //Avoid NPE when handling corrupt pdfs
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Forms.Fields.PdfFormField));
+                logger.LogError(iText.IO.Logs.IoLogMessageConstant.INCORRECT_PAGEROTATION);
+                matrix = new PdfArray(new double[] { 1, 0, 0, 1, 0, 0 });
+            }
+            //Apply field rotation
+            float fieldRotation = 0;
+            if (this.GetPdfObject().GetAsDictionary(PdfName.MK) != null && this.GetPdfObject().GetAsDictionary(PdfName
+                .MK).Get(PdfName.R) != null) {
+                fieldRotation = (float)this.GetPdfObject().GetAsDictionary(PdfName.MK).GetAsFloat(PdfName.R);
+                //Get relative field rotation
+                fieldRotation += pageRotation;
+            }
+            if (fieldRotation % 90 == 0) {
+                Rectangle initialBboxRectangle = bBox.ToRectangle();
+                //Cast angle to [-360, 360]
+                double angle = fieldRotation % 360;
+                //Get angle in radians
+                angle = DegreeToRadians(angle);
+                //Calculate origin offset
+                double translationWidth = CalculateTranslationWidthAfterFieldRot(initialBboxRectangle, DegreeToRadians(pageRotation
+                    ), angle);
+                double translationHeight = CalculateTranslationHeightAfterFieldRot(initialBboxRectangle, DegreeToRadians(pageRotation
+                    ), angle);
+                //Concatenate rotation and translation into the matrix
+                Matrix currentMatrix = new Matrix(matrix.GetAsNumber(0).FloatValue(), matrix.GetAsNumber(1).FloatValue(), 
+                    matrix.GetAsNumber(2).FloatValue(), matrix.GetAsNumber(3).FloatValue(), matrix.GetAsNumber(4).FloatValue
+                    (), matrix.GetAsNumber(5).FloatValue());
+                Matrix toConcatenate = new Matrix((float)Math.Cos(angle), (float)(-Math.Sin(angle)), (float)(Math.Sin(angle
+                    )), (float)(Math.Cos(angle)), (float)translationWidth, (float)translationHeight);
+                currentMatrix = currentMatrix.Multiply(toConcatenate);
+                matrix = new PdfArray(new float[] { currentMatrix.Get(0), currentMatrix.Get(1), currentMatrix.Get(3), currentMatrix
+                    .Get(4), currentMatrix.Get(6), currentMatrix.Get(7) });
+                //Construct bounding box
+                Rectangle rect = initialBboxRectangle.Clone();
+                //If the angle is a multiple of 90 and not a multiple of 180, height and width of the bounding box need to be switched
+                if (angle % (Math.PI / 2) == 0 && angle % (Math.PI) != 0) {
+                    rect.SetWidth(initialBboxRectangle.GetHeight());
+                    rect.SetHeight(initialBboxRectangle.GetWidth());
+                }
+                rect.SetX(rect.GetX() + (float)translationWidth);
+                rect.SetY(rect.GetY() + (float)translationHeight);
+                //Copy Bounding box
+                bBox = new PdfArray(rect);
+            }
+            //Create appearance
+            Rectangle bboxRectangle = bBox.ToRectangle();
+            PdfFormXObject appearance = new PdfFormXObject(new Rectangle(0, 0, bboxRectangle.GetWidth(), bboxRectangle
+                .GetHeight()));
+            appearance.Put(PdfName.Matrix, matrix);
+            //Create text appearance
+            if (PdfName.Tx.Equals(type)) {
+                if (IsMultiline()) {
+                    DrawMultiLineTextAppearance(bboxRectangle, this.font, value, appearance);
+                }
+                else {
+                    DrawTextAppearance(bboxRectangle, this.font, GetFontSize(bBox, value), value, appearance);
+                }
+            }
+            else {
+                int topIndex = 0;
+                if (!GetFieldFlag(PdfChoiceFormField.FF_COMBO)) {
+                    PdfNumber topIndexNum = this.GetPdfObject().GetAsNumber(PdfName.TI);
+                    if (topIndexNum == null && this.GetParent() != null) {
+                        topIndexNum = this.GetParent().GetAsNumber(PdfName.TI);
+                    }
+                    PdfArray options = GetOptions();
+                    if (null == options && this.GetParent() != null) {
+                        options = this.GetParent().GetAsArray(PdfName.Opt);
+                    }
+                    if (null != options) {
+                        topIndex = null != topIndexNum ? topIndexNum.IntValue() : 0;
+                        PdfArray visibleOptions = topIndex > 0 ? new PdfArray(options.SubList(topIndex, options.Size())) : (PdfArray
+                            )options.Clone();
+                        value = OptionsArrayToString(visibleOptions);
+                    }
+                }
+                DrawChoiceAppearance(bboxRectangle, GetFontSize(bBox, value), value, appearance, topIndex);
+            }
+            PdfDictionary ap = new PdfDictionary();
+            ap.Put(PdfName.N, appearance.GetPdfObject());
+            ap.SetModified();
+            Put(PdfName.AP, ap);
+            return true;
+        }
+
+        private void CopyParamsToKids(iText.Forms.Fields.PdfFormField child) {
+            if (child.checkType <= 0 || child.checkType > 5) {
+                child.checkType = this.checkType;
+            }
+            if (child.GetDefaultAppearance() == null) {
+                child.font = this.font;
+                child.fontSize = this.fontSize;
+            }
+            if (child.color == null) {
+                child.color = this.color;
+            }
+            if (child.text == null) {
+                child.text = this.text;
+            }
+            if (child.img == null) {
+                child.img = this.img;
+            }
+            if (child.borderWidth == 1) {
+                child.borderWidth = this.borderWidth;
+            }
+            if (child.backgroundColor == null) {
+                child.backgroundColor = this.backgroundColor;
+            }
+            if (child.borderColor == null) {
+                child.borderColor = this.borderColor;
+            }
+            if (child.rotation == 0) {
+                child.rotation = this.rotation;
+            }
+            if (child.pdfAConformanceLevel == null) {
+                child.pdfAConformanceLevel = this.pdfAConformanceLevel;
+            }
+            if (child.form == null) {
+                child.form = this.form;
+            }
+        }
+
+        private bool RegenerateWidget(String value) {
+            PdfName type = GetFormType();
+            if (PdfName.Tx.Equals(type) || PdfName.Ch.Equals(type)) {
+                return RegenerateTextAndChoiceField(value, type);
+            }
+            else {
+                if (PdfName.Btn.Equals(type)) {
+                    if (GetFieldFlag(PdfButtonFormField.FF_PUSH_BUTTON)) {
+                        RegeneratePushButtonField();
+                    }
+                    else {
+                        if (GetFieldFlag(PdfButtonFormField.FF_RADIO)) {
+                            RegenerateRadioButtonField();
+                        }
+                        else {
+                            RegenerateCheckboxField(value);
+                        }
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static String OptionsArrayToString(PdfArray options) {
+            StringBuilder sb = new StringBuilder();
+            foreach (PdfObject obj in options) {
+                if (obj.IsString()) {
+                    sb.Append(((PdfString)obj).ToUnicodeString()).Append('\n');
+                }
+                else {
+                    if (obj.IsArray()) {
+                        PdfObject element = ((PdfArray)obj).Get(1);
+                        if (element.IsString()) {
+                            sb.Append(((PdfString)element).ToUnicodeString()).Append('\n');
+                        }
+                    }
+                    else {
+                        sb.Append('\n');
+                    }
+                }
+            }
+            // last '\n'
+            sb.DeleteCharAt(sb.Length - 1);
+            return sb.ToString();
+        }
+
+        private static double DegreeToRadians(double angle) {
+            return Math.PI * angle / 180.0;
+        }
+
+        private static PdfString GenerateDefaultAppearance(PdfName font, float fontSize, Color textColor) {
+            System.Diagnostics.Debug.Assert(font != null);
+            MemoryStream output = new MemoryStream();
+            PdfOutputStream pdfStream = new PdfOutputStream(new OutputStream<Stream>(output));
+            byte[] g = new byte[] { (byte)'g' };
+            byte[] rg = new byte[] { (byte)'r', (byte)'g' };
+            byte[] k = new byte[] { (byte)'k' };
+            byte[] Tf = new byte[] { (byte)'T', (byte)'f' };
+            pdfStream.Write(font).WriteSpace().WriteFloat(fontSize).WriteSpace().WriteBytes(Tf);
+            if (textColor != null) {
+                if (textColor is DeviceGray) {
+                    pdfStream.WriteSpace().WriteFloats(textColor.GetColorValue()).WriteSpace().WriteBytes(g);
+                }
+                else {
+                    if (textColor is DeviceRgb) {
+                        pdfStream.WriteSpace().WriteFloats(textColor.GetColorValue()).WriteSpace().WriteBytes(rg);
+                    }
+                    else {
+                        if (textColor is DeviceCmyk) {
+                            pdfStream.WriteSpace().WriteFloats(textColor.GetColorValue()).WriteSpace().WriteBytes(k);
+                        }
+                        else {
+                            ILogger logger = ITextLogManager.GetLogger(typeof(iText.Forms.Fields.PdfFormField));
+                            logger.LogError(iText.IO.Logs.IoLogMessageConstant.UNSUPPORTED_COLOR_IN_DA);
+                        }
+                    }
+                }
+            }
+            return new PdfString(output.ToArray());
+        }
+
+        private static bool IsWidgetAnnotation(PdfDictionary pdfObject) {
+            return pdfObject != null && PdfName.Widget.Equals(pdfObject.GetAsName(PdfName.Subtype));
+        }
+
+        private static void CreatePushButtonAppearanceState(PdfDictionary widget) {
+            PdfDictionary appearances = widget.GetAsDictionary(PdfName.AP);
+            PdfStream normalAppearanceStream = appearances.GetAsStream(PdfName.N);
+            if (normalAppearanceStream != null) {
+                PdfName stateName = widget.GetAsName(PdfName.AS);
+                if (stateName == null) {
+                    stateName = new PdfName("push");
+                }
+                widget.Put(PdfName.AS, stateName);
+                PdfDictionary normalAppearance = new PdfDictionary();
+                normalAppearance.Put(stateName, normalAppearanceStream);
+                appearances.Put(PdfName.N, normalAppearance);
+            }
+        }
+
+        private static Paragraph CreateParagraphForTextFieldValue(String value) {
+            iText.Layout.Element.Text text = new iText.Layout.Element.Text(value);
+            text.SetNextRenderer(new FormFieldValueNonTrimmingTextRenderer(text));
+            return new Paragraph(text);
         }
     }
 }

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,21 +44,22 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
 using Org.BouncyCastle.Ocsp;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
+using iText.Commons;
+using iText.Commons.Actions.Contexts;
+using iText.Commons.Utils;
 using iText.Forms;
-using iText.IO.Util;
-using iText.Kernel.Counter.Event;
 using iText.Kernel.Pdf;
 
 namespace iText.Signatures {
     /// <summary>Verifies the signatures in an LTV document.</summary>
     public class LtvVerifier : RootStoreVerifier {
         /// <summary>The Logger instance</summary>
-        protected internal static readonly ILog LOGGER = LogManager.GetLogger(typeof(iText.Signatures.LtvVerifier)
-            );
+        protected internal static readonly ILogger LOGGER = ITextLogManager.GetLogger(typeof(iText.Signatures.LtvVerifier
+            ));
 
         /// <summary>Option to specify level of verification; signing certificate only or the entire chain.</summary>
         protected internal LtvVerification.CertificateOption option = LtvVerification.CertificateOption.SIGNING_CERTIFICATE;
@@ -113,14 +114,14 @@ namespace iText.Signatures {
         }
 
         /// <summary>Set the verifyRootCertificate to false if you can't verify the root certificate.</summary>
-        /// <param name="verifyRootCertificate"/>
+        /// <param name="verifyRootCertificate">false if you can't verify the root certificate, otherwise true</param>
         public virtual void SetVerifyRootCertificate(bool verifyRootCertificate) {
             this.verifyRootCertificate = verifyRootCertificate;
         }
 
         /// <summary>
         /// Sets the
-        /// <see cref="iText.Kernel.Counter.Event.IMetaInfo"/>
+        /// <see cref="iText.Commons.Actions.Contexts.IMetaInfo"/>
         /// that will be used during
         /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
         /// creation.
@@ -131,7 +132,16 @@ namespace iText.Signatures {
         }
 
         /// <summary>Verifies all the document-level timestamps and all the signatures in the document.</summary>
-        /// <param name="result"/>
+        /// <param name="result">
+        /// a list of
+        /// <see cref="VerificationOK"/>
+        /// objects
+        /// </param>
+        /// <returns>
+        /// a list of all
+        /// <see cref="VerificationOK"/>
+        /// objects after verification
+        /// </returns>
         public virtual IList<VerificationOK> Verify(IList<VerificationOK> result) {
             if (result == null) {
                 result = new List<VerificationOK>();
@@ -143,8 +153,13 @@ namespace iText.Signatures {
         }
 
         /// <summary>Verifies a document level timestamp.</summary>
+        /// <returns>
+        /// a list of
+        /// <see cref="VerificationOK"/>
+        /// objects
+        /// </returns>
         public virtual IList<VerificationOK> VerifySignature() {
-            LOGGER.Info("Verifying signature.");
+            LOGGER.LogInformation("Verifying signature.");
             IList<VerificationOK> result = new List<VerificationOK>();
             // Get the certificate chain
             X509Certificate[] chain = pkcs7.GetSignCertificateChain();
@@ -166,7 +181,7 @@ namespace iText.Signatures {
                     issuerCert = (X509Certificate)chain[i];
                 }
                 // now lets verify the certificate
-                LOGGER.Info(signCert.SubjectDN.ToString());
+                LOGGER.LogInformation(signCert.SubjectDN.ToString());
                 IList<VerificationOK> list = Verify(signCert, issuerCert, signDate);
                 if (list.Count == 0) {
                     try {
@@ -211,7 +226,7 @@ namespace iText.Signatures {
                     chain[i - 1].Verify(chain[i].GetPublicKey());
                 }
             }
-            LOGGER.Info("All certificates are valid on " + signDate.ToString());
+            LOGGER.LogInformation("All certificates are valid on " + signDate.ToString());
         }
 
         /// <summary>Verifies certificates against a list of CRLs and OCSP responses.</summary>
@@ -225,7 +240,7 @@ namespace iText.Signatures {
         ///     "/>
         public override IList<VerificationOK> Verify(X509Certificate signCert, X509Certificate issuerCert, DateTime
              signDate) {
-            // we'll verify agains the rootstore (if present)
+            // we'll verify against the rootstore (if present)
             RootStoreVerifier rootStoreVerifier = new RootStoreVerifier(verifier);
             rootStoreVerifier.SetRootStore(rootStore);
             // We'll verify against a list of CRLs
@@ -242,11 +257,11 @@ namespace iText.Signatures {
 
         /// <summary>Switches to the previous revision.</summary>
         public virtual void SwitchToPreviousRevision() {
-            LOGGER.Info("Switching to previous revision.");
+            LOGGER.LogInformation("Switching to previous revision.");
             latestRevision = false;
             dss = document.GetCatalog().GetPdfObject().GetAsDictionary(PdfName.DSS);
             DateTime cal = pkcs7.GetTimeStampDate();
-            if (cal == SignUtils.UNDEFINED_TIMESTAMP_DATE) {
+            if (cal == TimestampConstants.UNDEFINED_TIMESTAMP_DATE) {
                 cal = pkcs7.GetSignDate();
             }
             // TODO: get date from signature
@@ -254,18 +269,19 @@ namespace iText.Signatures {
             IList<String> names = sgnUtil.GetSignatureNames();
             if (names.Count > 1) {
                 signatureName = names[names.Count - 2];
-                document = new PdfDocument(new PdfReader(sgnUtil.ExtractRevision(signatureName)), new DocumentProperties()
-                    .SetEventCountingMetaInfo(metaInfo));
-                this.acroForm = PdfAcroForm.GetAcroForm(document, true);
-                this.sgnUtil = new SignatureUtil(document);
-                names = sgnUtil.GetSignatureNames();
-                signatureName = names[names.Count - 1];
-                pkcs7 = CoversWholeDocument();
-                LOGGER.Info(MessageFormatUtil.Format("Checking {0}signature {1}", pkcs7.IsTsp() ? "document-level timestamp "
-                     : "", signatureName));
+                using (PdfReader readerTmp = new PdfReader(sgnUtil.ExtractRevision(signatureName))) {
+                    document = new PdfDocument(readerTmp, new DocumentProperties().SetEventCountingMetaInfo(metaInfo));
+                    this.acroForm = PdfAcroForm.GetAcroForm(document, true);
+                    this.sgnUtil = new SignatureUtil(document);
+                    names = sgnUtil.GetSignatureNames();
+                    signatureName = names[names.Count - 1];
+                    pkcs7 = CoversWholeDocument();
+                    LOGGER.LogInformation(MessageFormatUtil.Format("Checking {0}signature {1}", pkcs7.IsTsp() ? "document-level timestamp "
+                         : "", signatureName));
+                }
             }
             else {
-                LOGGER.Info("No signatures in revision");
+                LOGGER.LogInformation("No signatures in revision");
                 pkcs7 = null;
             }
         }
@@ -301,7 +317,13 @@ namespace iText.Signatures {
             }
             for (int i = 0; i < ocsparray.Size(); i++) {
                 PdfStream stream = ocsparray.GetAsStream(i);
-                OcspResp ocspResponse = new OcspResp(stream.GetBytes());
+                OcspResp ocspResponse;
+                try {
+                    ocspResponse = new OcspResp(stream.GetBytes());
+                }
+                catch (System.IO.IOException e) {
+                    throw new GeneralSecurityException(e.Message);
+                }
                 if (ocspResponse.Status == 0) {
                     try {
                         ocsps.Add((BasicOcspResp)ocspResponse.GetResponseObject());
@@ -322,7 +344,7 @@ namespace iText.Signatures {
             signatureName = names[names.Count - 1];
             this.signDate = DateTimeUtil.GetCurrentUtcTime();
             pkcs7 = CoversWholeDocument();
-            LOGGER.Info(MessageFormatUtil.Format("Checking {0}signature {1}", pkcs7.IsTsp() ? "document-level timestamp "
+            LOGGER.LogInformation(MessageFormatUtil.Format("Checking {0}signature {1}", pkcs7.IsTsp() ? "document-level timestamp "
                  : "", signatureName));
         }
 
@@ -334,13 +356,13 @@ namespace iText.Signatures {
         protected internal virtual PdfPKCS7 CoversWholeDocument() {
             PdfPKCS7 pkcs7 = sgnUtil.ReadSignatureData(signatureName);
             if (sgnUtil.SignatureCoversWholeDocument(signatureName)) {
-                LOGGER.Info("The timestamp covers whole document.");
+                LOGGER.LogInformation("The timestamp covers whole document.");
             }
             else {
                 throw new VerificationException((X509Certificate)null, "Signature doesn't cover whole document.");
             }
             if (pkcs7.VerifySignatureIntegrityAndAuthenticity()) {
-                LOGGER.Info("The signed document has not been modified.");
+                LOGGER.LogInformation("The signed document has not been modified.");
                 return pkcs7;
             }
             else {

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -178,8 +178,8 @@ namespace iText.Layout {
             String cmpFileName = sourceFolder + "cmp_overflowHiddenOnCanvasTest01.pdf";
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(outFileName));
             PdfPage page = pdfDocument.AddNewPage();
-            iText.Layout.Canvas canvas = new Canvas(new PdfCanvas(page), pdfDocument, page.GetPageSize().Clone().ApplyMargins
-                (36, 36, 36, 36, false));
+            iText.Layout.Canvas canvas = new Canvas(new PdfCanvas(page), page.GetPageSize().Clone().ApplyMargins(36, 36
+                , 36, 36, false));
             AddParaWithImgSetOverflowX(canvas, OverflowPropertyValue.HIDDEN);
             canvas.Close();
             pdfDocument.Close();
@@ -208,8 +208,8 @@ namespace iText.Layout {
             String cmpFileName = sourceFolder + "cmp_overflowVisibleOnCanvasTest01.pdf";
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(outFileName));
             PdfPage page = pdfDocument.AddNewPage();
-            iText.Layout.Canvas canvas = new iText.Layout.Canvas(new PdfCanvas(page), pdfDocument, page.GetPageSize().
-                Clone().ApplyMargins(36, 36, 36, 36, false));
+            iText.Layout.Canvas canvas = new iText.Layout.Canvas(new PdfCanvas(page), page.GetPageSize().Clone().ApplyMargins
+                (36, 36, 36, 36, false));
             AddParaWithImgSetOverflowX(canvas, OverflowPropertyValue.VISIBLE);
             canvas.Close();
             pdfDocument.Close();
@@ -271,7 +271,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.OCCUPIED_AREA_HAS_NOT_BEEN_INITIALIZED)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.OCCUPIED_AREA_HAS_NOT_BEEN_INITIALIZED)]
         public virtual void ForcedPlacementTest02() {
             String outFileName = destinationFolder + "forcedPlacementTest02.pdf";
             String cmpFileName = sourceFolder + "cmp_forcedPlacementTest02.pdf";

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,9 +43,12 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
-using iText.IO.Util;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.Kernel.Font;
+using iText.Kernel.Geom;
+using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Tagging;
 using iText.Layout.Element;
 using iText.Layout.Layout;
@@ -93,9 +96,9 @@ namespace iText.Layout.Renderer {
 
         public override void Draw(DrawContext drawContext) {
             if (occupiedArea == null) {
-                ILog logger = LogManager.GetLogger(typeof(iText.Layout.Renderer.ListItemRenderer));
-                logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.OCCUPIED_AREA_HAS_NOT_BEEN_INITIALIZED, 
-                    "Drawing won't be performed."));
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Renderer.ListItemRenderer));
+                logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.OCCUPIED_AREA_HAS_NOT_BEEN_INITIALIZED
+                    , "Drawing won't be performed."));
                 return;
             }
             if (drawContext.IsTaggingEnabled()) {
@@ -128,7 +131,7 @@ namespace iText.Layout.Renderer {
             base.Draw(drawContext);
             // It will be null in case of overflow (only the "split" part will contain symbol renderer.
             if (symbolRenderer != null && !symbolAddedInside) {
-                bool isRtl = BaseDirection.RIGHT_TO_LEFT.Equals(this.GetProperty<BaseDirection?>(Property.BASE_DIRECTION));
+                bool isRtl = BaseDirection.RIGHT_TO_LEFT == this.GetProperty<BaseDirection?>(Property.BASE_DIRECTION);
                 symbolRenderer.SetParent(this);
                 float x = isRtl ? occupiedArea.GetBBox().GetRight() : occupiedArea.GetBBox().GetLeft();
                 ListSymbolPosition symbolPosition = (ListSymbolPosition)ListRenderer.GetListItemOrListProperty(this, parent
@@ -145,18 +148,18 @@ namespace iText.Layout.Renderer {
                         if (isRtl) {
                             UnitValue marginRightUV = this.GetPropertyAsUnitValue(Property.MARGIN_RIGHT);
                             if (!marginRightUV.IsPointValue()) {
-                                ILog logger = LogManager.GetLogger(typeof(iText.Layout.Renderer.ListItemRenderer));
-                                logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED, Property
-                                    .MARGIN_RIGHT));
+                                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Renderer.ListItemRenderer));
+                                logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED
+                                    , Property.MARGIN_RIGHT));
                             }
                             x -= marginRightUV.GetValue();
                         }
                         else {
                             UnitValue marginLeftUV = this.GetPropertyAsUnitValue(Property.MARGIN_LEFT);
                             if (!marginLeftUV.IsPointValue()) {
-                                ILog logger = LogManager.GetLogger(typeof(iText.Layout.Renderer.ListItemRenderer));
-                                logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED, Property
-                                    .MARGIN_LEFT));
+                                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Renderer.ListItemRenderer));
+                                logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED
+                                    , Property.MARGIN_LEFT));
                             }
                             x += marginLeftUV.GetValue();
                         }
@@ -225,7 +228,11 @@ namespace iText.Layout.Renderer {
                 else {
                     symbolRenderer.Move(dxPosition, 0);
                 }
-                if (symbolRenderer.GetOccupiedArea().GetBBox().GetRight() > parent.GetOccupiedArea().GetBBox().GetLeft()) {
+                // consider page area without margins
+                Rectangle effectiveArea = ObtainEffectiveArea(drawContext);
+                // symbols are not drawn here, because they are in page margins
+                if (!isRtl && symbolRenderer.GetOccupiedArea().GetBBox().GetRight() > effectiveArea.GetLeft() || isRtl && 
+                    symbolRenderer.GetOccupiedArea().GetBBox().GetLeft() < effectiveArea.GetRight()) {
                     BeginElementOpacityApplying(drawContext);
                     symbolRenderer.Draw(drawContext);
                     EndElementOpacityApplying(drawContext);
@@ -340,15 +347,45 @@ namespace iText.Layout.Renderer {
             UnitValue fontSize = this.GetPropertyAsUnitValue(Property.FONT_SIZE);
             if (listItemFont != null && fontSize != null) {
                 if (!fontSize.IsPointValue()) {
-                    ILog logger = LogManager.GetLogger(typeof(iText.Layout.Renderer.ListItemRenderer));
-                    logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED, Property
-                        .FONT_SIZE));
+                    ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Renderer.ListItemRenderer));
+                    logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED
+                        , Property.FONT_SIZE));
                 }
                 float[] ascenderDescender = TextRenderer.CalculateAscenderDescender(listItemFont);
                 return new float[] { fontSize.GetValue() * ascenderDescender[0] / TextRenderer.TEXT_SPACE_COEFF, fontSize.
                     GetValue() * ascenderDescender[1] / TextRenderer.TEXT_SPACE_COEFF };
             }
             return new float[] { 0, 0 };
+        }
+
+        private Rectangle ObtainEffectiveArea(DrawContext drawContext) {
+            PdfDocument pdfDocument = drawContext.GetDocument();
+            // for the time being iText creates a single symbol renderer for a list.
+            // This renderer will be used for all the items across all the pages, which mean that it could
+            // be layouted at page i and used at page j, j>i.
+            int pageNumber = parent.GetOccupiedArea().GetPageNumber();
+            Rectangle pageSize;
+            if (pageNumber != 0) {
+                PdfPage page = pdfDocument.GetPage(pageNumber);
+                pageSize = page.GetPageSize();
+            }
+            else {
+                pageSize = pdfDocument.GetDefaultPageSize();
+            }
+            RootRenderer rootRenderer = this.GetRootRenderer();
+            //TODO DEVSIX-6372 Obtaining DocumentRenderer's margins results in a ClassCastException
+            float?[] margins = new float?[] { rootRenderer.GetProperty<float?>(Property.MARGIN_TOP), rootRenderer.GetProperty
+                <float?>(Property.MARGIN_RIGHT), rootRenderer.GetProperty<float?>(Property.MARGIN_BOTTOM), rootRenderer
+                .GetProperty<float?>(Property.MARGIN_LEFT) };
+            for (int i = 0; i < margins.Length; i++) {
+                margins[i] = ReplaceIfNull(margins[i], 0f);
+            }
+            return new Rectangle(pageSize).ApplyMargins((float)margins[0], (float)margins[1], (float)margins[2], (float
+                )margins[3], false);
+        }
+
+        private static float ReplaceIfNull(float? value, float defaultValue) {
+            return (float)(null == value ? defaultValue : value);
         }
     }
 }

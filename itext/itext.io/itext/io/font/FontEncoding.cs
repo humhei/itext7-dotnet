@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,6 +42,7 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
+using iText.Commons.Utils;
 using iText.IO.Util;
 
 namespace iText.IO.Font {
@@ -111,6 +112,7 @@ namespace iText.IO.Font {
         }
 
         /// <summary>This encoding will base on font encoding (FontSpecific encoding in Type 1 terminology)</summary>
+        /// <returns>created font specific encoding</returns>
         public static iText.IO.Font.FontEncoding CreateFontSpecificEncoding() {
             iText.IO.Font.FontEncoding encoding = new iText.IO.Font.FontEncoding();
             encoding.fontSpecific = true;
@@ -164,6 +166,20 @@ namespace iText.IO.Font {
 
         public virtual String GetDifference(int index) {
             return differences != null ? differences[index] : null;
+        }
+
+        /// <summary>Sets a new value in the differences array.</summary>
+        /// <remarks>
+        /// Sets a new value in the differences array.
+        /// See
+        /// <see cref="differences"/>.
+        /// </remarks>
+        /// <param name="index">position to replace</param>
+        /// <param name="difference">new difference value</param>
+        public virtual void SetDifference(int index, String difference) {
+            if (index >= 0 && differences != null && index < differences.Length) {
+                differences[index] = difference;
+            }
         }
 
         /// <summary>
@@ -283,7 +299,7 @@ namespace iText.IO.Font {
                         orderK = order[1];
                     }
                     else {
-                        orderK = Convert.ToInt32(order);
+                        orderK = Convert.ToInt32(order, System.Globalization.CultureInfo.InvariantCulture);
                     }
                     orderK %= 256;
                     unicodeToCode.Put(uni, orderK);
@@ -295,7 +311,7 @@ namespace iText.IO.Font {
             else {
                 int k = 0;
                 if (tok.HasMoreTokens()) {
-                    k = Convert.ToInt32(tok.NextToken());
+                    k = Convert.ToInt32(tok.NextToken(), System.Globalization.CultureInfo.InvariantCulture);
                 }
                 while (tok.HasMoreTokens() && k < 256) {
                     String hex = tok.NextToken();

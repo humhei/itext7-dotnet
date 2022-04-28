@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -58,9 +58,10 @@ using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Ocsp;
 using Org.BouncyCastle.Tsp;
 using Org.BouncyCastle.X509;
-using iText.IO.Util;
-using iText.Kernel;
+using iText.Commons.Utils;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
+using iText.Signatures.Exceptions;
 
 namespace iText.Signatures {
     /// <summary>
@@ -82,7 +83,7 @@ namespace iText.Signatures {
         private String location;
 
         /// <summary>Holds value of property signDate.</summary>
-        private DateTime signDate;
+        private DateTime signDate = (DateTime)TimestampConstants.UNDEFINED_TIMESTAMP_DATE;
 
         // Constructors for creating new signatures
         /// <summary>Assembles all the elements needed to create a signature, except for the data.</summary>
@@ -97,7 +98,8 @@ namespace iText.Signatures {
             // message digest
             digestAlgorithmOid = DigestAlgorithms.GetAllowedDigest(hashAlgorithm);
             if (digestAlgorithmOid == null) {
-                throw new PdfException(PdfException.UnknownHashAlgorithm1).SetMessageParams(hashAlgorithm);
+                throw new PdfException(SignExceptionMessageConstant.UNKNOWN_HASH_ALGORITHM).SetMessageParams(hashAlgorithm
+                    );
             }
             // Copy the certificates
             signCert = (X509Certificate)certChain[0];
@@ -119,7 +121,8 @@ namespace iText.Signatures {
                         digestEncryptionAlgorithmOid = SecurityIDs.ID_DSA;
                     }
                     else {
-                        throw new PdfException(PdfException.UnknownKeyAlgorithm1).SetMessageParams(digestEncryptionAlgorithmOid);
+                        throw new PdfException(SignExceptionMessageConstant.UNKNOWN_KEY_ALGORITHM).SetMessageParams(digestEncryptionAlgorithmOid
+                            );
                     }
                 }
             }
@@ -176,15 +179,15 @@ namespace iText.Signatures {
                     pkcs = din.ReadObject();
                 }
                 catch (System.IO.IOException) {
-                    throw new ArgumentException(PdfException.CannotDecodePkcs7SigneddataObject);
+                    throw new ArgumentException(SignExceptionMessageConstant.CANNOT_DECODE_PKCS7_SIGNED_DATA_OBJECT);
                 }
                 if (!(pkcs is Asn1Sequence)) {
-                    throw new ArgumentException(PdfException.NotAValidPkcs7ObjectNotASequence);
+                    throw new ArgumentException(SignExceptionMessageConstant.NOT_A_VALID_PKCS7_OBJECT_NOT_A_SEQUENCE);
                 }
                 Asn1Sequence signedData = (Asn1Sequence)pkcs;
                 DerObjectIdentifier objId = (DerObjectIdentifier)signedData[0];
                 if (!objId.Id.Equals(SecurityIDs.ID_PKCS7_SIGNED_DATA)) {
-                    throw new ArgumentException(PdfException.NotAValidPkcs7ObjectNotSignedData);
+                    throw new ArgumentException(SignExceptionMessageConstant.NOT_A_VALID_PKCS7_OBJECT_NOT_SIGNED_DATA);
                 }
                 Asn1Sequence content = (Asn1Sequence)((Asn1TaggedObject)signedData[1]).GetObject();
                 // the positions that we care are:
@@ -197,7 +200,7 @@ namespace iText.Signatures {
                 version = ((DerInteger)content[0]).Value.IntValue;
                 // the digestAlgorithms
                 digestalgos = new HashSet<String>();
-                IEnumerator e_1 = ((Asn1Set)content[1]).GetObjects();
+                IEnumerator e_1 = ((Asn1Set)content[1]).GetEnumerator();
                 while (e_1.MoveNext()) {
                     Asn1Sequence s = (Asn1Sequence)e_1.Current;
                     DerObjectIdentifier o = (DerObjectIdentifier)s[0];
@@ -254,7 +257,7 @@ namespace iText.Signatures {
                 // the signerInfos
                 Asn1Set signerInfos = (Asn1Set)content[next];
                 if (signerInfos.Count != 1) {
-                    throw new ArgumentException(PdfException.ThisPkcs7ObjectHasMultipleSignerinfosOnlyOneIsSupportedAtThisTime
+                    throw new ArgumentException(SignExceptionMessageConstant.THIS_PKCS7_OBJECT_HAS_MULTIPLE_SIGNERINFOS_ONLY_ONE_IS_SUPPORTED_AT_THIS_TIME
                         );
                 }
                 Asn1Sequence signerInfo = (Asn1Sequence)signerInfos[0];
@@ -277,8 +280,8 @@ namespace iText.Signatures {
                     }
                 }
                 if (signCert == null) {
-                    throw new PdfException(PdfException.CannotFindSigningCertificateWithSerial1).SetMessageParams(issuer.ToString
-                        () + " / " + serialNumber.ToString(16));
+                    throw new PdfException(SignExceptionMessageConstant.CANNOT_FIND_SIGNING_CERTIFICATE_WITH_THIS_SERIAL).SetMessageParams
+                        (issuer.ToString() + " / " + serialNumber.ToString(16));
                 }
                 SignCertificateChain();
                 digestAlgorithmOid = ((DerObjectIdentifier)((Asn1Sequence)signerInfo[2])[0]).Id;
@@ -351,7 +354,7 @@ namespace iText.Signatures {
                         }
                     }
                     if (digestAttr == null) {
-                        throw new ArgumentException(PdfException.AuthenticatedAttributeIsMissingTheDigest);
+                        throw new ArgumentException(SignExceptionMessageConstant.AUTHENTICATED_ATTRIBUTE_IS_MISSING_THE_DIGEST);
                     }
                     ++next;
                 }
@@ -446,7 +449,7 @@ namespace iText.Signatures {
         /// <returns>Value of property signDate.</returns>
         public virtual DateTime GetSignDate() {
             DateTime dt = GetTimeStampDate();
-            if (dt == SignUtils.UNDEFINED_TIMESTAMP_DATE) {
+            if (dt == TimestampConstants.UNDEFINED_TIMESTAMP_DATE) {
                 return this.signDate;
             }
             else {
@@ -494,7 +497,12 @@ namespace iText.Signatures {
 
         private PdfName filterSubtype;
 
-        /// <summary>Getter for the ID of the digest algorithm, e.g. "2.16.840.1.101.3.4.2.1"</summary>
+        /// <summary>Getter for the ID of the digest algorithm, e.g. "2.16.840.1.101.3.4.2.1".</summary>
+        /// <remarks>
+        /// Getter for the ID of the digest algorithm, e.g. "2.16.840.1.101.3.4.2.1".
+        /// See ISO-32000-1, section 12.8.3.3 PKCS#7 Signatures as used in ISO 32000
+        /// </remarks>
+        /// <returns>the ID of the digest algorithm</returns>
         public virtual String GetDigestAlgorithmOid() {
             return digestAlgorithmOid;
         }
@@ -509,12 +517,21 @@ namespace iText.Signatures {
         /// <summary>The encryption algorithm.</summary>
         private String digestEncryptionAlgorithmOid;
 
-        /// <summary>Getter for the digest encryption algorithm</summary>
+        /// <summary>Getter for the digest encryption algorithm.</summary>
+        /// <remarks>
+        /// Getter for the digest encryption algorithm.
+        /// See ISO-32000-1, section 12.8.3.3 PKCS#7 Signatures as used in ISO 32000
+        /// </remarks>
+        /// <returns>the encryption algorithm</returns>
         public virtual String GetDigestEncryptionAlgorithmOid() {
             return digestEncryptionAlgorithmOid;
         }
 
         /// <summary>Get the algorithm used to calculate the message digest, e.g. "SHA1withRSA".</summary>
+        /// <remarks>
+        /// Get the algorithm used to calculate the message digest, e.g. "SHA1withRSA".
+        /// See ISO-32000-1, section 12.8.3.3 PKCS#7 Signatures as used in ISO 32000
+        /// </remarks>
         /// <returns>the algorithm used to calculate the message digest</returns>
         public virtual String GetDigestAlgorithm() {
             return GetHashAlgorithm() + "with" + GetEncryptionAlgorithm();
@@ -554,7 +571,8 @@ namespace iText.Signatures {
                             this.digestEncryptionAlgorithmOid = SecurityIDs.ID_ECDSA;
                         }
                         else {
-                            throw new PdfException(PdfException.UnknownKeyAlgorithm1).SetMessageParams(digestEncryptionAlgorithm);
+                            throw new PdfException(SignExceptionMessageConstant.UNKNOWN_KEY_ALGORITHM).SetMessageParams(digestEncryptionAlgorithm
+                                );
                         }
                     }
                 }
@@ -617,7 +635,7 @@ namespace iText.Signatures {
                     digest = sig.GenerateSignature();
                 }
                 MemoryStream bOut = new MemoryStream();
-                Asn1OutputStream dout = new Asn1OutputStream(bOut);
+                DerOutputStream dout = new Org.BouncyCastle.Asn1.Asn1OutputStream(bOut);
                 dout.WriteObject(new DerOctetString(digest));
                 dout.Dispose();
                 return bOut.ToArray();
@@ -631,7 +649,7 @@ namespace iText.Signatures {
         /// <summary>Gets the bytes for the PKCS7SignedData object.</summary>
         /// <returns>the bytes for the PKCS7SignedData object</returns>
         public virtual byte[] GetEncodedPKCS7() {
-            return GetEncodedPKCS7(null, null, null, null, PdfSigner.CryptoStandard.CMS);
+            return GetEncodedPKCS7(null, PdfSigner.CryptoStandard.CMS, null, null, null);
         }
 
         /// <summary>Gets the bytes for the PKCS7SignedData object.</summary>
@@ -642,30 +660,7 @@ namespace iText.Signatures {
         /// <param name="secondDigest">the digest in the authenticatedAttributes</param>
         /// <returns>the bytes for the PKCS7SignedData object</returns>
         public virtual byte[] GetEncodedPKCS7(byte[] secondDigest) {
-            return GetEncodedPKCS7(secondDigest, null, null, null, PdfSigner.CryptoStandard.CMS);
-        }
-
-        /// <summary>Gets the bytes for the PKCS7SignedData object.</summary>
-        /// <remarks>
-        /// Gets the bytes for the PKCS7SignedData object. Optionally the authenticatedAttributes
-        /// in the signerInfo can also be set, and/or a time-stamp-authority client
-        /// may be provided.
-        /// </remarks>
-        /// <param name="secondDigest">the digest in the authenticatedAttributes</param>
-        /// <param name="tsaClient">TSAClient - null or an optional time stamp authority client</param>
-        /// <param name="ocsp">DER-encoded OCSP response for the first certificate in the signature certificates chain, or null if OCSP revocation data is not to be added.
-        ///     </param>
-        /// <param name="crlBytes">collection of DER-encoded CRL for certificates from the signature certificates chain, or null if CRL revocation data is not to be added.
-        ///     </param>
-        /// <param name="sigtype">specifies the PKCS7 standard flavor to which created PKCS7SignedData object will adhere: either basic CMS or CAdES
-        ///     </param>
-        /// <returns>byte[] the bytes for the PKCS7SignedData object</returns>
-        [System.ObsoleteAttribute(@"This overload is deprecated, use GetEncodedPKCS7(byte[], CryptoStandard, ITSAClient, System.Collections.Generic.ICollection{E}, System.Collections.Generic.ICollection{E}) instead."
-            )]
-        public virtual byte[] GetEncodedPKCS7(byte[] secondDigest, ITSAClient tsaClient, byte[] ocsp, ICollection<
-            byte[]> crlBytes, PdfSigner.CryptoStandard sigtype) {
-            return GetEncodedPKCS7(secondDigest, sigtype, tsaClient, ocsp != null ? JavaCollectionsUtil.Singleton(ocsp
-                ) : null, crlBytes);
+            return GetEncodedPKCS7(secondDigest, PdfSigner.CryptoStandard.CMS, null, null, null);
         }
 
         /// <summary>Gets the bytes for the PKCS7SignedData object.</summary>
@@ -678,10 +673,15 @@ namespace iText.Signatures {
         /// <param name="sigtype">specifies the PKCS7 standard flavor to which created PKCS7SignedData object will adhere: either basic CMS or CAdES
         ///     </param>
         /// <param name="tsaClient">TSAClient - null or an optional time stamp authority client</param>
-        /// <param name="ocsp">collection of DER-encoded OCSP responses for the  certificate in the signature certificates chain, or null if OCSP revocation data is not to be added.
-        ///     </param>
-        /// <param name="crlBytes">collection of DER-encoded CRL for certificates from the signature certificates chain, or null if CRL revocation data is not to be added.
-        ///     </param>
+        /// <param name="ocsp">
+        /// collection of DER-encoded BasicOCSPResponses for the  certificate in the signature certificates
+        /// chain, or null if OCSP revocation data is not to be added.
+        /// </param>
+        /// <param name="crlBytes">
+        /// collection of DER-encoded CRL for certificates from the signature certificates chain,
+        /// or null if CRL revocation data is not to be added.
+        /// </param>
+        /// <seealso><a href="https://datatracker.ietf.org/doc/html/rfc6960#section-4.2.1">RFC 6960 § 4.2.1</a></seealso>
         /// <returns>byte[] the bytes for the PKCS7SignedData object</returns>
         public virtual byte[] GetEncodedPKCS7(byte[] secondDigest, PdfSigner.CryptoStandard sigtype, ITSAClient tsaClient
             , ICollection<byte[]> ocsp, ICollection<byte[]> crlBytes) {
@@ -731,10 +731,8 @@ namespace iText.Signatures {
                 }
                 DerSet dercertificates = new DerSet(v);
                 // Create signerinfo structure.
-                //
                 Asn1EncodableVector signerinfo = new Asn1EncodableVector();
                 // Add the signerInfo version
-                //
                 signerinfo.Add(new DerInteger(signerversion));
                 v = new Asn1EncodableVector();
                 v.Add(CertificateInfo.GetIssuer(signCert.GetTbsCertificate()));
@@ -785,7 +783,7 @@ namespace iText.Signatures {
                 whole.Add(new DerObjectIdentifier(SecurityIDs.ID_PKCS7_SIGNED_DATA));
                 whole.Add(new DerTaggedObject(0, new DerSequence(body)));
                 MemoryStream bOut = new MemoryStream();
-                Asn1OutputStream dout = new Asn1OutputStream(bOut);
+                DerOutputStream dout = new Org.BouncyCastle.Asn1.Asn1OutputStream(bOut);
                 dout.WriteObject(new DerSequence(whole));
                 dout.Dispose();
                 return bOut.ToArray();
@@ -834,8 +832,10 @@ namespace iText.Signatures {
         /// exactly the same as in
         /// <see cref="GetEncodedPKCS7(byte[])"/>.
         /// <para />
-        /// A simple example:
+        /// Note: do not pass in the full DER-encoded OCSPResponse object obtained from the responder,
+        /// only the DER-encoded BasicOCSPResponse value contained in the response data.
         /// <para />
+        /// A simple example:
         /// <pre>
         /// Calendar cal = Calendar.getInstance();
         /// PdfPKCS7 pk7 = new PdfPKCS7(key, chain, null, "SHA1", null, false);
@@ -853,55 +853,20 @@ namespace iText.Signatures {
         /// </pre>
         /// </remarks>
         /// <param name="secondDigest">the content digest</param>
-        /// <param name="ocsp">collection of DER-encoded OCSP responses for the  certificate in the signature certificates chain, or null if OCSP revocation data is not to be added.
-        ///     </param>
-        /// <param name="crlBytes">collection of DER-encoded CRL for certificates from the signature certificates chain, or null if CRL revocation data is not to be added.
-        ///     </param>
-        /// <param name="sigtype">specifies the PKCS7 standard flavor to which created PKCS7SignedData object will adhere: either basic CMS or CAdES
-        ///     </param>
+        /// <param name="sigtype">
+        /// specifies the PKCS7 standard flavor to which created PKCS7SignedData object will adhere:
+        /// either basic CMS or CAdES
+        /// </param>
+        /// <param name="ocsp">
+        /// collection of DER-encoded BasicOCSPResponses for the  certificate in the signature certificates
+        /// chain, or null if OCSP revocation data is not to be added.
+        /// </param>
+        /// <param name="crlBytes">
+        /// collection of DER-encoded CRL for certificates from the signature certificates chain,
+        /// or null if CRL revocation data is not to be added.
+        /// </param>
         /// <returns>the byte array representation of the authenticatedAttributes ready to be signed</returns>
-        [System.ObsoleteAttribute(@"This method overload is deprecated. Please use GetAuthenticatedAttributeBytes(byte[], CryptoStandard, System.Collections.Generic.ICollection{E}, System.Collections.Generic.ICollection{E})"
-            )]
-        public virtual byte[] GetAuthenticatedAttributeBytes(byte[] secondDigest, byte[] ocsp, ICollection<byte[]>
-             crlBytes, PdfSigner.CryptoStandard sigtype) {
-            return GetAuthenticatedAttributeBytes(secondDigest, sigtype, ocsp != null ? JavaCollectionsUtil.Singleton(
-                ocsp) : null, crlBytes);
-        }
-
-        /// <summary>When using authenticatedAttributes the authentication process is different.</summary>
-        /// <remarks>
-        /// When using authenticatedAttributes the authentication process is different.
-        /// The document digest is generated and put inside the attribute. The signing is done over the DER encoded
-        /// authenticatedAttributes. This method provides that encoding and the parameters must be
-        /// exactly the same as in
-        /// <see cref="GetEncodedPKCS7(byte[])"/>.
-        /// <para />
-        /// A simple example:
-        /// <para />
-        /// <pre>
-        /// Calendar cal = Calendar.getInstance();
-        /// PdfPKCS7 pk7 = new PdfPKCS7(key, chain, null, "SHA1", null, false);
-        /// MessageDigest messageDigest = MessageDigest.getInstance("SHA1");
-        /// byte[] buf = new byte[8192];
-        /// int n;
-        /// InputStream inp = sap.getRangeStream();
-        /// while ((n = inp.read(buf)) &gt; 0) {
-        /// messageDigest.update(buf, 0, n);
-        /// }
-        /// byte[] hash = messageDigest.digest();
-        /// byte[] sh = pk7.getAuthenticatedAttributeBytes(hash, cal);
-        /// pk7.update(sh, 0, sh.length);
-        /// byte[] sg = pk7.getEncodedPKCS7(hash, cal);
-        /// </pre>
-        /// </remarks>
-        /// <param name="secondDigest">the content digest</param>
-        /// <param name="sigtype">specifies the PKCS7 standard flavor to which created PKCS7SignedData object will adhere: either basic CMS or CAdES
-        ///     </param>
-        /// <param name="ocsp">collection of DER-encoded OCSP responses for the  certificate in the signature certificates chain, or null if OCSP revocation data is not to be added.
-        ///     </param>
-        /// <param name="crlBytes">collection of DER-encoded CRL for certificates from the signature certificates chain, or null if CRL revocation data is not to be added.
-        ///     </param>
-        /// <returns>the byte array representation of the authenticatedAttributes ready to be signed</returns>
+        /// <seealso><a href="https://datatracker.ietf.org/doc/html/rfc6960#section-4.2.1">RFC 6960 § 4.2.1</a></seealso>
         public virtual byte[] GetAuthenticatedAttributeBytes(byte[] secondDigest, PdfSigner.CryptoStandard sigtype
             , ICollection<byte[]> ocsp, ICollection<byte[]> crlBytes) {
             try {
@@ -1017,14 +982,6 @@ namespace iText.Signatures {
         private bool verifyResult;
 
         // verification
-        /// <summary>Verify the digest.</summary>
-        /// <returns><c>true</c> if the signature checks out, <c>false</c> otherwise</returns>
-        [System.ObsoleteAttribute(@"This method will be removed in future versions. Please use VerifySignatureIntegrityAndAuthenticity() instead."
-            )]
-        public virtual bool Verify() {
-            return VerifySignatureIntegrityAndAuthenticity();
-        }
-
         /// <summary>
         /// Verifies that signature integrity is intact (or in other words that signed data wasn't modified)
         /// by checking that embedded data digest corresponds to the calculated one.
@@ -1091,7 +1048,7 @@ namespace iText.Signatures {
         /// <summary>Checks if the timestamp refers to this document.</summary>
         /// <returns>true if it checks false otherwise</returns>
         public virtual bool VerifyTimestampImprint() {
-            // TODO ensure this method works correctly
+            // TODO DEVSIX-6011 ensure this method works correctly
             if (timeStampToken == null) {
                 return false;
             }
@@ -1108,7 +1065,7 @@ namespace iText.Signatures {
         private ICollection<X509Certificate> certs;
 
         /// <summary>All the X.509 certificates used for the main signature.</summary>
-        private ICollection<X509Certificate> signCerts;
+        internal ICollection<X509Certificate> signCerts;
 
         /// <summary>The X.509 certificate that is used to sign the digest.</summary>
         private X509Certificate signCert;
@@ -1182,7 +1139,7 @@ namespace iText.Signatures {
         }
 
         /// <summary>Helper method that tries to construct the CRLs.</summary>
-        private void FindCRL(Asn1Sequence seq) {
+        internal virtual void FindCRL(Asn1Sequence seq) {
             try {
                 crls = new List<X509Crl>();
                 for (int k = 0; k < seq.Count; ++k) {
@@ -1199,7 +1156,7 @@ namespace iText.Signatures {
         // ignore
         // Online Certificate Status Protocol
         /// <summary>BouncyCastle BasicOCSPResp</summary>
-        private BasicOcspResp basicResp;
+        internal BasicOcspResp basicResp;
 
         /// <summary>Gets the OCSP basic response if there is one.</summary>
         /// <returns>the OCSP basic response or null</returns>
@@ -1291,16 +1248,23 @@ namespace iText.Signatures {
             return timeStampToken;
         }
 
-        /// <summary>Gets the timestamp date</summary>
-        /// <returns>a date</returns>
+        /// <summary>Gets the timestamp date.</summary>
+        /// <remarks>
+        /// Gets the timestamp date.
+        /// In case the signed document doesn't contain timestamp,
+        /// <see cref="TimestampConstants.UNDEFINED_TIMESTAMP_DATE"/>
+        /// will be returned.
+        /// </remarks>
+        /// <returns>the timestamp date</returns>
         public virtual DateTime GetTimeStampDate() {
             if (timeStampToken == null) {
-                return (DateTime)SignUtils.UNDEFINED_TIMESTAMP_DATE;
+                return (DateTime)TimestampConstants.UNDEFINED_TIMESTAMP_DATE;
             }
             return SignUtils.GetTimeStampDate(timeStampToken);
         }
 
-        /// <summary>Returns the filter subtype.</summary>
+        /// <summary>Getter for the filter subtype.</summary>
+        /// <returns>the filter subtype</returns>
         public virtual PdfName GetFilterSubtype() {
             return filterSubtype;
         }

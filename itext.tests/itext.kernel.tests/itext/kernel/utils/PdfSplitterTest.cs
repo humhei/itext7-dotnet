@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,7 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.IO;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Kernel.Pdf;
 using iText.Test;
 using iText.Test.Attributes;
@@ -62,7 +62,7 @@ namespace iText.Kernel.Utils {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.SOURCE_DOCUMENT_HAS_ACROFORM_DICTIONARY, Count = 3)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.SOURCE_DOCUMENT_HAS_ACROFORM_DICTIONARY, Count = 3)]
         public virtual void SplitDocumentTest01() {
             String inputFileName = sourceFolder + "iphone_user_guide.pdf";
             PdfDocument inputPdfDoc = new PdfDocument(new PdfReader(inputFileName));
@@ -98,7 +98,7 @@ namespace iText.Kernel.Utils {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.SOURCE_DOCUMENT_HAS_ACROFORM_DICTIONARY, Count = 3)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.SOURCE_DOCUMENT_HAS_ACROFORM_DICTIONARY, Count = 3)]
         public virtual void SplitDocumentTest02() {
             String inputFileName = sourceFolder + "iphone_user_guide.pdf";
             PdfDocument inputPdfDoc = new PdfDocument(new PdfReader(inputFileName));
@@ -142,7 +142,7 @@ namespace iText.Kernel.Utils {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.SOURCE_DOCUMENT_HAS_ACROFORM_DICTIONARY, Count = 2)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.SOURCE_DOCUMENT_HAS_ACROFORM_DICTIONARY, Count = 2)]
         public virtual void SplitDocumentTest03() {
             String inputFileName = sourceFolder + "iphone_user_guide.pdf";
             PdfDocument inputPdfDoc = new PdfDocument(new PdfReader(inputFileName));
@@ -180,7 +180,7 @@ namespace iText.Kernel.Utils {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.SOURCE_DOCUMENT_HAS_ACROFORM_DICTIONARY, Count = 2)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.SOURCE_DOCUMENT_HAS_ACROFORM_DICTIONARY, Count = 2)]
         public virtual void SplitDocumentTest04() {
             String inputFileName = sourceFolder + "iphone_user_guide.pdf";
             PdfDocument inputPdfDoc = new PdfDocument(new PdfReader(inputFileName));
@@ -219,7 +219,7 @@ namespace iText.Kernel.Utils {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.SOURCE_DOCUMENT_HAS_ACROFORM_DICTIONARY, Count = 2)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.SOURCE_DOCUMENT_HAS_ACROFORM_DICTIONARY, Count = 2)]
         public virtual void SplitDocumentByOutlineTest() {
             String inputFileName = sourceFolder + "iphone_user_guide.pdf";
             PdfDocument inputPdfDoc = new PdfDocument(new PdfReader(inputFileName));
@@ -265,6 +265,22 @@ namespace iText.Kernel.Utils {
                 catch (FileNotFoundException) {
                     throw new Exception();
                 }
+            }
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.SOURCE_DOCUMENT_HAS_ACROFORM_DICTIONARY, Count = 10)]
+        public virtual void SplitByPageCountTest() {
+            String inputFileName = sourceFolder + "iphone_user_guide.pdf";
+            using (PdfDocument inputPdfDoc = new PdfDocument(new PdfReader(inputFileName))) {
+                PdfSplitter splitter = new PdfSplitter(inputPdfDoc);
+                int pagesCount = inputPdfDoc.GetNumberOfPages();
+                int pagesCountInSplitDoc = 13;
+                IList<PdfDocument> splitDocuments = splitter.SplitByPageCount(pagesCountInSplitDoc);
+                foreach (PdfDocument doc in splitDocuments) {
+                    doc.Close();
+                }
+                NUnit.Framework.Assert.AreEqual(pagesCount / pagesCountInSplitDoc, splitDocuments.Count);
             }
         }
     }

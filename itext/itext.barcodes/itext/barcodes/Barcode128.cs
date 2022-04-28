@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,9 +44,10 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.Text;
-using iText.IO.Util;
-using iText.Kernel;
+using iText.Barcodes.Exceptions;
+using iText.Commons.Utils;
 using iText.Kernel.Colors;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Font;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
@@ -225,7 +226,7 @@ namespace iText.Barcodes {
                     if (code.Length < k) {
                         break;
                     }
-                    int subcode = Convert.ToInt32(code.JSubstring(0, k));
+                    int subcode = Convert.ToInt32(code.JSubstring(0, k), System.Globalization.CultureInfo.InvariantCulture);
                     n = ais.ContainsKey(subcode) ? (int)ais.Get(subcode) : 0;
                     if (n != 0) {
                         idlen = k;
@@ -283,7 +284,7 @@ namespace iText.Barcodes {
             for (int k = 0; k < tLen; ++k) {
                 c = text[k];
                 if (c > 127 && c != FNC1) {
-                    throw new PdfException(PdfException.ThereAreIllegalCharactersForBarcode128In1);
+                    throw new PdfException(BarcodeExceptionMessageConstant.THERE_ARE_ILLEGAL_CHARACTERS_FOR_BARCODE_128);
                 }
             }
             c = text[0];
@@ -325,7 +326,7 @@ namespace iText.Barcodes {
                 }
             }
             if (codeSet != Barcode128.Barcode128CodeSet.AUTO && currentCode != GetStartSymbol(codeSet)) {
-                throw new PdfException(PdfException.ThereAreIllegalCharactersForBarcode128In1);
+                throw new PdfException(BarcodeExceptionMessageConstant.THERE_ARE_ILLEGAL_CHARACTERS_FOR_BARCODE_128);
             }
             while (index < tLen) {
                 switch (currentCode) {
@@ -416,7 +417,7 @@ namespace iText.Barcodes {
                     }
                 }
                 if (codeSet != Barcode128.Barcode128CodeSet.AUTO && currentCode != GetStartSymbol(codeSet)) {
-                    throw new PdfException(PdfException.ThereAreIllegalCharactersForBarcode128In1);
+                    throw new PdfException(BarcodeExceptionMessageConstant.THERE_ARE_ILLEGAL_CHARACTERS_FOR_BARCODE_128);
                 }
             }
             return @out;
@@ -688,7 +689,7 @@ namespace iText.Barcodes {
                     if (sai.Length < 2) {
                         throw new ArgumentException("AI is too short");
                     }
-                    int ai = Convert.ToInt32(sai);
+                    int ai = Convert.ToInt32(sai, System.Globalization.CultureInfo.InvariantCulture);
                     int len = (int)ais.Get(ai);
                     if (len == 0) {
                         throw new ArgumentException("AI not found");

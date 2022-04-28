@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,7 +45,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using iText.Kernel.Counter.Event;
+using iText.Commons.Actions.Contexts;
 
 namespace iText.Kernel.Pdf {
     /// <summary>
@@ -189,7 +189,7 @@ namespace iText.Kernel.Pdf {
 
         /// <summary>
         /// Sets the
-        /// <see cref="iText.Kernel.Counter.Event.IMetaInfo"/>
+        /// <see cref="iText.Commons.Actions.Contexts.IMetaInfo"/>
         /// that will be used during
         /// <see cref="PdfDocument"/>
         /// creation.
@@ -234,14 +234,21 @@ namespace iText.Kernel.Pdf {
         public void Encrypt(PdfReader reader, Stream os, IDictionary<String, String> newInfo) {
             WriterProperties writerProperties = new WriterProperties();
             writerProperties.encryptionProperties = properties;
-            PdfWriter writer = new PdfWriter(os, writerProperties);
             StampingProperties stampingProperties = new StampingProperties();
             stampingProperties.SetEventCountingMetaInfo(metaInfo);
-            PdfDocument document = new PdfDocument(reader, writer, stampingProperties);
-            document.GetDocumentInfo().SetMoreInfo(newInfo);
-            document.Close();
+            try {
+                using (PdfWriter writer = new PdfWriter(os, writerProperties)) {
+                    using (PdfDocument document = new PdfDocument(reader, writer, stampingProperties)) {
+                        document.GetDocumentInfo().SetMoreInfo(newInfo);
+                    }
+                }
+            }
+            catch (System.IO.IOException) {
+            }
         }
 
+        //The close() method of OutputStream throws an exception, but we don't need to do anything in this case,
+        // because OutputStream#close() does nothing.
         /// <summary>Entry point to encrypt a PDF document.</summary>
         /// <param name="reader">the read PDF</param>
         /// <param name="os">the output destination</param>

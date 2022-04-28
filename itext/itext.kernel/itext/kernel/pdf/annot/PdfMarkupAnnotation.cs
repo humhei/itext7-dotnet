@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,8 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 
@@ -66,6 +67,19 @@ namespace iText.Kernel.Pdf.Annot {
             : base(rect) {
         }
 
+        /// <summary>
+        /// Instantiates a new
+        /// <see cref="PdfMarkupAnnotation"/>
+        /// instance based on
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// instance, that represents existing annotation object in the document.
+        /// </summary>
+        /// <param name="pdfObject">
+        /// the
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// representing annotation object
+        /// </param>
+        /// <seealso cref="PdfAnnotation.MakeAnnotation(iText.Kernel.Pdf.PdfObject)"/>
         protected internal PdfMarkupAnnotation(PdfDictionary pdfObject)
             : base(pdfObject) {
         }
@@ -331,8 +345,8 @@ namespace iText.Kernel.Pdf.Annot {
                 if (popupObject != null) {
                     PdfAnnotation annotation = MakeAnnotation(popupObject);
                     if (!(annotation is PdfPopupAnnotation)) {
-                        ILog logger = LogManager.GetLogger(typeof(iText.Kernel.Pdf.Annot.PdfMarkupAnnotation));
-                        logger.Warn(iText.IO.LogMessageConstant.POPUP_ENTRY_IS_NOT_POPUP_ANNOTATION);
+                        ILogger logger = ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.Annot.PdfMarkupAnnotation));
+                        logger.LogWarning(iText.IO.Logs.IoLogMessageConstant.POPUP_ENTRY_IS_NOT_POPUP_ANNOTATION);
                         return null;
                     }
                     popup = (PdfPopupAnnotation)annotation;
@@ -521,12 +535,13 @@ namespace iText.Kernel.Pdf.Annot {
         /// </description></item>
         /// </list>
         /// </remarks>
+        /// <param name="exData">the external data dictionary</param>
         /// <returns>
         /// this
         /// <see cref="PdfMarkupAnnotation"/>
-        /// instance.
+        /// instance
         /// </returns>
-        public virtual iText.Kernel.Pdf.Annot.PdfMarkupAnnotation SetExternalData(PdfName exData) {
+        public virtual iText.Kernel.Pdf.Annot.PdfMarkupAnnotation SetExternalData(PdfDictionary exData) {
             return (iText.Kernel.Pdf.Annot.PdfMarkupAnnotation)Put(PdfName.ExData, exData);
         }
     }

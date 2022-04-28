@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,6 +44,10 @@ address: sales@itextpdf.com
 namespace iText.Kernel.Pdf.Canvas {
     /// <summary>A container for constants defined in the PDF specification (ISO 32000-1).</summary>
     public class PdfCanvasConstants {
+        private PdfCanvasConstants() {
+        }
+
+        // This private constructor will prevent the instantiation of this class
         /// <summary>
         /// The text rendering mode determines whether showing text causes glyph
         /// outlines to be stroked, filled, used as a clipping boundary, or some
@@ -101,6 +105,10 @@ namespace iText.Kernel.Pdf.Canvas {
         /// 8.4.3.3 "Line Cap Style".
         /// </remarks>
         public class LineCapStyle {
+            private LineCapStyle() {
+            }
+
+            // This private constructor will prevent the instantiation of this class
             /// <summary>The stroke is squared of at the endpoint of the path.</summary>
             /// <remarks>
             /// The stroke is squared of at the endpoint of the path. There is no
@@ -134,6 +142,10 @@ namespace iText.Kernel.Pdf.Canvas {
         /// 8.4.3.4 "Line Join Style".
         /// </remarks>
         public class LineJoinStyle {
+            private LineJoinStyle() {
+            }
+
+            // This private constructor will prevent the instantiation of this class
             /// <summary>
             /// The outer edges of the strokes for the two segments are extended
             /// until they meet at an angle, as in a picture frame.
@@ -166,9 +178,16 @@ namespace iText.Kernel.Pdf.Canvas {
             public const int BEVEL = 2;
         }
 
+        /// <summary>Rule for determining which points lie inside a path.</summary>
         public class FillingRule {
+            private FillingRule() {
+            }
+
+            // This private constructor will prevent the instantiation of this class
+            /// <summary>The nonzero winding number rule.</summary>
             public const int NONZERO_WINDING = 1;
 
+            /// <summary>The even-odd winding number rule.</summary>
             public const int EVEN_ODD = 2;
         }
     }

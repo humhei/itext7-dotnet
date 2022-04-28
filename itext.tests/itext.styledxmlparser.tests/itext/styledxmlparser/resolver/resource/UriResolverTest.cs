@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -47,6 +47,10 @@ using iText.Test;
 
 namespace iText.StyledXmlParser.Resolver.Resource {
     public class UriResolverTest : ExtendedITextTest {
+        
+        public static readonly String SOURCE_FOLDER = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
+            .CurrentContext.TestDirectory) + "/resources/com/itextpdfstyledxmlparser/resolver/resource/UriResolverTest/";
+
         [NUnit.Framework.Test]
         public virtual void UriResolverTest01() {
             String absolutePathRoot = new Uri(new Uri("file://"), Path.GetPathRoot(Directory.GetCurrentDirectory())).ToExternalForm();
@@ -105,6 +109,15 @@ namespace iText.StyledXmlParser.Resolver.Resource {
             String parentFolder = new Uri(Directory.GetParent(Directory.GetCurrentDirectory()).FullName).ToExternalForm() + "/";
             TestPaths(parentFolder, resolver);
         }
+        
+        [NUnit.Framework.Test]
+        public virtual void ResolveAgainstBaseUriTest() {
+            String baseUrl = "https://test";
+            UriResolver resolver = new UriResolver(SOURCE_FOLDER);
+        resolver.ResolveAgainstBaseUri(baseUrl);
+        NUnit.Framework.Assert.IsTrue(resolver.IsLocalBaseUri());
+        NUnit.Framework.Assert.IsTrue(resolver.GetBaseUri().StartsWith("file:"));
+    }
 
         [NUnit.Framework.Test]
         public virtual void UriResolverTest07() {
@@ -240,12 +253,20 @@ namespace iText.StyledXmlParser.Resolver.Resource {
             UriResolver resolver = new UriResolver("base/uri/index.html");
             String runFolder = new Uri(Path.GetFullPath(Directory.GetCurrentDirectory() )).ToExternalForm() + "/";
             NUnit.Framework.Assert.AreEqual(runFolder + "base/uri/index.html", resolver.GetBaseUri());
-            NUnit.Framework.Assert.AreEqual("file:///c:/test/folder/img.txt", resolver.ResolveAgainstBaseUri("file:/c:/test/folder/img.txt"
-                ).ToExternalForm());
+            
+            String firstUriResolvingResult = resolver.ResolveAgainstBaseUri("file:/c:/test/folder/img.txt")
+                .ToExternalForm();
+            String expectedUriWithSingleSlash = "file:/c:/test/folder/img.txt";
+            String expectedUriWithTripleSlash = "file:///c:/test/folder/img.txt";
+            NUnit.Framework.Assert.True(expectedUriWithSingleSlash.Equals(firstUriResolvingResult) 
+                                        || expectedUriWithTripleSlash.Equals(firstUriResolvingResult));
             NUnit.Framework.Assert.AreEqual("file:///c:/test/folder/img.txt", resolver.ResolveAgainstBaseUri("file://c:/test/folder/img.txt"
                 ).ToExternalForm());
-            NUnit.Framework.Assert.AreEqual("file:///c:/test/folder/data.jpg", resolver.ResolveAgainstBaseUri("file:///c:/test/folder/data.jpg"
-                ).ToExternalForm());
+            
+            String thirdUriResolvingResult = resolver.ResolveAgainstBaseUri("file:///c:/test/folder/img.txt")
+                .ToExternalForm();
+            // Result of resolving uri with triple slash should be the same as if it contained single slash.
+            NUnit.Framework.Assert.AreEqual(firstUriResolvingResult, thirdUriResolvingResult);
         }
 
 
@@ -304,8 +325,7 @@ namespace iText.StyledXmlParser.Resolver.Resource {
 //            NUnit.Framework.Assert.AreNotEqual(uriRoot + "test/folder/folder2/innerTest2", resolver.ResolveAgainstBaseUri
 //                ("//folder2/innerTest2").ToExternalForm());
         }
-
-        // the whitespace characters are
+        
         [NUnit.Framework.Test]
         public virtual void UriResolverTest16C() {
             String absolutePathRoot = new Uri(new Uri("file://"), Path.GetPathRoot(Directory.GetCurrentDirectory())).ToString();
@@ -410,6 +430,13 @@ namespace iText.StyledXmlParser.Resolver.Resource {
 
             NUnit.Framework.Assert.AreEqual(expectedUrl, resolver.ResolveAgainstBaseUri(relativePath).ToExternalForm());
     }
+        
+        [NUnit.Framework.Test]
+        public void UriResolverPercentSignTest() {
+            String absolutePathRoot = new Uri(new Uri("file://"), Path.GetPathRoot(Directory.GetCurrentDirectory())).ToString();
+            UriResolver resolver = new UriResolver(absolutePathRoot + "%homepath%");
+            NUnit.Framework.Assert.AreEqual(absolutePathRoot + "%25homepath%25", resolver.GetBaseUri());
+        }
         
         private void TestPaths(String absolutePathRoot, UriResolver resolver)
         {

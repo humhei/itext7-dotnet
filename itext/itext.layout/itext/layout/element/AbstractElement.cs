@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Kernel.Pdf.Action;
 using iText.Layout;
 using iText.Layout.Properties;
@@ -57,7 +57,7 @@ namespace iText.Layout.Element {
     /// share.
     /// </summary>
     /// <typeparam name="T">the type of the implementation</typeparam>
-    public abstract class AbstractElement<T> : ElementPropertyContainer<T>, IElement
+    public abstract class AbstractElement<T> : ElementPropertyContainer<T>, IAbstractElement
         where T : IElement {
         protected internal IRenderer nextRenderer;
 
@@ -115,11 +115,21 @@ namespace iText.Layout.Element {
         /// <summary>Add a new style to this element.</summary>
         /// <remarks>
         /// Add a new style to this element. A style can be used as an effective way
-        /// to define multiple equal properties to several elements.
+        /// to define multiple equal properties to several elements, however its properties have
+        /// lower priority than properties, directly set on
+        /// <see cref="iText.Layout.ElementPropertyContainer{T}"/>
+        /// Note that if several Style objects are added, iText checks them one by one
+        /// in the order in which they were added and returns the property's value from
+        /// the last Style object, which contains this property. So, if there are two Style
+        /// objects added: the first has set width of 100 points and the second of 200 points,
+        /// iText will get 200 points as width value.
         /// </remarks>
         /// <param name="style">the style to be added</param>
         /// <returns>this element</returns>
         public virtual T AddStyle(Style style) {
+            if (style == null) {
+                throw new ArgumentException("Style can not be null.");
+            }
             if (styles == null) {
                 styles = new LinkedHashSet<Style>();
             }

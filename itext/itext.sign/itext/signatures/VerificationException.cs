@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,15 +44,18 @@ address: sales@itextpdf.com
 using System;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
-using iText.IO.Util;
+using iText.Commons.Utils;
+using iText.Signatures.Exceptions;
 
 namespace iText.Signatures {
     /// <summary>An exception that is thrown when something is wrong with a certificate.</summary>
     public class VerificationException : GeneralSecurityException {
-        /// <summary>Creates a VerificationException</summary>
+        /// <summary>Creates a VerificationException.</summary>
+        /// <param name="cert">is a failed certificate</param>
+        /// <param name="message">is a reason of failure</param>
         public VerificationException(X509Certificate cert, String message)
-            : base(MessageFormatUtil.Format("Certificate {0} failed: {1}", cert == null ? "Unknown" : ((X509Certificate
-                )cert).SubjectDN.ToString(), message)) {
+            : base(MessageFormatUtil.Format(SignExceptionMessageConstant.CERTIFICATE_TEMPLATE_FOR_EXCEPTION_MESSAGE, cert
+                 == null ? "Unknown" : ((X509Certificate)cert).SubjectDN.ToString(), message)) {
         }
     }
 }

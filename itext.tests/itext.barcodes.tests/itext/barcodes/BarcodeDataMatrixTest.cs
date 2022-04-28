@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -208,41 +208,32 @@ namespace iText.Barcodes {
 
         [NUnit.Framework.Test]
         public virtual void Barcode12Test() {
-            NUnit.Framework.Assert.That(() =>  {
-                BarcodeDataMatrix barcodeDataMatrix = new BarcodeDataMatrix();
-                barcodeDataMatrix.SetWidth(18);
-                barcodeDataMatrix.SetHeight(18);
-                byte[] str = "AbcdFFghijklmnop".GetBytes();
-                barcodeDataMatrix.SetCode(str, -1, str.Length);
-            }
-            , NUnit.Framework.Throws.InstanceOf<IndexOutOfRangeException>())
-;
+            BarcodeDataMatrix barcodeDataMatrix = new BarcodeDataMatrix();
+            barcodeDataMatrix.SetWidth(18);
+            barcodeDataMatrix.SetHeight(18);
+            byte[] str = "AbcdFFghijklmnop".GetBytes();
+            Exception e = NUnit.Framework.Assert.Catch(typeof(IndexOutOfRangeException), () => barcodeDataMatrix.SetCode
+                (str, -1, str.Length));
         }
 
         [NUnit.Framework.Test]
         public virtual void Barcode13Test() {
-            NUnit.Framework.Assert.That(() =>  {
-                BarcodeDataMatrix barcodeDataMatrix = new BarcodeDataMatrix();
-                barcodeDataMatrix.SetWidth(18);
-                barcodeDataMatrix.SetHeight(18);
-                byte[] str = "AbcdFFghijklmnop".GetBytes();
-                barcodeDataMatrix.SetCode(str, 0, str.Length + 1);
-            }
-            , NUnit.Framework.Throws.InstanceOf<IndexOutOfRangeException>())
-;
+            BarcodeDataMatrix barcodeDataMatrix = new BarcodeDataMatrix();
+            barcodeDataMatrix.SetWidth(18);
+            barcodeDataMatrix.SetHeight(18);
+            byte[] str = "AbcdFFghijklmnop".GetBytes();
+            NUnit.Framework.Assert.Catch(typeof(IndexOutOfRangeException), () => barcodeDataMatrix.SetCode(str, 0, str
+                .Length + 1));
         }
 
         [NUnit.Framework.Test]
         public virtual void Barcode14Test() {
-            NUnit.Framework.Assert.That(() =>  {
-                BarcodeDataMatrix barcodeDataMatrix = new BarcodeDataMatrix();
-                barcodeDataMatrix.SetWidth(18);
-                barcodeDataMatrix.SetHeight(18);
-                byte[] str = "AbcdFFghijklmnop".GetBytes();
-                barcodeDataMatrix.SetCode(str, 0, -1);
-            }
-            , NUnit.Framework.Throws.InstanceOf<IndexOutOfRangeException>())
-;
+            BarcodeDataMatrix barcodeDataMatrix = new BarcodeDataMatrix();
+            barcodeDataMatrix.SetWidth(18);
+            barcodeDataMatrix.SetHeight(18);
+            byte[] str = "AbcdFFghijklmnop".GetBytes();
+            NUnit.Framework.Assert.Catch(typeof(IndexOutOfRangeException), () => barcodeDataMatrix.SetCode(str, 0, -1)
+                );
         }
 
         [NUnit.Framework.Test]

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -45,6 +45,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using iText.Commons.Utils;
 using iText.IO.Font.Cmap;
 using iText.IO.Font.Constants;
 using iText.IO.Util;
@@ -214,7 +215,7 @@ namespace iText.IO.Font {
                 p.Load(resource);
                 foreach (KeyValuePair<Object, Object> entry in p) {
                     String value = (String)entry.Value;
-                    String[] splitValue = iText.IO.Util.StringUtil.Split(value, " ");
+                    String[] splitValue = iText.Commons.Utils.StringUtil.Split(value, " ");
                     ICollection<String> set = new HashSet<String>();
                     foreach (String s in splitValue) {
                         if (s.Length != 0) {
@@ -255,8 +256,8 @@ namespace iText.IO.Font {
             IntHashtable h = new IntHashtable();
             StringTokenizer tk = new StringTokenizer(s);
             while (tk.HasMoreTokens()) {
-                int n1 = Convert.ToInt32(tk.NextToken());
-                h.Put(n1, Convert.ToInt32(tk.NextToken()));
+                int n1 = Convert.ToInt32(tk.NextToken(), System.Globalization.CultureInfo.InvariantCulture);
+                h.Put(n1, Convert.ToInt32(tk.NextToken(), System.Globalization.CultureInfo.InvariantCulture));
             }
             return h;
         }
@@ -267,7 +268,7 @@ namespace iText.IO.Font {
                 CMapParser.ParseCid(name, cmap, new CMapLocationResource());
             }
             catch (System.IO.IOException e) {
-                throw new iText.IO.IOException(iText.IO.IOException.IoException, e);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.IoException, e);
             }
             return cmap;
         }

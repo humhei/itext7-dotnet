@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -182,7 +182,9 @@ namespace iText.Kernel.Pdf.Function {
                 PdfDictionary dictionary = new PdfDictionary();
                 dictionary.Put(PdfName.FunctionType, new PdfNumber(3));
                 dictionary.Put(PdfName.Domain, domain);
-                dictionary.Put(PdfName.Range, range);
+                if (range != null) {
+                    dictionary.Put(PdfName.Range, range);
+                }
                 dictionary.Put(PdfName.Functions, functions);
                 dictionary.Put(PdfName.Bounds, bounds);
                 dictionary.Put(PdfName.Encode, encode);

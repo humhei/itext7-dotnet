@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,17 +42,18 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.Forms;
 using iText.Forms.Fields;
-using iText.IO.Util;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Annot;
 
 namespace iText.Forms.Xfdf {
     internal class XfdfReader {
-        private static ILog logger = LogManager.GetLogger(typeof(XfdfReader));
+        private static ILogger logger = ITextLogManager.GetLogger(typeof(XfdfReader));
 
         /// <summary>Merges existing XfdfObject into pdf document associated with it.</summary>
         /// <param name="xfdfObject">The object to be merged.</param>
@@ -62,16 +63,17 @@ namespace iText.Forms.Xfdf {
             ) {
             if (xfdfObject.GetF() != null && xfdfObject.GetF().GetHref() != null) {
                 if (pdfDocumentName.EqualsIgnoreCase(xfdfObject.GetF().GetHref())) {
-                    logger.Info("Xfdf href and pdf name are equal. Continue merge");
+                    logger.LogInformation("Xfdf href and pdf name are equal. Continue merge");
                 }
                 else {
-                    logger.Warn(iText.IO.LogMessageConstant.XFDF_HREF_ATTRIBUTE_AND_PDF_DOCUMENT_NAME_ARE_DIFFERENT);
+                    logger.LogWarning(iText.IO.Logs.IoLogMessageConstant.XFDF_HREF_ATTRIBUTE_AND_PDF_DOCUMENT_NAME_ARE_DIFFERENT
+                        );
                 }
             }
             else {
-                logger.Warn(iText.IO.LogMessageConstant.XFDF_NO_F_OBJECT_TO_COMPARE);
+                logger.LogWarning(iText.IO.Logs.IoLogMessageConstant.XFDF_NO_F_OBJECT_TO_COMPARE);
             }
-            //TODO check for ids original/modified compatability with those in pdf document
+            //TODO DEVSIX-4026 check for ids original/modified compatability with those in pdf document
             PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDocument, false);
             if (form != null) {
                 MergeFields(xfdfObject.GetFields(), form);
@@ -94,7 +96,7 @@ namespace iText.Forms.Xfdf {
                         formFields.Get(name).SetValue(xfdfField.GetValue());
                     }
                     else {
-                        logger.Error(iText.IO.LogMessageConstant.XFDF_NO_SUCH_FIELD_IN_PDF_DOCUMENT);
+                        logger.LogError(iText.IO.Logs.IoLogMessageConstant.XFDF_NO_SUCH_FIELD_IN_PDF_DOCUMENT);
                     }
                 }
             }
@@ -136,7 +138,7 @@ namespace iText.Forms.Xfdf {
             if (annotName != null) {
                 switch (annotName) {
                     case XfdfConstants.TEXT: {
-                        //TODO add all attributes properly one by one
+                        //TODO DEVSIX-4027 add all attributes properly one by one
                         PdfTextAnnotation pdfTextAnnotation = new PdfTextAnnotation(XfdfObjectUtils.ConvertRectFromString(annotObject
                             .GetAttributeValue(XfdfConstants.RECT)));
                         AddCommonAnnotationAttributes(pdfTextAnnotation, annotObject);
@@ -148,8 +150,8 @@ namespace iText.Forms.Xfdf {
                         if (annotObject.GetAttributeValue(XfdfConstants.STATE_MODEL) != null) {
                             pdfTextAnnotation.SetStateModel(new PdfString(annotObject.GetAttributeValue(XfdfConstants.STATE_MODEL)));
                         }
-                        pdfDocument.GetPage(Convert.ToInt32(annotObject.GetAttributeValue(XfdfConstants.PAGE))).AddAnnotation(pdfTextAnnotation
-                            );
+                        pdfDocument.GetPage(Convert.ToInt32(annotObject.GetAttributeValue(XfdfConstants.PAGE), System.Globalization.CultureInfo.InvariantCulture
+                            )).AddAnnotation(pdfTextAnnotation);
                         break;
                     }
 
@@ -159,8 +161,8 @@ namespace iText.Forms.Xfdf {
                             (annotObject.GetAttributeValue(XfdfConstants.COORDS)));
                         AddCommonAnnotationAttributes(pdfHighLightAnnotation, annotObject);
                         AddMarkupAnnotationAttributes(pdfHighLightAnnotation, annotObject);
-                        pdfDocument.GetPage(Convert.ToInt32(annotObject.GetAttribute(XfdfConstants.PAGE).GetValue())).AddAnnotation
-                            (pdfHighLightAnnotation);
+                        pdfDocument.GetPage(Convert.ToInt32(annotObject.GetAttribute(XfdfConstants.PAGE).GetValue(), System.Globalization.CultureInfo.InvariantCulture
+                            )).AddAnnotation(pdfHighLightAnnotation);
                         break;
                     }
 
@@ -170,8 +172,8 @@ namespace iText.Forms.Xfdf {
                             (annotObject.GetAttributeValue(XfdfConstants.COORDS)));
                         AddCommonAnnotationAttributes(pdfUnderlineAnnotation, annotObject);
                         AddMarkupAnnotationAttributes(pdfUnderlineAnnotation, annotObject);
-                        pdfDocument.GetPage(Convert.ToInt32(annotObject.GetAttribute(XfdfConstants.PAGE).GetValue())).AddAnnotation
-                            (pdfUnderlineAnnotation);
+                        pdfDocument.GetPage(Convert.ToInt32(annotObject.GetAttribute(XfdfConstants.PAGE).GetValue(), System.Globalization.CultureInfo.InvariantCulture
+                            )).AddAnnotation(pdfUnderlineAnnotation);
                         break;
                     }
 
@@ -181,8 +183,8 @@ namespace iText.Forms.Xfdf {
                             (annotObject.GetAttributeValue(XfdfConstants.COORDS)));
                         AddCommonAnnotationAttributes(pdfStrikeoutAnnotation, annotObject);
                         AddMarkupAnnotationAttributes(pdfStrikeoutAnnotation, annotObject);
-                        pdfDocument.GetPage(Convert.ToInt32(annotObject.GetAttribute(XfdfConstants.PAGE).GetValue())).AddAnnotation
-                            (pdfStrikeoutAnnotation);
+                        pdfDocument.GetPage(Convert.ToInt32(annotObject.GetAttribute(XfdfConstants.PAGE).GetValue(), System.Globalization.CultureInfo.InvariantCulture
+                            )).AddAnnotation(pdfStrikeoutAnnotation);
                         break;
                     }
 
@@ -192,8 +194,8 @@ namespace iText.Forms.Xfdf {
                             (annotObject.GetAttributeValue(XfdfConstants.COORDS)));
                         AddCommonAnnotationAttributes(pdfSquigglyAnnotation, annotObject);
                         AddMarkupAnnotationAttributes(pdfSquigglyAnnotation, annotObject);
-                        pdfDocument.GetPage(Convert.ToInt32(annotObject.GetAttribute(XfdfConstants.PAGE).GetValue())).AddAnnotation
-                            (pdfSquigglyAnnotation);
+                        pdfDocument.GetPage(Convert.ToInt32(annotObject.GetAttribute(XfdfConstants.PAGE).GetValue(), System.Globalization.CultureInfo.InvariantCulture
+                            )).AddAnnotation(pdfSquigglyAnnotation);
                         break;
                     }
 
@@ -206,10 +208,12 @@ namespace iText.Forms.Xfdf {
                             .GetAttributeValue(XfdfConstants.RECT)));
                         AddCommonAnnotationAttributes(pdfCircleAnnotation, annotObject);
                         AddMarkupAnnotationAttributes(pdfCircleAnnotation, annotObject);
-                        pdfCircleAnnotation.SetRectangleDifferences(XfdfObjectUtils.ConvertFringeFromString(annotObject.GetAttributeValue
-                            (XfdfConstants.FRINGE)));
-                        pdfDocument.GetPage(Convert.ToInt32(annotObject.GetAttribute(XfdfConstants.PAGE).GetValue())).AddAnnotation
-                            (pdfCircleAnnotation);
+                        if (annotObject.GetAttributeValue(XfdfConstants.FRINGE) != null) {
+                            pdfCircleAnnotation.SetRectangleDifferences(XfdfObjectUtils.ConvertFringeFromString(annotObject.GetAttributeValue
+                                (XfdfConstants.FRINGE)));
+                        }
+                        pdfDocument.GetPage(Convert.ToInt32(annotObject.GetAttribute(XfdfConstants.PAGE).GetValue(), System.Globalization.CultureInfo.InvariantCulture
+                            )).AddAnnotation(pdfCircleAnnotation);
                         break;
                     }
 
@@ -218,10 +222,12 @@ namespace iText.Forms.Xfdf {
                             .GetAttributeValue(XfdfConstants.RECT)));
                         AddCommonAnnotationAttributes(pdfSquareAnnotation, annotObject);
                         AddMarkupAnnotationAttributes(pdfSquareAnnotation, annotObject);
-                        pdfSquareAnnotation.SetRectangleDifferences(XfdfObjectUtils.ConvertFringeFromString(annotObject.GetAttributeValue
-                            (XfdfConstants.FRINGE)));
-                        pdfDocument.GetPage(Convert.ToInt32(annotObject.GetAttribute(XfdfConstants.PAGE).GetValue())).AddAnnotation
-                            (pdfSquareAnnotation);
+                        if (annotObject.GetAttributeValue(XfdfConstants.FRINGE) != null) {
+                            pdfSquareAnnotation.SetRectangleDifferences(XfdfObjectUtils.ConvertFringeFromString(annotObject.GetAttributeValue
+                                (XfdfConstants.FRINGE)));
+                        }
+                        pdfDocument.GetPage(Convert.ToInt32(annotObject.GetAttribute(XfdfConstants.PAGE).GetValue(), System.Globalization.CultureInfo.InvariantCulture
+                            )).AddAnnotation(pdfSquareAnnotation);
                         break;
                     }
 
@@ -232,8 +238,8 @@ namespace iText.Forms.Xfdf {
                         PdfPolyGeomAnnotation polygonAnnotation = PdfPolyGeomAnnotation.CreatePolygon(rect, vertices);
                         AddCommonAnnotationAttributes(polygonAnnotation, annotObject);
                         AddMarkupAnnotationAttributes(polygonAnnotation, annotObject);
-                        pdfDocument.GetPage(Convert.ToInt32(annotObject.GetAttribute(XfdfConstants.PAGE).GetValue())).AddAnnotation
-                            (polygonAnnotation);
+                        pdfDocument.GetPage(Convert.ToInt32(annotObject.GetAttribute(XfdfConstants.PAGE).GetValue(), System.Globalization.CultureInfo.InvariantCulture
+                            )).AddAnnotation(polygonAnnotation);
                         break;
                     }
 
@@ -245,23 +251,23 @@ namespace iText.Forms.Xfdf {
                             );
                         AddCommonAnnotationAttributes(polylineAnnotation, annotObject);
                         AddMarkupAnnotationAttributes(polylineAnnotation, annotObject);
-                        pdfDocument.GetPage(Convert.ToInt32(annotObject.GetAttribute(XfdfConstants.PAGE).GetValue())).AddAnnotation
-                            (polylineAnnotation);
+                        pdfDocument.GetPage(Convert.ToInt32(annotObject.GetAttribute(XfdfConstants.PAGE).GetValue(), System.Globalization.CultureInfo.InvariantCulture
+                            )).AddAnnotation(polylineAnnotation);
                         break;
                     }
 
                     case XfdfConstants.STAMP: {
-                        pdfDocument.GetPage(Convert.ToInt32(annotObject.GetAttribute(XfdfConstants.PAGE).GetValue())).AddAnnotation
-                            (new PdfStampAnnotation(XfdfObjectUtils.ConvertRectFromString(annotObject.GetAttributeValue(XfdfConstants
-                            .RECT))));
+                        pdfDocument.GetPage(Convert.ToInt32(annotObject.GetAttribute(XfdfConstants.PAGE).GetValue(), System.Globalization.CultureInfo.InvariantCulture
+                            )).AddAnnotation(new PdfStampAnnotation(XfdfObjectUtils.ConvertRectFromString(annotObject.GetAttributeValue
+                            (XfdfConstants.RECT))));
                         break;
                     }
 
                     case XfdfConstants.FREETEXT: {
                         //XfdfConstants.INK
-                        pdfDocument.GetPage(Convert.ToInt32(annotObject.GetAttribute(XfdfConstants.PAGE).GetValue())).AddAnnotation
-                            (new PdfFreeTextAnnotation(XfdfObjectUtils.ConvertRectFromString(annotObject.GetAttributeValue(XfdfConstants
-                            .RECT)), annotObject.GetContents()));
+                        pdfDocument.GetPage(Convert.ToInt32(annotObject.GetAttribute(XfdfConstants.PAGE).GetValue(), System.Globalization.CultureInfo.InvariantCulture
+                            )).AddAnnotation(new PdfFreeTextAnnotation(XfdfObjectUtils.ConvertRectFromString(annotObject.GetAttributeValue
+                            (XfdfConstants.RECT)), annotObject.GetContents()));
                         break;
                     }
 
@@ -271,8 +277,8 @@ namespace iText.Forms.Xfdf {
                         //XfdfConstants.LINK
                         //XfdfConstants.REDACT
                         //XfdfConstants.PROJECTION
-                        logger.Warn(MessageFormatUtil.Format(iText.IO.LogMessageConstant.XFDF_ANNOTATION_IS_NOT_SUPPORTED, annotName
-                            ));
+                        logger.LogWarning(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.XFDF_ANNOTATION_IS_NOT_SUPPORTED
+                            , annotName));
                         break;
                     }
                 }

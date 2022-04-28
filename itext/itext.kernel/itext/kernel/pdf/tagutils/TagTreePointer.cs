@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,8 +43,9 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
-using iText.Kernel;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Annot;
 using iText.Kernel.Pdf.Tagging;
@@ -183,7 +184,7 @@ namespace iText.Kernel.Pdf.Tagutils {
         /// </returns>
         public virtual iText.Kernel.Pdf.Tagutils.TagTreePointer SetPageForTagging(PdfPage page) {
             if (page.IsFlushed()) {
-                throw new PdfException(PdfException.PageAlreadyFlushed);
+                throw new PdfException(KernelExceptionMessageConstant.PAGE_ALREADY_FLUSHED);
             }
             this.currentPage = page;
             return this;
@@ -216,8 +217,13 @@ namespace iText.Kernel.Pdf.Tagutils {
         /// <c>TagTreePointer</c>
         /// or
         /// <see langword="null"/>
-        /// if content stream tagging is finished.
+        /// if content stream tagging is finished
         /// </param>
+        /// <returns>
+        /// current
+        /// <see cref="TagTreePointer"/>
+        /// instance
+        /// </returns>
         public virtual iText.Kernel.Pdf.Tagutils.TagTreePointer SetContentStreamForTagging(PdfStream contentStream
             ) {
             this.contentStream = contentStream;
@@ -490,12 +496,12 @@ namespace iText.Kernel.Pdf.Tagutils {
             PdfStructElem currentStructElem = GetCurrentStructElem();
             IStructureNode parentElem = currentStructElem.GetParent();
             if (parentElem is PdfStructTreeRoot) {
-                throw new PdfException(PdfException.CannotRemoveDocumentRootTag);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_REMOVE_DOCUMENT_ROOT_TAG);
             }
             IList<IStructureNode> kids = currentStructElem.GetKids();
             PdfStructElem parent = (PdfStructElem)parentElem;
             if (parent.IsFlushed()) {
-                throw new PdfException(PdfException.CannotRemoveTagBecauseItsParentIsFlushed);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_REMOVE_TAG_BECAUSE_ITS_PARENT_IS_FLUSHED);
             }
             // remove waiting tag state if tag is removed
             Object objForStructDict = tagStructureContext.GetWaitingTagsManager().GetObjForStructDict(currentStructElem
@@ -504,7 +510,8 @@ namespace iText.Kernel.Pdf.Tagutils {
             int removedKidIndex = parent.RemoveKid(currentStructElem);
             PdfIndirectReference indRef = currentStructElem.GetPdfObject().GetIndirectReference();
             if (indRef != null) {
-                // TODO how about possible references to structure element from refs or structure destination for instance?
+                // TODO DEVSIX-5472 need to clean references to structure element from
+                //  other structure elements /Ref entries and structure destinations
                 indRef.SetFree();
             }
             foreach (IStructureNode kid in kids) {
@@ -546,10 +553,11 @@ namespace iText.Kernel.Pdf.Tagutils {
         public virtual iText.Kernel.Pdf.Tagutils.TagTreePointer RelocateKid(int kidIndex, iText.Kernel.Pdf.Tagutils.TagTreePointer
              pointerToNewParent) {
             if (GetDocument() != pointerToNewParent.GetDocument()) {
-                throw new PdfException(PdfException.TagCannotBeMovedToTheAnotherDocumentsTagStructure);
+                throw new PdfException(KernelExceptionMessageConstant.TAG_CANNOT_BE_MOVED_TO_THE_ANOTHER_DOCUMENTS_TAG_STRUCTURE
+                    );
             }
             if (GetCurrentStructElem().IsFlushed()) {
-                throw new PdfException(PdfException.CannotRelocateTagWhichParentIsAlreadyFlushed);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_RELOCATE_TAG_WHICH_PARENT_IS_ALREADY_FLUSHED);
             }
             if (IsPointingToSameTag(pointerToNewParent)) {
                 if (kidIndex == pointerToNewParent.nextNewKidIndex) {
@@ -562,7 +570,7 @@ namespace iText.Kernel.Pdf.Tagutils {
                 }
             }
             if (GetCurrentStructElem().GetKids()[kidIndex] == null) {
-                throw new PdfException(PdfException.CannotRelocateTagWhichIsAlreadyFlushed);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_RELOCATE_TAG_WHICH_IS_ALREADY_FLUSHED);
             }
             IStructureNode removedKid = GetCurrentStructElem().RemoveKid(kidIndex, true);
             if (removedKid is PdfStructElem) {
@@ -603,14 +611,14 @@ namespace iText.Kernel.Pdf.Tagutils {
         public virtual iText.Kernel.Pdf.Tagutils.TagTreePointer Relocate(iText.Kernel.Pdf.Tagutils.TagTreePointer 
             pointerToNewParent) {
             if (GetCurrentStructElem().GetPdfObject() == tagStructureContext.GetRootTag().GetPdfObject()) {
-                throw new PdfException(PdfException.CannotRelocateRootTag);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_RELOCATE_ROOT_TAG);
             }
             if (GetCurrentStructElem().IsFlushed()) {
-                throw new PdfException(PdfException.CannotRelocateTagWhichIsAlreadyFlushed);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_RELOCATE_TAG_WHICH_IS_ALREADY_FLUSHED);
             }
             int i = GetIndexInParentKidsList();
             if (i < 0) {
-                throw new PdfException(PdfException.CannotRelocateTagWhichParentIsAlreadyFlushed);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_RELOCATE_TAG_WHICH_PARENT_IS_ALREADY_FLUSHED);
             }
             new iText.Kernel.Pdf.Tagutils.TagTreePointer(this).MoveToParent().RelocateKid(i, pointerToNewParent);
             return this;
@@ -673,12 +681,12 @@ namespace iText.Kernel.Pdf.Tagutils {
         /// </returns>
         public virtual iText.Kernel.Pdf.Tagutils.TagTreePointer MoveToParent() {
             if (GetCurrentStructElem().GetPdfObject() == tagStructureContext.GetRootTag().GetPdfObject()) {
-                throw new PdfException(PdfException.CannotMoveToParentCurrentElementIsRoot);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_MOVE_TO_PARENT_CURRENT_ELEMENT_IS_ROOT);
             }
             PdfStructElem parent = (PdfStructElem)GetCurrentStructElem().GetParent();
             if (parent.IsFlushed()) {
-                ILog logger = LogManager.GetLogger(typeof(iText.Kernel.Pdf.Tagutils.TagTreePointer));
-                logger.Warn(iText.IO.LogMessageConstant.ATTEMPT_TO_MOVE_TO_FLUSHED_PARENT);
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.Tagutils.TagTreePointer));
+                logger.LogWarning(iText.IO.Logs.IoLogMessageConstant.ATTEMPT_TO_MOVE_TO_FLUSHED_PARENT);
                 MoveToRoot();
             }
             else {
@@ -705,10 +713,10 @@ namespace iText.Kernel.Pdf.Tagutils {
             }
             else {
                 if (kid is PdfMcr) {
-                    throw new PdfException(PdfException.CannotMoveToMarkedContentReference);
+                    throw new PdfException(KernelExceptionMessageConstant.CANNOT_MOVE_TO_MARKED_CONTENT_REFERENCE);
                 }
                 else {
-                    throw new PdfException(PdfException.CannotMoveToFlushedKid);
+                    throw new PdfException(KernelExceptionMessageConstant.CANNOT_MOVE_TO_FLUSHED_KID);
                 }
             }
             return this;
@@ -764,7 +772,7 @@ namespace iText.Kernel.Pdf.Tagutils {
         public virtual iText.Kernel.Pdf.Tagutils.TagTreePointer MoveToKid(int n, String role) {
             // MCR literal could be returned in a list of kid names (see #getKidsRoles())
             if (MCR_MARKER.Equals(role)) {
-                throw new PdfException(PdfException.CannotMoveToMarkedContentReference);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_MOVE_TO_MARKED_CONTENT_REFERENCE);
             }
             IList<IStructureNode> descendants = new List<IStructureNode>(GetCurrentStructElem().GetKids());
             int k = 0;
@@ -781,7 +789,7 @@ namespace iText.Kernel.Pdf.Tagutils {
                     descendants.AddAll(descendants[i].GetKids());
                 }
             }
-            throw new PdfException(PdfException.NoKidWithSuchRole);
+            throw new PdfException(KernelExceptionMessageConstant.NO_KID_WITH_SUCH_ROLE);
         }
 
         /// <summary>Gets current tag kids roles.</summary>
@@ -831,7 +839,8 @@ namespace iText.Kernel.Pdf.Tagutils {
         /// </returns>
         public virtual iText.Kernel.Pdf.Tagutils.TagTreePointer FlushTag() {
             if (GetCurrentStructElem().GetPdfObject() == tagStructureContext.GetRootTag().GetPdfObject()) {
-                throw new PdfException(PdfException.CannotFlushDocumentRootTagBeforeDocumentIsClosed);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_FLUSH_DOCUMENT_ROOT_TAG_BEFORE_DOCUMENT_IS_CLOSED
+                    );
             }
             IStructureNode parent = tagStructureContext.GetWaitingTagsManager().FlushTag(GetCurrentStructElem());
             if (parent != null) {
@@ -1001,7 +1010,7 @@ namespace iText.Kernel.Pdf.Tagutils {
 
         internal virtual iText.Kernel.Pdf.Tagutils.TagTreePointer SetCurrentStructElem(PdfStructElem structElem) {
             if (structElem.GetParent() == null) {
-                throw new PdfException(PdfException.StructureElementShallContainParentObject);
+                throw new PdfException(KernelExceptionMessageConstant.STRUCTURE_ELEMENT_SHALL_CONTAIN_PARENT_OBJECT);
             }
             currentStructElem = structElem;
             return this;
@@ -1009,12 +1018,14 @@ namespace iText.Kernel.Pdf.Tagutils {
 
         internal virtual PdfStructElem GetCurrentStructElem() {
             if (currentStructElem.IsFlushed()) {
-                throw new PdfException(PdfException.TagTreePointerIsInInvalidStateItPointsAtFlushedElementUseMoveToRoot);
+                throw new PdfException(KernelExceptionMessageConstant.TAG_TREE_POINTER_IS_IN_INVALID_STATE_IT_POINTS_AT_FLUSHED_ELEMENT_USE_MOVE_TO_ROOT
+                    );
             }
             PdfIndirectReference indRef = currentStructElem.GetPdfObject().GetIndirectReference();
             if (indRef != null && indRef.IsFree()) {
                 // is removed
-                throw new PdfException(PdfException.TagTreePointerIsInInvalidStateItPointsAtRemovedElementUseMoveToRoot);
+                throw new PdfException(KernelExceptionMessageConstant.TAG_TREE_POINTER_IS_IN_INVALID_STATE_IT_POINTS_AT_REMOVED_ELEMENT_USE_MOVE_TO_ROOT
+                    );
             }
             return currentStructElem;
         }
@@ -1114,7 +1125,7 @@ namespace iText.Kernel.Pdf.Tagutils {
 
         private void ThrowExceptionIfCurrentPageIsNotInited() {
             if (currentPage == null) {
-                throw new PdfException(PdfException.PageIsNotSetForThePdfTagStructure);
+                throw new PdfException(KernelExceptionMessageConstant.PAGE_IS_NOT_SET_FOR_THE_PDF_TAG_STRUCTURE);
             }
         }
     }

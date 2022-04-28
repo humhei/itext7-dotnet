@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,24 +41,31 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
+using System.IO;
+using iText.IO.Util;
 using iText.Test;
 
 namespace iText.IO.Image {
     public class JpegTest : ExtendedITextTest {
-        public static readonly String sourceFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
+        public static readonly String SOURCE_FOLDER = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
             .CurrentContext.TestDirectory) + "/resources/itext/io/image/";
 
         [NUnit.Framework.Test]
         public virtual void OpenJpeg1() {
-            ImageData img = ImageDataFactory.Create(sourceFolder + "WP_20140410_001.jpg");
-            NUnit.Framework.Assert.AreEqual(2592, img.GetWidth(), 0);
-            NUnit.Framework.Assert.AreEqual(1456, img.GetHeight(), 0);
-            NUnit.Framework.Assert.AreEqual(8, img.GetBpc());
+            using (FileStream fis = new FileStream(SOURCE_FOLDER + "WP_20140410_001.jpg", FileMode.Open, FileAccess.Read
+                )) {
+                // Test this a more specific entry point
+                ImageData img = ImageDataFactory.CreateJpeg(StreamUtil.InputStreamToArray(fis));
+                NUnit.Framework.Assert.AreEqual(2592, img.GetWidth(), 0);
+                NUnit.Framework.Assert.AreEqual(1456, img.GetHeight(), 0);
+                NUnit.Framework.Assert.AreEqual(8, img.GetBpc());
+            }
         }
 
         [NUnit.Framework.Test]
         public virtual void OpenJpeg2() {
-            ImageData img = ImageDataFactory.Create(sourceFolder + "WP_20140410_001_gray.jpg");
+            // Test this a more specific entry point
+            ImageData img = ImageDataFactory.CreateJpeg(UrlUtil.ToURL(SOURCE_FOLDER + "WP_20140410_001_gray.jpg"));
             NUnit.Framework.Assert.AreEqual(2592, img.GetWidth(), 0);
             NUnit.Framework.Assert.AreEqual(1456, img.GetHeight(), 0);
             NUnit.Framework.Assert.AreEqual(8, img.GetBpc());
@@ -66,15 +73,19 @@ namespace iText.IO.Image {
 
         [NUnit.Framework.Test]
         public virtual void OpenJpeg3() {
-            ImageData img = ImageDataFactory.Create(sourceFolder + "WP_20140410_001_monochrome.jpg");
-            NUnit.Framework.Assert.AreEqual(2592, img.GetWidth(), 0);
-            NUnit.Framework.Assert.AreEqual(1456, img.GetHeight(), 0);
-            NUnit.Framework.Assert.AreEqual(8, img.GetBpc());
+            using (FileStream fis = new FileStream(SOURCE_FOLDER + "WP_20140410_001_monochrome.jpg", FileMode.Open, FileAccess.Read
+                )) {
+                // Test this a more specific entry point
+                ImageData img = ImageDataFactory.Create(StreamUtil.InputStreamToArray(fis));
+                NUnit.Framework.Assert.AreEqual(2592, img.GetWidth(), 0);
+                NUnit.Framework.Assert.AreEqual(1456, img.GetHeight(), 0);
+                NUnit.Framework.Assert.AreEqual(8, img.GetBpc());
+            }
         }
 
         [NUnit.Framework.Test]
         public virtual void OpenJpeg4() {
-            ImageData img = ImageDataFactory.Create(sourceFolder + "WP_20140410_001_negate.jpg");
+            ImageData img = ImageDataFactory.Create(SOURCE_FOLDER + "WP_20140410_001_negate.jpg");
             NUnit.Framework.Assert.AreEqual(2592, img.GetWidth(), 0);
             NUnit.Framework.Assert.AreEqual(1456, img.GetHeight(), 0);
             NUnit.Framework.Assert.AreEqual(8, img.GetBpc());
@@ -82,7 +93,7 @@ namespace iText.IO.Image {
 
         [NUnit.Framework.Test]
         public virtual void OpenJpeg5() {
-            ImageData img = ImageDataFactory.Create(sourceFolder + "WP_20140410_001_year1900.jpg");
+            ImageData img = ImageDataFactory.Create(SOURCE_FOLDER + "WP_20140410_001_year1900.jpg");
             NUnit.Framework.Assert.AreEqual(2592, img.GetWidth(), 0);
             NUnit.Framework.Assert.AreEqual(1456, img.GetHeight(), 0);
             NUnit.Framework.Assert.AreEqual(8, img.GetBpc());
@@ -90,7 +101,7 @@ namespace iText.IO.Image {
 
         [NUnit.Framework.Test]
         public virtual void OpenJpeg6() {
-            ImageData img = ImageDataFactory.Create(sourceFolder + "WP_20140410_001_year1980.jpg");
+            ImageData img = ImageDataFactory.Create(SOURCE_FOLDER + "WP_20140410_001_year1980.jpg");
             NUnit.Framework.Assert.AreEqual(2592, img.GetWidth(), 0);
             NUnit.Framework.Assert.AreEqual(1456, img.GetHeight(), 0);
             NUnit.Framework.Assert.AreEqual(8, img.GetBpc());

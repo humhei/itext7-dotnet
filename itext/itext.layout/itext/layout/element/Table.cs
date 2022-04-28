@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,12 +43,14 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
-using iText.Kernel;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf.Tagging;
 using iText.Kernel.Pdf.Tagutils;
 using iText.Layout;
 using iText.Layout.Borders;
+using iText.Layout.Exceptions;
 using iText.Layout.Properties;
 using iText.Layout.Renderer;
 
@@ -693,7 +695,6 @@ namespace iText.Layout.Element {
             return this;
         }
 
-        //TODO when rendering starts, make sure, that last row is not empty.
         /// <summary>Adds a new cell to the table.</summary>
         /// <remarks>
         /// Adds a new cell to the table. The implementation decides for itself which
@@ -707,7 +708,7 @@ namespace iText.Layout.Element {
         /// <returns>this element</returns>
         public virtual iText.Layout.Element.Table AddCell(Cell cell) {
             if (isComplete && null != lastAddedRow) {
-                throw new PdfException(PdfException.CannotAddCellToCompletedLargeTable);
+                throw new PdfException(LayoutExceptionMessageConstant.CANNOT_ADD_CELL_TO_COMPLETED_LARGE_TABLE);
             }
             // Try to find first empty slot in table.
             // We shall not use colspan or rowspan, 1x1 will be enough.
@@ -824,8 +825,8 @@ namespace iText.Layout.Element {
                     return renderer;
                 }
                 else {
-                    ILog logger = LogManager.GetLogger(typeof(iText.Layout.Element.Table));
-                    logger.Error("Invalid renderer for Table: must be inherited from TableRenderer");
+                    ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Element.Table));
+                    logger.LogError("Invalid renderer for Table: must be inherited from TableRenderer");
                 }
             }
             // In case of large tables, we only add to the renderer the cells from complete row groups,

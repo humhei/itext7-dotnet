@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,25 +44,26 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.Ocsp;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Ocsp;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.Forms;
 using iText.IO.Font;
 using iText.IO.Source;
-using iText.IO.Util;
-using iText.Kernel;
 using iText.Kernel.Pdf;
+using iText.Signatures.Exceptions;
 
 namespace iText.Signatures {
     /// <summary>Add verification according to PAdES-LTV (part 4).</summary>
     /// <author>Paulo Soares</author>
     public class LtvVerification {
-        private ILog LOGGER = LogManager.GetLogger(typeof(iText.Signatures.LtvVerification));
+        private ILogger LOGGER = ITextLogManager.GetLogger(typeof(iText.Signatures.LtvVerification));
 
         private PdfDocument document;
 
@@ -134,17 +135,17 @@ namespace iText.Signatures {
         public virtual bool AddVerification(String signatureName, IOcspClient ocsp, ICrlClient crl, LtvVerification.CertificateOption
              certOption, LtvVerification.Level level, LtvVerification.CertificateInclusion certInclude) {
             if (used) {
-                throw new InvalidOperationException(PdfException.VerificationAlreadyOutput);
+                throw new InvalidOperationException(SignExceptionMessageConstant.VERIFICATION_ALREADY_OUTPUT);
             }
             PdfPKCS7 pk = sgnUtil.ReadSignatureData(signatureName);
-            LOGGER.Info("Adding verification for " + signatureName);
+            LOGGER.LogInformation("Adding verification for " + signatureName);
             X509Certificate[] xc = pk.GetCertificates();
             X509Certificate cert;
             X509Certificate signingCert = pk.GetSigningCertificate();
             LtvVerification.ValidationData vd = new LtvVerification.ValidationData();
             for (int k = 0; k < xc.Length; ++k) {
                 cert = (X509Certificate)xc[k];
-                LOGGER.Info("Certificate: " + cert.SubjectDN);
+                LOGGER.LogInformation("Certificate: " + cert.SubjectDN);
                 if (certOption == LtvVerification.CertificateOption.SIGNING_CERTIFICATE && !cert.Equals(signingCert)) {
                     continue;
                 }
@@ -153,7 +154,7 @@ namespace iText.Signatures {
                     ocspEnc = ocsp.GetEncoded(cert, GetParent(cert, xc), null);
                     if (ocspEnc != null) {
                         vd.ocsps.Add(BuildOCSPResponse(ocspEnc));
-                        LOGGER.Info("OCSP added");
+                        LOGGER.LogInformation("OCSP added");
                     }
                 }
                 if (crl != null && (level == LtvVerification.Level.CRL || level == LtvVerification.Level.OCSP_CRL || (level
@@ -170,7 +171,7 @@ namespace iText.Signatures {
                             }
                             if (!dup) {
                                 vd.crls.Add(cim);
-                                LOGGER.Info("CRL added");
+                                LOGGER.LogInformation("CRL added");
                             }
                         }
                     }
@@ -210,14 +211,14 @@ namespace iText.Signatures {
 
         /// <summary>Adds verification to the signature.</summary>
         /// <param name="signatureName">name of the signature</param>
-        /// <param name="ocsps">collection of ocsp responses</param>
-        /// <param name="crls">collection of crls</param>
-        /// <param name="certs">collection of certificates</param>
+        /// <param name="ocsps">collection of DER-encoded BasicOCSPResponses</param>
+        /// <param name="crls">collection of DER-encoded CRLs</param>
+        /// <param name="certs">collection of DER-encoded certificates</param>
         /// <returns>boolean</returns>
         public virtual bool AddVerification(String signatureName, ICollection<byte[]> ocsps, ICollection<byte[]> crls
             , ICollection<byte[]> certs) {
             if (used) {
-                throw new InvalidOperationException(PdfException.VerificationAlreadyOutput);
+                throw new InvalidOperationException(SignExceptionMessageConstant.VERIFICATION_ALREADY_OUTPUT);
             }
             LtvVerification.ValidationData vd = new LtvVerification.ValidationData();
             if (ocsps != null) {
@@ -294,7 +295,7 @@ namespace iText.Signatures {
             dss.Remove(PdfName.CRLs);
             dss.Remove(PdfName.Certs);
             PdfDictionary vrim = dss.GetAsDictionary(PdfName.VRI);
-            //delete old validations
+            // delete old validations
             if (vrim != null) {
                 foreach (PdfName n in vrim.KeySet()) {
                     if (validated.ContainsKey(n)) {
@@ -328,17 +329,11 @@ namespace iText.Signatures {
             }
             foreach (PdfObject pi in toDelete) {
                 PdfIndirectReference pir = pi.GetIndirectReference();
-                if (pir == null) {
-                    continue;
-                }
-                for (int k = 0; k < all.Size(); ++k) {
-                    PdfIndirectReference pod = all.Get(k).GetIndirectReference();
-                    if (pod == null) {
-                        continue;
-                    }
-                    if (pir.GetObjNumber() == pod.GetObjNumber()) {
-                        all.Remove(k);
-                        --k;
+                for (int i = 0; i < all.Size(); i++) {
+                    PdfIndirectReference pod = all.Get(i).GetIndirectReference();
+                    if (Object.Equals(pir, pod)) {
+                        all.Remove(i);
+                        i--;
                     }
                 }
             }

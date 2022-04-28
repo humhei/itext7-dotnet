@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,12 +44,14 @@ address: sales@itextpdf.com
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
 using Org.BouncyCastle.Asn1.Ocsp;
 using Org.BouncyCastle.Ocsp;
+using Org.BouncyCastle.Security;
 using Org.BouncyCastle.Security.Certificates;
 using Org.BouncyCastle.X509;
-using iText.IO.Util;
+using iText.Commons;
+using iText.Commons.Utils;
 
 namespace iText.Signatures {
     /// <summary>
@@ -58,7 +60,7 @@ namespace iText.Signatures {
     /// </summary>
     public class OCSPVerifier : RootStoreVerifier {
         /// <summary>The Logger instance</summary>
-        protected internal static readonly ILog LOGGER = LogManager.GetLogger(typeof(iText.Signatures.OCSPVerifier
+        protected internal static readonly ILogger LOGGER = ITextLogManager.GetLogger(typeof(iText.Signatures.OCSPVerifier
             ));
 
         protected internal const String id_kp_OCSPSigning = "1.3.6.1.5.5.7.3.9";
@@ -74,9 +76,9 @@ namespace iText.Signatures {
             this.ocsps = ocsps;
         }
 
-        /// <summary>Verifies if a a valid OCSP response is found for the certificate.</summary>
+        /// <summary>Verifies if a valid OCSP response is found for the certificate.</summary>
         /// <remarks>
-        /// Verifies if a a valid OCSP response is found for the certificate.
+        /// Verifies if a valid OCSP response is found for the certificate.
         /// If this method returns false, it doesn't mean the certificate isn't valid.
         /// It means we couldn't verify it against any OCSP response that was available.
         /// </remarks>
@@ -109,7 +111,7 @@ namespace iText.Signatures {
                 }
             }
             // show how many valid OCSP responses were found
-            LOGGER.Info("Valid OCSPs found: " + validOCSPsFound);
+            LOGGER.LogInformation("Valid OCSPs found: " + validOCSPsFound);
             if (validOCSPsFound > 0) {
                 result.Add(new VerificationOK(signCert, this.GetType(), "Valid OCSPs Found: " + validOCSPsFound + (online ? 
                     " (online)" : "")));
@@ -124,8 +126,10 @@ namespace iText.Signatures {
         /// <summary>Verifies a certificate against a single OCSP response</summary>
         /// <param name="ocspResp">the OCSP response</param>
         /// <param name="signCert">the certificate that needs to be checked</param>
-        /// <param name="issuerCert">the certificate of CA (certificate that issued signCert). This certificate is considered trusted and valid by this method.
-        ///     </param>
+        /// <param name="issuerCert">
+        /// the certificate of CA (certificate that issued signCert). This certificate is considered trusted
+        /// and valid by this method.
+        /// </param>
         /// <param name="signDate">sign date</param>
         /// <returns>
         /// 
@@ -150,9 +154,12 @@ namespace iText.Signatures {
                         issuerCert = signCert;
                     }
                     if (!SignUtils.CheckIfIssuersMatch(resp[i].GetCertID(), issuerCert)) {
-                        LOGGER.Info("OCSP: Issuers doesn't match.");
+                        LOGGER.LogInformation("OCSP: Issuers doesn't match.");
                         continue;
                     }
+                }
+                catch (System.IO.IOException e) {
+                    throw new GeneralSecurityException(e.Message);
                 }
                 catch (OcspException) {
                     continue;
@@ -160,15 +167,18 @@ namespace iText.Signatures {
                 // check if the OCSP response was valid at the time of signing
                 if (resp[i].NextUpdate == null) {
                     DateTime nextUpdate = SignUtils.Add180Sec(resp[i].ThisUpdate);
-                    LOGGER.Info(MessageFormatUtil.Format("No 'next update' for OCSP Response; assuming {0}", nextUpdate));
+                    LOGGER.LogInformation(MessageFormatUtil.Format("No 'next update' for OCSP Response; assuming {0}", nextUpdate
+                        ));
                     if (signDate.After(nextUpdate)) {
-                        LOGGER.Info(MessageFormatUtil.Format("OCSP no longer valid: {0} after {1}", signDate, nextUpdate));
+                        LOGGER.LogInformation(MessageFormatUtil.Format("OCSP no longer valid: {0} after {1}", signDate, nextUpdate
+                            ));
                         continue;
                     }
                 }
                 else {
                     if (signDate.After(resp[i].NextUpdate)) {
-                        LOGGER.Info(MessageFormatUtil.Format("OCSP no longer valid: {0} after {1}", signDate, resp[i].NextUpdate));
+                        LOGGER.LogInformation(MessageFormatUtil.Format("OCSP no longer valid: {0} after {1}", signDate, resp[i].NextUpdate
+                            ));
                         continue;
                     }
                 }
@@ -181,20 +191,6 @@ namespace iText.Signatures {
                 }
             }
             return false;
-        }
-
-        /// <summary>
-        /// Verifies if an OCSP response is genuine
-        /// If it doesn't verify against the issuer certificate and response's certificates, it may verify
-        /// using a trusted anchor or cert.
-        /// </summary>
-        /// <param name="ocspResp">the OCSP response</param>
-        /// <param name="issuerCert">the issuer certificate. This certificate is considered trusted and valid by this method.
-        ///     </param>
-        [System.ObsoleteAttribute(@"Will be removed in iText 7.2. Use IsValidResponse(Org.BouncyCastle.Ocsp.BasicOcspResp, Org.BouncyCastle.X509.X509Certificate, System.DateTime) instead"
-            )]
-        public virtual void IsValidResponse(BasicOcspResp ocspResp, X509Certificate issuerCert) {
-            IsValidResponse(ocspResp, issuerCert, DateTimeUtil.GetCurrentUtcTime());
         }
 
         /// <summary>
@@ -253,8 +249,8 @@ namespace iText.Signatures {
                     if (responderCert.GetExtensionValue(OcspObjectIdentifiers.PkixOcspNocheck.Id) == null) {
                         X509Crl crl;
                         try {
-                            // TODO should also check for Authority Information Access according to RFC6960 4.2.2.2.1. "Revocation Checking of an Authorized Responder"
-                            // TODO should also respect onlineCheckingAllowed property?
+                            // TODO DEVSIX-5210 Implement a check heck for Authority Information Access according to
+                            // RFC6960 4.2.2.2.1. "Revocation Checking of an Authorized Responder"
                             crl = CertificateUtil.GetCRL(responderCert);
                         }
                         catch (Exception) {
@@ -269,14 +265,13 @@ namespace iText.Signatures {
                             }
                         }
                         else {
-                            ILog logger = LogManager.GetLogger(typeof(iText.Signatures.OCSPVerifier));
-                            logger.Error("Authorized OCSP responder certificate revocation status cannot be checked");
+                            LOGGER.LogError("Authorized OCSP responder certificate revocation status cannot be checked");
                         }
                     }
                 }
                 else {
-                    // TODO throw exception starting from iText version 7.2, but only after OCSPVerifier would allow explicit setting revocation check end points/provide revocation data
-                    // throw new VerificationException(issuerCert, "Authorized OCSP responder certificate revocation status cannot be checked.");
+                    // TODO DEVSIX-5207 throw exception starting from iText version 7.2, but only after OCSPVerifier
+                    // would allow explicit setting revocation check end points/provide revocation data
                     // certificate chain is not present in response received
                     // try to verify using rootStore according to RFC 6960 2.2. Response:
                     // "The key used to sign the response MUST belong to one of the following:

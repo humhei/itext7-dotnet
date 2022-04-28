@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-    Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -189,15 +189,5 @@ namespace iText.Signatures {
             dgst.Update(input);
             return dgst.Digest();
         }
-
-#if NETSTANDARD1_6
-        public static WebResponse GetResponse(this WebRequest request) {
-            return request.GetResponseAsync().Result;
-        }
-
-        public static Stream GetRequestStream(this HttpWebRequest request) {
-            return request.GetRequestStreamAsync().Result;
-        }
-#endif
     }
 }

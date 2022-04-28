@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,10 +43,11 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
-using iText.IO.Util;
-using iText.Kernel;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.Kernel.Events;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf.Action;
 using iText.Kernel.Pdf.Annot;
@@ -508,10 +509,10 @@ namespace iText.Kernel.Pdf {
         /// </returns>
         public virtual iText.Kernel.Pdf.PdfPage CopyTo(PdfDocument toDocument, IPdfPageExtraCopier copier) {
             PdfDictionary dictionary = GetPdfObject().CopyTo(toDocument, PAGE_EXCLUDED_KEYS, true);
-            iText.Kernel.Pdf.PdfPage page = new iText.Kernel.Pdf.PdfPage(dictionary);
+            iText.Kernel.Pdf.PdfPage page = GetDocument().GetPageFactory().CreatePdfPage(dictionary);
             CopyInheritedProperties(page, toDocument);
             foreach (PdfAnnotation annot in GetAnnotations()) {
-                if (annot.GetSubtype().Equals(PdfName.Link)) {
+                if (PdfName.Link.Equals(annot.GetSubtype())) {
                     GetDocument().StoreLinkAnnotation(page, (PdfLinkAnnotation)annot);
                 }
                 else {
@@ -528,10 +529,9 @@ namespace iText.Kernel.Pdf {
                 copier.Copy(this, page);
             }
             else {
-                if (!toDocument.GetWriter().isUserWarnedAboutAcroFormCopying && GetDocument().GetCatalog().GetPdfObject().
-                    ContainsKey(PdfName.AcroForm)) {
-                    ILog logger = LogManager.GetLogger(typeof(iText.Kernel.Pdf.PdfPage));
-                    logger.Warn(iText.IO.LogMessageConstant.SOURCE_DOCUMENT_HAS_ACROFORM_DICTIONARY);
+                if (!toDocument.GetWriter().isUserWarnedAboutAcroFormCopying && GetDocument().HasAcroForm()) {
+                    ILogger logger = ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.PdfPage));
+                    logger.LogWarning(iText.IO.Logs.IoLogMessageConstant.SOURCE_DOCUMENT_HAS_ACROFORM_DICTIONARY);
                     toDocument.GetWriter().isUserWarnedAboutAcroFormCopying = true;
                 }
             }
@@ -625,7 +625,6 @@ namespace iText.Kernel.Pdf {
         /// will be flushed.
         /// </param>
         public virtual void Flush(bool flushResourcesContentStreams) {
-            // TODO log warning in case of failed flush in pdfa document case
             if (IsFlushed()) {
                 return;
             }
@@ -691,19 +690,20 @@ namespace iText.Kernel.Pdf {
                 mediaBox = (PdfArray)GetInheritedValue(PdfName.MediaBox, PdfObject.ARRAY);
             }
             if (mediaBox == null) {
-                throw new PdfException(PdfException.CannotRetrieveMediaBoxAttribute);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_RETRIEVE_MEDIA_BOX_ATTRIBUTE);
             }
             int mediaBoxSize;
             if ((mediaBoxSize = mediaBox.Size()) != 4) {
                 if (mediaBoxSize > 4) {
-                    ILog logger = LogManager.GetLogger(typeof(iText.Kernel.Pdf.PdfPage));
-                    if (logger.IsErrorEnabled) {
-                        logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.WRONG_MEDIABOX_SIZE_TOO_MANY_ARGUMENTS, 
-                            mediaBoxSize));
+                    ILogger logger = ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.PdfPage));
+                    if (logger.IsEnabled(LogLevel.Error)) {
+                        logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.WRONG_MEDIABOX_SIZE_TOO_MANY_ARGUMENTS
+                            , mediaBoxSize));
                     }
                 }
                 if (mediaBoxSize < 4) {
-                    throw new PdfException(PdfException.WRONGMEDIABOXSIZETOOFEWARGUMENTS).SetMessageParams(mediaBox.Size());
+                    throw new PdfException(KernelExceptionMessageConstant.WRONG_MEDIA_BOX_SIZE_TOO_FEW_ARGUMENTS).SetMessageParams
+                        (mediaBox.Size());
                 }
             }
             PdfNumber llx = mediaBox.GetAsNumber(0);
@@ -711,7 +711,7 @@ namespace iText.Kernel.Pdf {
             PdfNumber urx = mediaBox.GetAsNumber(2);
             PdfNumber ury = mediaBox.GetAsNumber(3);
             if (llx == null || lly == null || urx == null || ury == null) {
-                throw new PdfException(PdfException.InvalidMediaBoxValue);
+                throw new PdfException(KernelExceptionMessageConstant.INVALID_MEDIA_BOX_VALUE);
             }
             return new Rectangle(Math.Min(llx.FloatValue(), urx.FloatValue()), Math.Min(lly.FloatValue(), ury.FloatValue
                 ()), Math.Abs(urx.FloatValue() - llx.FloatValue()), Math.Abs(ury.FloatValue() - lly.FloatValue()));
@@ -839,8 +839,8 @@ namespace iText.Kernel.Pdf {
         public virtual iText.Kernel.Pdf.PdfPage SetArtBox(Rectangle rectangle) {
             if (GetPdfObject().GetAsRectangle(PdfName.TrimBox) != null) {
                 GetPdfObject().Remove(PdfName.TrimBox);
-                ILog logger = LogManager.GetLogger(typeof(iText.Kernel.Pdf.PdfPage));
-                logger.Warn(iText.IO.LogMessageConstant.ONLY_ONE_OF_ARTBOX_OR_TRIMBOX_CAN_EXIST_IN_THE_PAGE);
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.PdfPage));
+                logger.LogWarning(iText.IO.Logs.IoLogMessageConstant.ONLY_ONE_OF_ARTBOX_OR_TRIMBOX_CAN_EXIST_IN_THE_PAGE);
             }
             Put(PdfName.ArtBox, new PdfArray(rectangle));
             return this;
@@ -878,8 +878,8 @@ namespace iText.Kernel.Pdf {
         public virtual iText.Kernel.Pdf.PdfPage SetTrimBox(Rectangle rectangle) {
             if (GetPdfObject().GetAsRectangle(PdfName.ArtBox) != null) {
                 GetPdfObject().Remove(PdfName.ArtBox);
-                ILog logger = LogManager.GetLogger(typeof(iText.Kernel.Pdf.PdfPage));
-                logger.Warn(iText.IO.LogMessageConstant.ONLY_ONE_OF_ARTBOX_OR_TRIMBOX_CAN_EXIST_IN_THE_PAGE);
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.PdfPage));
+                logger.LogWarning(iText.IO.Logs.IoLogMessageConstant.ONLY_ONE_OF_ARTBOX_OR_TRIMBOX_CAN_EXIST_IN_THE_PAGE);
             }
             Put(PdfName.TrimBox, new PdfArray(rectangle));
             return this;
@@ -926,7 +926,7 @@ namespace iText.Kernel.Pdf {
                 return baos.ToArray();
             }
             catch (System.IO.IOException ioe) {
-                throw new PdfException(PdfException.CannotGetContentBytes, ioe, this);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_GET_CONTENT_BYTES, ioe, this);
             }
         }
 
@@ -937,11 +937,11 @@ namespace iText.Kernel.Pdf {
             return GetContentStream(index).GetBytes();
         }
 
-        /// <summary>Calculates and returns next available MCID reference.</summary>
+        /// <summary>Calculates and returns the next available for this page's content stream MCID reference.</summary>
         /// <returns>calculated MCID reference.</returns>
         public virtual int GetNextMcid() {
             if (!GetDocument().IsTagged()) {
-                throw new PdfException(PdfException.MustBeATaggedDocument);
+                throw new PdfException(KernelExceptionMessageConstant.MUST_BE_A_TAGGED_DOCUMENT);
             }
             if (mcid == -1) {
                 PdfStructTreeRoot structTreeRoot = GetDocument().GetStructTreeRoot();
@@ -1190,6 +1190,15 @@ namespace iText.Kernel.Pdf {
         }
 
         /// <summary>This method gets outlines of a current page</summary>
+        /// <param name="updateOutlines">
+        /// if the flag is
+        /// <see langword="true"/>
+        /// , the method reads the whole document and creates outline tree.
+        /// If the flag is
+        /// <see langword="false"/>
+        /// , the method gets cached outline tree
+        /// (if it was cached via calling getOutlines method before).
+        /// </param>
         /// <returns>return all outlines of a current page</returns>
         public virtual IList<PdfOutline> GetOutlines(bool updateOutlines) {
             GetDocument().GetOutlines(updateOutlines);
@@ -1216,6 +1225,11 @@ namespace iText.Kernel.Pdf {
         /// </remarks>
         /// <param name="ignorePageRotationForContent">- true to ignore rotation of the new content on the rotated page.
         ///     </param>
+        /// <returns>
+        /// this
+        /// <see cref="PdfPage"/>
+        /// instance.
+        /// </returns>
         public virtual iText.Kernel.Pdf.PdfPage SetIgnorePageRotationForContent(bool ignorePageRotationForContent) {
             this.ignorePageRotationForContent = ignorePageRotationForContent;
             return this;
@@ -1255,7 +1269,8 @@ namespace iText.Kernel.Pdf {
         public virtual iText.Kernel.Pdf.PdfPage SetPageLabel(PageLabelNumberingStyle? numberingStyle, String labelPrefix
             , int firstPage) {
             if (firstPage < 1) {
-                throw new PdfException(PdfException.InAPageLabelThePageNumbersMustBeGreaterOrEqualTo1);
+                throw new PdfException(KernelExceptionMessageConstant.IN_A_PAGE_LABEL_THE_PAGE_NUMBERS_MUST_BE_GREATER_OR_EQUAL_TO_1
+                    );
             }
             PdfDictionary pageLabel = new PdfDictionary();
             if (numberingStyle != null) {
@@ -1491,8 +1506,8 @@ namespace iText.Kernel.Pdf {
         /// <param name="fs">file specification dictionary of associated file</param>
         public virtual void AddAssociatedFile(String description, PdfFileSpec fs) {
             if (null == ((PdfDictionary)fs.GetPdfObject()).Get(PdfName.AFRelationship)) {
-                ILog logger = LogManager.GetLogger(typeof(iText.Kernel.Pdf.PdfPage));
-                logger.Error(iText.IO.LogMessageConstant.ASSOCIATED_FILE_SPEC_SHALL_INCLUDE_AFRELATIONSHIP);
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.PdfPage));
+                logger.LogError(iText.IO.Logs.IoLogMessageConstant.ASSOCIATED_FILE_SPEC_SHALL_INCLUDE_AFRELATIONSHIP);
             }
             if (null != description) {
                 GetDocument().GetCatalog().AddNameToNameTree(description, fs.GetPdfObject(), PdfName.EmbeddedFiles);
@@ -1524,8 +1539,8 @@ namespace iText.Kernel.Pdf {
         }
 
         /// <summary>Returns files associated with PDF page.</summary>
-        /// <param name="create">iText will create AF array if it doesn't exist and create value is true</param>
-        /// <returns>associated files array.</returns>
+        /// <param name="create">defines whether AF arrays will be created if it doesn't exist</param>
+        /// <returns>associated files array</returns>
         public virtual PdfArray GetAssociatedFiles(bool create) {
             PdfArray afArray = GetPdfObject().GetAsArray(PdfName.AF);
             if (afArray == null && create) {
@@ -1543,7 +1558,8 @@ namespace iText.Kernel.Pdf {
                 GetDocument().GetStructTreeRoot().SavePageStructParentIndexIfNeeded(this);
             }
             catch (Exception ex) {
-                throw new PdfException(PdfException.TagStructureFlushingFailedItMightBeCorrupted, ex);
+                throw new PdfException(KernelExceptionMessageConstant.TAG_STRUCTURE_FLUSHING_FAILED_IT_MIGHT_BE_CORRUPTED, 
+                    ex);
             }
         }
 
@@ -1731,6 +1747,8 @@ namespace iText.Kernel.Pdf {
                 RebuildFormFieldParent(oldParent, newParent, toDocument);
                 PdfArray kids = newParent.GetAsArray(PdfName.Kids);
                 if (kids == null) {
+                    // no kids are added here, since we do not know at this point which pages are to be copied,
+                    // hence we do not know which annotations we should copy
                     newParent.Put(PdfName.Kids, new PdfArray());
                 }
                 newField.Put(PdfName.Parent, newParent);

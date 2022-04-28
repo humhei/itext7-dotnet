@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -94,7 +94,7 @@ namespace iText.StyledXmlParser.Css.Media {
         public virtual bool Matches(MediaDeviceDescription deviceDescription) {
             switch (feature) {
                 case MediaFeature.COLOR: {
-                    int? val = CssUtils.ParseInteger(value);
+                    int? val = CssDimensionParsingUtils.ParseInteger(value);
                     if (minPrefix) {
                         return val != null && deviceDescription.GetBitsPerComponent() >= val;
                     }
@@ -111,7 +111,7 @@ namespace iText.StyledXmlParser.Css.Media {
                 }
 
                 case MediaFeature.COLOR_INDEX: {
-                    int? val = CssUtils.ParseInteger(value);
+                    int? val = CssDimensionParsingUtils.ParseInteger(value);
                     if (minPrefix) {
                         return val != null && deviceDescription.GetColorIndex() >= val;
                     }
@@ -127,7 +127,7 @@ namespace iText.StyledXmlParser.Css.Media {
                 }
 
                 case MediaFeature.ASPECT_RATIO: {
-                    int[] aspectRatio = CssUtils.ParseAspectRatio(value);
+                    int[] aspectRatio = CssDimensionParsingUtils.ParseAspectRatio(value);
                     if (minPrefix) {
                         return aspectRatio != null && aspectRatio[0] * deviceDescription.GetHeight() >= aspectRatio[1] * deviceDescription
                             .GetWidth();
@@ -146,7 +146,7 @@ namespace iText.StyledXmlParser.Css.Media {
                 }
 
                 case MediaFeature.GRID: {
-                    int? val = CssUtils.ParseInteger(value);
+                    int? val = CssDimensionParsingUtils.ParseInteger(value);
                     return val != null && val == 0 && !deviceDescription.IsGrid() || deviceDescription.IsGrid();
                 }
 
@@ -159,7 +159,7 @@ namespace iText.StyledXmlParser.Css.Media {
                 }
 
                 case MediaFeature.MONOCHROME: {
-                    int? val = CssUtils.ParseInteger(value);
+                    int? val = CssDimensionParsingUtils.ParseInteger(value);
                     if (minPrefix) {
                         return val != null && deviceDescription.GetMonochrome() >= val;
                     }
@@ -207,7 +207,7 @@ namespace iText.StyledXmlParser.Css.Media {
                 }
 
                 case MediaFeature.RESOLUTION: {
-                    float val = CssUtils.ParseResolution(value);
+                    float val = CssDimensionParsingUtils.ParseResolution(value);
                     if (minPrefix) {
                         return deviceDescription.GetResolution() >= val;
                     }
@@ -240,12 +240,13 @@ namespace iText.StyledXmlParser.Css.Media {
         /// value
         /// </returns>
         private static float ParseAbsoluteLength(String value) {
-            if (CssUtils.IsRelativeValue(value)) {
-                // TODO here should be used default font size of the browser, it probably should be fetched from the more generic place than private class constant
-                return CssUtils.ParseRelativeValue(value, DEFAULT_FONT_SIZE);
+            if (CssTypesValidationUtils.IsRelativeValue(value)) {
+                // TODO DEVSIX-6365 Use some shared default value (from default.css or CssDefaults)
+                //      rather than a constant of this class
+                return CssDimensionParsingUtils.ParseRelativeValue(value, DEFAULT_FONT_SIZE);
             }
             else {
-                return CssUtils.ParseAbsoluteLength(value);
+                return CssDimensionParsingUtils.ParseAbsoluteLength(value);
             }
         }
     }

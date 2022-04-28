@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.IO;
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 
 namespace iText.Kernel.Crypto {
     public class OutputStreamAesEncryption : OutputStreamEncryption {
@@ -73,7 +73,7 @@ namespace iText.Kernel.Crypto {
                 Write(iv);
             }
             catch (System.IO.IOException e) {
-                throw new PdfException(PdfException.PdfEncryption, e);
+                throw new PdfException(KernelExceptionMessageConstant.PDF_ENCRYPTION, e);
             }
         }
 
@@ -166,7 +166,7 @@ namespace iText.Kernel.Crypto {
                     @out.Write(b, 0, b.Length);
                 }
                 catch (System.IO.IOException e) {
-                    throw new PdfException(PdfException.PdfEncryption, e);
+                    throw new PdfException(KernelExceptionMessageConstant.PDF_ENCRYPTION, e);
                 }
             }
         }

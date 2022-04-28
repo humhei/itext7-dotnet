@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -135,7 +135,7 @@ namespace iText.IO.Font {
                 return (char)(i & 0xff);
             }
             catch (Exception e) {
-                throw new iText.IO.IOException(iText.IO.IOException.IoException, e);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.IoException, e);
             }
         }
 
@@ -144,7 +144,7 @@ namespace iText.IO.Font {
                 return buf.ReadChar();
             }
             catch (System.IO.IOException e) {
-                throw new iText.IO.IOException(iText.IO.IOException.IoException, e);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.IoException, e);
             }
         }
 
@@ -158,12 +158,7 @@ namespace iText.IO.Font {
         }
 
         internal virtual void Seek(int offset) {
-            try {
-                buf.Seek(offset);
-            }
-            catch (System.IO.IOException e) {
-                throw new iText.IO.IOException(iText.IO.IOException.IoException, e);
-            }
+            buf.Seek(offset);
         }
 
         internal virtual short GetShort() {
@@ -171,7 +166,7 @@ namespace iText.IO.Font {
                 return buf.ReadShort();
             }
             catch (System.IO.IOException e) {
-                throw new iText.IO.IOException(iText.IO.IOException.IoException, e);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.IoException, e);
             }
         }
 
@@ -180,17 +175,12 @@ namespace iText.IO.Font {
                 return buf.ReadInt();
             }
             catch (System.IO.IOException e) {
-                throw new iText.IO.IOException(iText.IO.IOException.IoException, e);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.IoException, e);
             }
         }
 
         internal virtual int GetPosition() {
-            try {
-                return (int)buf.GetPosition();
-            }
-            catch (System.IO.IOException e) {
-                throw new iText.IO.IOException(iText.IO.IOException.IoException, e);
-            }
+            return (int)buf.GetPosition();
         }
 
         internal int nextIndexOffset;
@@ -362,12 +352,14 @@ namespace iText.IO.Font {
         protected internal abstract class Item {
             protected internal int myOffset = -1;
 
-            /// <summary>remember the current offset and increment by item's size in bytes.</summary>
+            /// <summary>Remember the current offset and increment by item's size in bytes.</summary>
+            /// <param name="currentOffset">increment offset by item's size</param>
             public virtual void Increment(int[] currentOffset) {
                 myOffset = currentOffset[0];
             }
 
             /// <summary>Emit the byte stream for this item.</summary>
+            /// <param name="buffer">byte array</param>
             public virtual void Emit(byte[] buffer) {
             }
 
@@ -379,11 +371,12 @@ namespace iText.IO.Font {
         protected internal abstract class OffsetItem : CFFFont.Item {
             public int value;
 
-            /// <summary>set the value of an offset item that was initially unknown.</summary>
+            /// <summary>Set the value of an offset item that was initially unknown.</summary>
             /// <remarks>
-            /// set the value of an offset item that was initially unknown.
+            /// Set the value of an offset item that was initially unknown.
             /// It will be fixed up latex by a call to xref on some marker.
             /// </remarks>
+            /// <param name="offset">offset to set</param>
             public virtual void Set(int offset) {
                 this.value = offset;
             }
@@ -417,7 +410,7 @@ namespace iText.IO.Font {
                     }
                 }
                 catch (System.IO.IOException e) {
-                    throw new iText.IO.IOException(iText.IO.IOException.IoException, e);
+                    throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.IoException, e);
                 }
             }
             //System.err.println("finished range emit");
@@ -478,10 +471,6 @@ namespace iText.IO.Font {
             }
         }
 
-        /// <summary>
-        /// TODO To change the template for this generated type comment go to
-        /// Window - Preferences - Java - Code Generation - Code and Comments
-        /// </summary>
         protected internal sealed class SubrMarkerItem : CFFFont.Item {
             private CFFFont.OffsetItem offItem;
 
@@ -709,7 +698,8 @@ namespace iText.IO.Font {
         /// a PDF restriction) and to subset the CharStrings glyph
         /// description.
         /// </remarks>
-        /// <param name="fontName"/>
+        /// <param name="fontName">name of the font</param>
+        /// <returns>byte array represents the CID font</returns>
         public virtual byte[] GetCID(String fontName) {
             //throws java.io.FileNotFoundException
             int j;
@@ -946,6 +936,10 @@ namespace iText.IO.Font {
             return b;
         }
 
+        public virtual bool IsCID() {
+            return IsCID(GetNames()[0]);
+        }
+
         public virtual bool IsCID(String fontName) {
             int j;
             for (j = 0; j < fonts.Length; j++) {
@@ -1058,6 +1052,8 @@ namespace iText.IO.Font {
             public int[][] PrivateSubrsOffsetsArray;
 
             public int[] SubrsOffsets;
+
+            public int[] gidToCid;
 
             internal Font(CFFFont _enclosing) {
                 this._enclosing = _enclosing;

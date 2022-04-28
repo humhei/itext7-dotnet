@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -51,7 +51,8 @@ using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
 using iText.IO.Util;
-using iText.Kernel;
+using iText.Kernel.Crypto;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
 
 namespace iText.Kernel.Crypto.Securityhandler {
@@ -83,7 +84,7 @@ namespace iText.Kernel.Crypto.Securityhandler {
                 }
             }
             catch (Exception e) {
-                throw new PdfException(PdfException.PdfEncryption, e);
+                throw new PdfException(KernelExceptionMessageConstant.PDF_ENCRYPTION, e);
             }
             return md.Digest();
         }
@@ -111,7 +112,7 @@ namespace iText.Kernel.Crypto.Securityhandler {
                 encryptionKey = md.Digest();
             }
             catch (Exception f) {
-                throw new PdfException(PdfException.PdfDecryption, f);
+                throw new PdfException(KernelExceptionMessageConstant.PDF_DECRYPTION, f);
             }
             return encryptionKey;
         }
@@ -130,7 +131,7 @@ namespace iText.Kernel.Crypto.Securityhandler {
                 recipients = GetEncodedRecipients();
             }
             catch (Exception e) {
-                throw new PdfException(PdfException.PdfEncryption, e);
+                throw new PdfException(KernelExceptionMessageConstant.PDF_ENCRYPTION, e);
             }
             return recipients;
         }
@@ -207,7 +208,7 @@ namespace iText.Kernel.Crypto.Securityhandler {
             pkcs7input[22] = two;
             pkcs7input[23] = one;
             MemoryStream baos = new MemoryStream();
-            DerOutputStream k = new DerOutputStream(baos);
+            DerOutputStream k = CryptoUtil.CreateAsn1OutputStream(baos, Org.BouncyCastle.Asn1.Asn1Encodable.Der);
             Asn1Object obj = CreateDERForRecipient(pkcs7input, (X509Certificate)certificate);
             k.WriteObject(obj);
             cms = baos.ToArray();

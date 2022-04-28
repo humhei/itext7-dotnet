@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -48,7 +48,7 @@ using System.IO;
 using System.Text;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.X509;
-using iText.Kernel;
+using iText.Kernel.Exceptions;
 
 namespace iText.Signatures {
     /// <summary>
@@ -143,21 +143,20 @@ namespace iText.Signatures {
             /// <summary>Constructs an X509 name.</summary>
             /// <param name="seq">an ASN1 Sequence</param>
             public X500Name(Asn1Sequence seq) {
-                IEnumerator e = seq.GetObjects();
+                IEnumerator e = seq.GetEnumerator();
                 while (e.MoveNext()) {
                     Asn1Set set = (Asn1Set)e.Current;
                     for (int i = 0; i < set.Count; i++) {
                         Asn1Sequence s = (Asn1Sequence)set[i];
                         String id = DefaultSymbols.Get((DerObjectIdentifier)s[0]);
-                        if (id == null) {
-                            continue;
+                        if (id != null) {
+                            IList<String> vs = values.Get(id);
+                            if (vs == null) {
+                                vs = new List<String>();
+                                values.Put(id, vs);
+                            }
+                            vs.Add(((DerStringBase)s[1]).GetString());
                         }
-                        IList<String> vs = values.Get(id);
-                        if (vs == null) {
-                            vs = new List<String>();
-                            values.Put(id, vs);
-                        }
-                        vs.Add(((DerStringBase)s[1]).GetString());
                     }
                 }
             }
@@ -212,11 +211,11 @@ namespace iText.Signatures {
 
         /// <summary>
         /// Class for breaking up an X500 Name into it's component tokens, similar to
-        /// <see cref="iText.IO.Util.StringTokenizer"/>.
+        /// <see cref="iText.Commons.Utils.StringTokenizer"/>.
         /// </summary>
         /// <remarks>
         /// Class for breaking up an X500 Name into it's component tokens, similar to
-        /// <see cref="iText.IO.Util.StringTokenizer"/>.
+        /// <see cref="iText.Commons.Utils.StringTokenizer"/>.
         /// We need this class as some of the lightweight Java environments don't support classes such as StringTokenizer.
         /// </remarks>
         public class X509NameTokenizer {

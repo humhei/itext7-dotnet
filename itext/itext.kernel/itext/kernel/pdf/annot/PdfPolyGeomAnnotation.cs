@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,29 +41,32 @@ source product.
 For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
-using System;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
 using iText.Kernel.Colors;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 
 namespace iText.Kernel.Pdf.Annot {
     public abstract class PdfPolyGeomAnnotation : PdfMarkupAnnotation {
-        [System.ObsoleteAttribute(@", use iText.Kernel.Pdf.PdfName.Polygon instead.")]
-        public static readonly PdfName Polygon = PdfName.Polygon;
-
-        [System.ObsoleteAttribute(@", use iText.Kernel.Pdf.PdfName.PolyLine instead.")]
-        public static readonly PdfName PolyLine = PdfName.PolyLine;
-
         internal PdfPolyGeomAnnotation(Rectangle rect, float[] vertices)
             : base(rect) {
             SetVertices(vertices);
         }
 
         /// <summary>
-        /// see
-        /// <see cref="PdfAnnotation.MakeAnnotation(iText.Kernel.Pdf.PdfObject)"/>
+        /// Instantiates a new
+        /// <see cref="PdfPolyGeomAnnotation"/>
+        /// instance based on
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// instance, that represents existing annotation object in the document.
         /// </summary>
+        /// <param name="pdfObject">
+        /// the
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// representing annotation object
+        /// </param>
+        /// <seealso cref="PdfAnnotation.MakeAnnotation(iText.Kernel.Pdf.PdfObject)"/>
         protected internal PdfPolyGeomAnnotation(PdfDictionary pdfObject)
             : base(pdfObject) {
         }
@@ -83,7 +86,7 @@ namespace iText.Kernel.Pdf.Annot {
 
         public virtual iText.Kernel.Pdf.Annot.PdfPolyGeomAnnotation SetVertices(PdfArray vertices) {
             if (GetPdfObject().ContainsKey(PdfName.Path)) {
-                LogManager.GetLogger(GetType()).Warn(iText.IO.LogMessageConstant.PATH_KEY_IS_PRESENT_VERTICES_WILL_BE_IGNORED
+                ITextLogManager.GetLogger(GetType()).LogWarning(iText.IO.Logs.IoLogMessageConstant.PATH_KEY_IS_PRESENT_VERTICES_WILL_BE_IGNORED
                     );
             }
             return (iText.Kernel.Pdf.Annot.PdfPolyGeomAnnotation)Put(PdfName.Vertices, vertices);
@@ -91,7 +94,7 @@ namespace iText.Kernel.Pdf.Annot {
 
         public virtual iText.Kernel.Pdf.Annot.PdfPolyGeomAnnotation SetVertices(float[] vertices) {
             if (GetPdfObject().ContainsKey(PdfName.Path)) {
-                LogManager.GetLogger(GetType()).Warn(iText.IO.LogMessageConstant.PATH_KEY_IS_PRESENT_VERTICES_WILL_BE_IGNORED
+                ITextLogManager.GetLogger(GetType()).LogWarning(iText.IO.Logs.IoLogMessageConstant.PATH_KEY_IS_PRESENT_VERTICES_WILL_BE_IGNORED
                     );
             }
             return (iText.Kernel.Pdf.Annot.PdfPolyGeomAnnotation)Put(PdfName.Vertices, new PdfArray(vertices));
@@ -150,7 +153,7 @@ namespace iText.Kernel.Pdf.Annot {
         /// </returns>
         public virtual iText.Kernel.Pdf.Annot.PdfPolyGeomAnnotation SetPath(PdfArray path) {
             if (GetPdfObject().ContainsKey(PdfName.Vertices)) {
-                LogManager.GetLogger(GetType()).Error(iText.IO.LogMessageConstant.IF_PATH_IS_SET_VERTICES_SHALL_NOT_BE_PRESENT
+                ITextLogManager.GetLogger(GetType()).LogError(iText.IO.Logs.IoLogMessageConstant.IF_PATH_IS_SET_VERTICES_SHALL_NOT_BE_PRESENT
                     );
             }
             return (iText.Kernel.Pdf.Annot.PdfPolyGeomAnnotation)Put(PdfName.Path, path);

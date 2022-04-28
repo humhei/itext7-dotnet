@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,7 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Kernel.Font;
 using iText.Kernel.Pdf.Colorspace;
 using iText.Kernel.Pdf.Extgstate;
@@ -121,7 +121,17 @@ namespace iText.Kernel.Pdf {
             : this(new PdfDictionary()) {
         }
 
-        /// <summary>Adds font to resources and register PdfFont in the document for further flushing.</summary>
+        /// <summary>Adds font to resources and registers PdfFont in the document for further flushing.</summary>
+        /// <param name="pdfDocument">
+        /// a
+        /// <see cref="PdfDocument"/>
+        /// instance to which the font is added for further flushing
+        /// </param>
+        /// <param name="font">
+        /// a
+        /// <see cref="iText.Kernel.Font.PdfFont"/>
+        /// instance to be added
+        /// </param>
         /// <returns>added font resource name.</returns>
         public virtual PdfName AddFont(PdfDocument pdfDocument, PdfFont font) {
             pdfDocument.AddFont(font);
@@ -391,11 +401,6 @@ namespace iText.Kernel.Pdf {
             return isModified;
         }
 
-        [System.ObsoleteAttribute(@"Please use SetModified() .")]
-        protected internal virtual void SetModified(bool isModified) {
-            this.isModified = isModified;
-        }
-
         /// <summary><inheritDoc/></summary>
         public override PdfObjectWrapper<PdfDictionary> SetModified() {
             this.isModified = true;
@@ -481,7 +486,6 @@ namespace iText.Kernel.Pdf {
         /// <summary>Gets the names of all the added resources.</summary>
         /// <returns>the name of all the added resources.</returns>
         public virtual ICollection<PdfName> GetResourceNames() {
-            // TODO: isn't it better to use HashSet? Do we really need certain order?
             ICollection<PdfName> names = new SortedSet<PdfName>();
             foreach (PdfName resType in GetPdfObject().KeySet()) {
                 names.AddAll(GetResourceNames(resType));
@@ -530,8 +534,7 @@ namespace iText.Kernel.Pdf {
         /// </returns>
         public virtual ICollection<PdfName> GetResourceNames(PdfName resType) {
             PdfDictionary resourceCategory = GetPdfObject().GetAsDictionary(resType);
-            // TODO: TreeSet or HashSet enough?
-            return resourceCategory == null ? new SortedSet<PdfName>() : resourceCategory.KeySet();
+            return resourceCategory == null ? JavaCollectionsUtil.EmptySet<PdfName>() : resourceCategory.KeySet();
         }
 
         /// <summary>
@@ -627,6 +630,9 @@ namespace iText.Kernel.Pdf {
             PdfDictionary resourceCategory = GetPdfObject().GetAsDictionary(resType);
             if (resourceCategory == null) {
                 GetPdfObject().Put(resType, resourceCategory = new PdfDictionary());
+            }
+            else {
+                resourceCategory.SetModified();
             }
             resourceCategory.Put(resName, resource);
             SetModified();

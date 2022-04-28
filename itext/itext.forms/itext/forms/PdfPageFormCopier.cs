@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,9 +43,10 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.Forms.Fields;
-using iText.IO.Util;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Annot;
 
@@ -57,7 +58,6 @@ namespace iText.Forms {
     /// <remarks>
     /// A sample implementation of the {#link IPdfPageExtraCopier} interface which
     /// copies only AcroForm fields to a new page.
-    /// <para />
     /// <para />
     /// NOTE: While it's absolutely not necessary to use the same PdfPageFormCopier instance for copying operations,
     /// it is still worth to know that PdfPageFormCopier uses some caching logic which can potentially improve performance
@@ -72,7 +72,7 @@ namespace iText.Forms {
 
         private PdfDocument documentTo;
 
-        private static ILog logger = LogManager.GetLogger(typeof(PdfPageFormCopier));
+        private static ILogger logger = ITextLogManager.GetLogger(typeof(PdfPageFormCopier));
 
         public virtual void Copy(PdfPage fromPage, PdfPage toPage) {
             if (documentFrom != fromPage.GetDocument()) {
@@ -109,8 +109,8 @@ namespace iText.Forms {
         private PdfFormField MakeFormField(PdfObject fieldDict) {
             PdfFormField field = PdfFormField.MakeFormField(fieldDict, documentTo);
             if (field == null) {
-                logger.Warn(MessageFormatUtil.Format(iText.IO.LogMessageConstant.CANNOT_CREATE_FORMFIELD, fieldDict.GetIndirectReference
-                    ()));
+                logger.LogWarning(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.CANNOT_CREATE_FORMFIELD, fieldDict
+                    .GetIndirectReference()));
             }
             return field;
         }
@@ -154,6 +154,7 @@ namespace iText.Forms {
              annot, PdfFormField parentField) {
             PdfString parentName = parentField.GetFieldName();
             if (!fieldsTo.ContainsKey(parentName.ToUnicodeString())) {
+                // no such field, hence we should simply add it
                 PdfFormField field = CreateParentFieldCopy(annot.GetPdfObject(), documentTo);
                 PdfArray kids = field.GetKids();
                 field.GetPdfObject().Remove(PdfName.Kids);
@@ -161,6 +162,7 @@ namespace iText.Forms {
                 field.GetPdfObject().Put(PdfName.Kids, kids);
             }
             else {
+                // it is either a field (field name will not be null) or a widget (field name is not null)
                 PdfFormField field = MakeFormField(annot.GetPdfObject());
                 if (field == null) {
                     return;
@@ -179,20 +181,38 @@ namespace iText.Forms {
                     }
                 }
                 else {
-                    if (!parentField.GetKids().Contains(field.GetPdfObject())) {
+                    if (!parentField.GetKids().Contains(field.GetPdfObject()) && formTo.GetFields().Contains(parentField.GetPdfObject
+                        ())) {
+                        // its parent is already a field of the resultant document,
+                        // hence we only need to update its children
                         HashSet<String> existingFields = new HashSet<String>();
                         GetAllFieldNames(formTo.GetFields(), existingFields);
                         AddChildToExistingParent(annot.GetPdfObject(), existingFields);
+                    }
+                    else {
+                        // its parent is not a field of the resultant document, but the latter contains
+                        // a field of the same name, therefore we should merge them (note that merging in this context
+                        // differs from merging a widget and an annotation into a single entity)
+                        PdfFormField mergedField = MergeFieldsWithTheSameName(field);
+                        // we need to add the field not to its representation (#getFormFields()), but to
+                        // /Fields entry of the acro form
+                        formTo.AddField(mergedField, toPage);
                     }
                 }
             }
         }
 
         private PdfFormField MergeFieldsWithTheSameName(PdfFormField newField) {
-            String fullFieldName = newField.GetFieldName().ToUnicodeString();
             PdfString fieldName = newField.GetPdfObject().GetAsString(PdfName.T);
-            logger.Warn(MessageFormatUtil.Format(iText.IO.LogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, fullFieldName
-                ));
+            if (null == fieldName) {
+                fieldName = newField.GetParent().GetAsString(PdfName.T);
+            }
+            String fullFieldName = fieldName.ToUnicodeString();
+            if (null != newField.GetFieldName()) {
+                fullFieldName = newField.GetFieldName().ToUnicodeString();
+            }
+            logger.LogWarning(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.DOCUMENT_ALREADY_HAS_FIELD, 
+                fullFieldName));
             PdfFormField existingField = formTo.GetField(fullFieldName);
             if (existingField.IsFlushed()) {
                 int index = 0;
@@ -233,7 +253,7 @@ namespace iText.Forms {
                 mergedField.Put(PdfName.Kids, kids);
             }
             mergedField.AddKid(existingField).AddKid(newField);
-            PdfObject value = existingField.GetValue();
+            PdfObject value = existingField.GetPdfObject().Get(PdfName.V);
             if (value != null) {
                 mergedField.Put(PdfName.V, existingField.GetPdfObject().Get(PdfName.V));
             }

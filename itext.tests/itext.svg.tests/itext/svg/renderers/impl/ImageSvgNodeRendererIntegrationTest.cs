@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -128,7 +128,6 @@ namespace iText.Svg.Renderers.Impl {
         }
 
         [NUnit.Framework.Test]
-        [NUnit.Framework.Ignore("DEVSIX-2240")]
         public virtual void DifferentDimensionsTest() {
             ConvertAndCompareSinglePage(sourceFolder, destinationFolder, "differentDimensions", properties);
         }
@@ -137,6 +136,72 @@ namespace iText.Svg.Renderers.Impl {
         public virtual void ImageWithTransparencyTest() {
             //TODO: update cmp_ when DEVSIX-2250, DEVSIX-2258 fixed
             ConvertAndCompareSinglePage(sourceFolder, destinationFolder, "imageWithTransparency", properties);
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ImageWithPreserveAspectRatioNoneTest() {
+            ConvertAndCompareSinglePage(sourceFolder, destinationFolder, "imageWithPreserveAspectRatioNone", properties
+                );
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ImageWithPreserveAspectRatioInvalidValueTest() {
+            ConvertAndCompareSinglePage(sourceFolder, destinationFolder, "imageWithPreserveAspectRatioInvalidValue", properties
+                );
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ImageWithPreserveAspectRatioXMinYMinTest() {
+            ConvertAndCompareSinglePage(sourceFolder, destinationFolder, "imageWithPreserveAspectRatioXMinYMin", properties
+                );
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ImageWithPreserveAspectRatioXMinYMidTest() {
+            ConvertAndCompareSinglePage(sourceFolder, destinationFolder, "imageWithPreserveAspectRatioXMinYMid", properties
+                );
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ImageWithPreserveAspectRatioXMinYMaxTest() {
+            ConvertAndCompareSinglePage(sourceFolder, destinationFolder, "imageWithPreserveAspectRatioXMinYMax", properties
+                );
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ImageWithPreserveAspectRatioXMidYMinTest() {
+            ConvertAndCompareSinglePage(sourceFolder, destinationFolder, "imageWithPreserveAspectRatioXMidYMin", properties
+                );
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ImageWithPreserveAspectRatioXMidYMidTest() {
+            ConvertAndCompareSinglePage(sourceFolder, destinationFolder, "imageWithPreserveAspectRatioXMidYMid", properties
+                );
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ImageWithPreserveAspectRatioXMidYMaxTest() {
+            ConvertAndCompareSinglePage(sourceFolder, destinationFolder, "imageWithPreserveAspectRatioXMidYMax", properties
+                );
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ImageWithPreserveAspectRatioXMaxYMinTest() {
+            ConvertAndCompareSinglePage(sourceFolder, destinationFolder, "imageWithPreserveAspectRatioXMaxYMin", properties
+                );
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ImageWithPreserveAspectRatioXMaxYMidTest() {
+            ConvertAndCompareSinglePage(sourceFolder, destinationFolder, "imageWithPreserveAspectRatioXMaxYMid", properties
+                );
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ImageWithPreserveAspectRatioXMaxYMaxTest() {
+            ConvertAndCompareSinglePage(sourceFolder, destinationFolder, "imageWithPreserveAspectRatioXMaxYMax", properties
+                );
         }
     }
 }

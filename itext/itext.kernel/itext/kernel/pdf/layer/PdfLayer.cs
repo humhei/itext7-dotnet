@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,8 +43,8 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
+using iText.Commons.Utils;
 using iText.IO.Font;
-using iText.IO.Util;
 using iText.Kernel.Pdf;
 
 namespace iText.Kernel.Pdf.Layer {
@@ -178,7 +178,7 @@ namespace iText.Kernel.Pdf.Layer {
         /// Gets whether the layer is currently locked or not. If the layer is locked,
         /// it will not be possible to change its state (on/off) in a viewer.
         /// </remarks>
-        /// <returns>true of the layer is currently locked, false otherwise.</returns>
+        /// <returns>true if the layer is currently locked, false otherwise.</returns>
         public virtual bool IsLocked() {
             return locked;
         }
@@ -190,6 +190,7 @@ namespace iText.Kernel.Pdf.Layer {
         /// of a viewer application. Producers can use this entry to prevent the visibility
         /// of content that depends on these groups from being changed by users.
         /// </remarks>
+        /// <param name="locked">sets whether the layer is currently locked or not</param>
         public virtual void SetLocked(bool locked) {
             if (this.IsLocked() != locked) {
                 FetchOCProperties().SetModified();
@@ -442,6 +443,7 @@ namespace iText.Kernel.Pdf.Layer {
         }
 
         /// <summary>Gets the title of the layer if it is a title layer, or null if it is a usual layer.</summary>
+        /// <returns>the title of the layer if it is a title layer, or null if it is a usual layer</returns>
         public virtual String GetTitle() {
             return title;
         }
@@ -461,6 +463,16 @@ namespace iText.Kernel.Pdf.Layer {
             return true;
         }
 
+        /// <summary>
+        /// Gets the
+        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
+        /// that owns that layer.
+        /// </summary>
+        /// <returns>
+        /// the
+        /// <see cref="iText.Kernel.Pdf.PdfDocument"/>
+        /// that owns that layer
+        /// </returns>
         protected internal virtual PdfDocument GetDocument() {
             return GetPdfObject().GetIndirectReference().GetDocument();
         }

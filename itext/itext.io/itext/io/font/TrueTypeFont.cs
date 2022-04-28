@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,10 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
+using System.Linq;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.IO.Font.Constants;
 using iText.IO.Font.Otf;
 using iText.IO.Util;
@@ -158,7 +161,7 @@ namespace iText.IO.Font {
             }
             catch (System.IO.IOException e) {
                 fontStreamBytes = null;
-                throw new iText.IO.IOException(iText.IO.IOException.IoException, e);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.IoException, e);
             }
             return fontStreamBytes;
         }
@@ -183,6 +186,7 @@ namespace iText.IO.Font {
         /// The offset from the start of the file to the table directory.
         /// It is 0 for TTF and may vary for TTC depending on the chosen font.
         /// </remarks>
+        /// <returns>directory Offset</returns>
         public virtual int GetDirectoryOffset() {
             return fontParser.directoryOffset;
         }
@@ -204,8 +208,33 @@ namespace iText.IO.Font {
                 return fontParser.GetSubset(glyphs, subset);
             }
             catch (System.IO.IOException e) {
-                throw new iText.IO.IOException(iText.IO.IOException.IoException, e);
+                throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.IoException, e);
             }
+        }
+
+        /// <summary>
+        /// Maps a set of glyph CIDs (as used in PDF file) to corresponding GID values
+        /// (as a glyph primary identifier in the font file).
+        /// </summary>
+        /// <remarks>
+        /// Maps a set of glyph CIDs (as used in PDF file) to corresponding GID values
+        /// (as a glyph primary identifier in the font file).
+        /// This call is only meaningful for fonts that return true for
+        /// <see cref="IsCff()"/>.
+        /// For other types of fonts, GID and CID are always the same, so that call would essentially
+        /// return a set of the same values.
+        /// </remarks>
+        /// <param name="glyphs">a set of glyph CIDs</param>
+        /// <returns>a set of glyph ids corresponding to the passed glyph CIDs</returns>
+        public virtual ICollection<int> MapGlyphsCidsToGids(ICollection<int> glyphs) {
+            return glyphs.Select((i) => {
+                Glyph usedGlyph = GetGlyphByCode(i);
+                if (usedGlyph is GidAwareGlyph) {
+                    return ((GidAwareGlyph)usedGlyph).GetGid();
+                }
+                return i;
+            }
+            ).ToList();
         }
 
         protected internal virtual void ReadGdefTable() {
@@ -291,20 +320,36 @@ namespace iText.IO.Font {
             unicodeToGlyph = new LinkedDictionary<int, Glyph>(cmap.Count);
             codeToGlyph = new LinkedDictionary<int, Glyph>(numOfGlyphs);
             avgWidth = 0;
+            CFFFontSubset cffFontSubset = null;
+            if (IsCff()) {
+                cffFontSubset = new CFFFontSubset(GetFontStreamBytes());
+            }
             foreach (int charCode in cmap.Keys) {
                 int index = cmap.Get(charCode)[0];
                 if (index >= numOfGlyphs) {
-                    ILog LOGGER = LogManager.GetLogger(typeof(iText.IO.Font.TrueTypeFont));
-                    LOGGER.Warn(MessageFormatUtil.Format(iText.IO.LogMessageConstant.FONT_HAS_INVALID_GLYPH, GetFontNames().GetFontName
-                        (), index));
+                    ILogger LOGGER = ITextLogManager.GetLogger(typeof(iText.IO.Font.TrueTypeFont));
+                    LOGGER.LogWarning(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.FONT_HAS_INVALID_GLYPH, GetFontNames
+                        ().GetFontName(), index));
                     continue;
                 }
-                Glyph glyph = new Glyph(index, glyphWidths[index], charCode, bBoxes != null ? bBoxes[index] : null);
+                int cid;
+                Glyph glyph;
+                int[] glyphBBox = bBoxes != null ? bBoxes[index] : null;
+                if (cffFontSubset != null && cffFontSubset.IsCID()) {
+                    cid = cffFontSubset.GetCidForGlyphId(index);
+                    GidAwareGlyph cffGlyph = new GidAwareGlyph(cid, glyphWidths[index], charCode, glyphBBox);
+                    cffGlyph.SetGid(index);
+                    glyph = cffGlyph;
+                }
+                else {
+                    cid = index;
+                    glyph = new Glyph(cid, glyphWidths[index], charCode, glyphBBox);
+                }
                 unicodeToGlyph.Put(charCode, glyph);
                 // This is done on purpose to keep the mapping to glyphs with smaller unicode values, in contrast with
                 // larger values which often represent different forms of other characters.
-                if (!codeToGlyph.ContainsKey(index)) {
-                    codeToGlyph.Put(index, glyph);
+                if (!codeToGlyph.ContainsKey(cid)) {
+                    codeToGlyph.Put(cid, glyph);
                 }
                 avgWidth += glyph.GetWidth();
             }

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -74,7 +74,7 @@ namespace iText.Layout.Renderer {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.SUM_OF_TABLE_COLUMNS_IS_GREATER_THAN_100, Count = 2)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.SUM_OF_TABLE_COLUMNS_IS_GREATER_THAN_100, Count = 2)]
         public virtual void TestSumOfColumnsIsGreaterThan100() {
             PdfDocument pdfDoc = new PdfDocument(new PdfWriter(new MemoryStream()));
             Document doc = new Document(pdfDoc);

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,9 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.IO.Util;
 using iText.Layout.Borders;
 using iText.Layout.Element;
@@ -216,7 +218,6 @@ namespace iText.Layout.Renderer {
         }
 
         internal void ProcessColumns() {
-            //TODO add colgroup information.
             for (int i = 0; i < numberOfColumns; i++) {
                 UnitValue colWidth = GetTable().GetColumnWidth(i);
                 if (colWidth != null && colWidth.GetValue() > 0) {
@@ -696,12 +697,12 @@ namespace iText.Layout.Renderer {
             foreach (TableWidths.CellInfo cell in cells) {
                 cell.SetParent(tableRenderer);
                 MinMaxWidth minMax = cell.GetCell().GetMinMaxWidth();
-                float[] indents = GetCellBorderIndents(cell);
                 if (BorderCollapsePropertyValue.SEPARATE.Equals(tableRenderer.GetProperty<BorderCollapsePropertyValue?>(Property
                     .BORDER_COLLAPSE))) {
                     minMax.SetAdditionalWidth((float)(minMax.GetAdditionalWidth() - horizontalBorderSpacing));
                 }
                 else {
+                    float[] indents = GetCellBorderIndents(cell);
                     minMax.SetAdditionalWidth(minMax.GetAdditionalWidth() + indents[1] / 2 + indents[3] / 2);
                 }
                 if (cell.GetColspan() == 1) {
@@ -775,8 +776,8 @@ namespace iText.Layout.Renderer {
         }
 
         private void Warn100percent() {
-            ILog logger = LogManager.GetLogger(typeof(iText.Layout.Renderer.TableWidths));
-            logger.Warn(iText.IO.LogMessageConstant.SUM_OF_TABLE_COLUMNS_IS_GREATER_THAN_100);
+            ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Renderer.TableWidths));
+            logger.LogWarning(iText.IO.Logs.IoLogMessageConstant.SUM_OF_TABLE_COLUMNS_IS_GREATER_THAN_100);
         }
 
         private float[] ExtractWidths() {
@@ -790,8 +791,8 @@ namespace iText.Layout.Renderer {
                 layoutMinWidth += widths[i].min + horizontalBorderSpacing;
             }
             if (actualWidth > tableWidth + MinMaxWidthUtils.GetEps() * widths.Length) {
-                ILog logger = LogManager.GetLogger(typeof(iText.Layout.Renderer.TableWidths));
-                logger.Warn(iText.IO.LogMessageConstant.TABLE_WIDTH_IS_MORE_THAN_EXPECTED_DUE_TO_MIN_WIDTH);
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Renderer.TableWidths));
+                logger.LogWarning(iText.IO.Logs.IoLogMessageConstant.TABLE_WIDTH_IS_MORE_THAN_EXPECTED_DUE_TO_MIN_WIDTH);
             }
             return columnWidths;
         }
@@ -880,47 +881,52 @@ namespace iText.Layout.Renderer {
 
         private static readonly UnitValue ZeroWidth = UnitValue.CreatePointValue(0);
 
+        /// <summary>Gets width of the cell, adding paddings and extra spacing if necessary.</summary>
+        /// <param name="cell">
+        /// renderer from which width will be taken.
+        /// Note that this method will not change original width of the element.
+        /// </param>
+        /// <param name="zeroIsValid">defines if 0 width is valid</param>
+        /// <returns>increased width of the renderer</returns>
         private UnitValue GetCellWidth(CellRenderer cell, bool zeroIsValid) {
-            UnitValue widthValue = cell.GetProperty<UnitValue>(Property.WIDTH);
+            UnitValue widthValue = new UnitValue(cell.GetProperty(Property.WIDTH, UnitValue.CreatePointValue(-1)));
             //zero has special meaning in fixed layout, we shall not add padding to zero value
-            if (widthValue == null || widthValue.GetValue() < 0) {
+            if (widthValue.GetValue() < -AbstractRenderer.EPS) {
                 return null;
             }
+            if (widthValue.GetValue() < AbstractRenderer.EPS) {
+                return zeroIsValid ? ZeroWidth : null;
+            }
             else {
-                if (widthValue.GetValue() == 0) {
-                    return zeroIsValid ? ZeroWidth : null;
+                if (widthValue.IsPercentValue()) {
+                    return widthValue;
                 }
                 else {
-                    if (widthValue.IsPercentValue()) {
-                        return widthValue;
-                    }
-                    else {
-                        widthValue = ResolveMinMaxCollision(cell, widthValue);
-                        if (!AbstractRenderer.IsBorderBoxSizing(cell)) {
-                            Border[] borders = cell.GetBorders();
-                            if (borders[1] != null) {
-                                widthValue.SetValue(widthValue.GetValue() + ((tableRenderer.bordersHandler is SeparatedTableBorders) ? borders
-                                    [1].GetWidth() : borders[1].GetWidth() / 2));
-                            }
-                            if (borders[3] != null) {
-                                widthValue.SetValue(widthValue.GetValue() + ((tableRenderer.bordersHandler is SeparatedTableBorders) ? borders
-                                    [3].GetWidth() : borders[3].GetWidth() / 2));
-                            }
-                            UnitValue[] paddings = cell.GetPaddings();
-                            if (!paddings[1].IsPointValue()) {
-                                ILog logger = LogManager.GetLogger(typeof(TableWidths));
-                                logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED, Property
-                                    .PADDING_LEFT));
-                            }
-                            if (!paddings[3].IsPointValue()) {
-                                ILog logger = LogManager.GetLogger(typeof(TableWidths));
-                                logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED, Property
-                                    .PADDING_RIGHT));
-                            }
-                            widthValue.SetValue(widthValue.GetValue() + paddings[1].GetValue() + paddings[3].GetValue());
+                    widthValue = ResolveMinMaxCollision(cell, widthValue);
+                    if (!AbstractRenderer.IsBorderBoxSizing(cell)) {
+                        Border[] borders = cell.GetBorders();
+                        if (borders[1] != null) {
+                            widthValue.SetValue(widthValue.GetValue() + ((tableRenderer.bordersHandler is SeparatedTableBorders) ? borders
+                                [1].GetWidth() : borders[1].GetWidth() / 2));
                         }
-                        return widthValue;
+                        if (borders[3] != null) {
+                            widthValue.SetValue(widthValue.GetValue() + ((tableRenderer.bordersHandler is SeparatedTableBorders) ? borders
+                                [3].GetWidth() : borders[3].GetWidth() / 2));
+                        }
+                        UnitValue[] paddings = cell.GetPaddings();
+                        if (!paddings[1].IsPointValue()) {
+                            ILogger logger = ITextLogManager.GetLogger(typeof(TableWidths));
+                            logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED
+                                , Property.PADDING_LEFT));
+                        }
+                        if (!paddings[3].IsPointValue()) {
+                            ILogger logger = ITextLogManager.GetLogger(typeof(TableWidths));
+                            logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED
+                                , Property.PADDING_RIGHT));
+                        }
+                        widthValue.SetValue(widthValue.GetValue() + paddings[1].GetValue() + paddings[3].GetValue());
                     }
+                    return widthValue;
                 }
             }
         }

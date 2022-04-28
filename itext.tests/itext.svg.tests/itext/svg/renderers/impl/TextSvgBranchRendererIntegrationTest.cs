@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -147,11 +147,8 @@ namespace iText.Svg.Renderers.Impl {
 
         [NUnit.Framework.Test]
         public virtual void TextAbsolutePositionInvalidXTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "text-absolutePosition-invalidX");
-            }
-            , NUnit.Framework.Throws.InstanceOf<StyledXMLParserException>())
-;
+            NUnit.Framework.Assert.Catch(typeof(StyledXMLParserException), () => ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER
+                , "text-absolutePosition-invalidX"));
         }
 
         //Y
@@ -172,11 +169,8 @@ namespace iText.Svg.Renderers.Impl {
 
         [NUnit.Framework.Test]
         public virtual void TextAbsolutePositionInvalidYTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "text-absolutePosition-invalidY");
-            }
-            , NUnit.Framework.Throws.InstanceOf<StyledXMLParserException>())
-;
+            NUnit.Framework.Assert.Catch(typeof(StyledXMLParserException), () => ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER
+                , "text-absolutePosition-invalidY"));
         }
 
         //Relative move
@@ -198,11 +192,8 @@ namespace iText.Svg.Renderers.Impl {
 
         [NUnit.Framework.Test]
         public virtual void TextRelativeMoveInvalidXTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "text-relativeMove-invalidX");
-            }
-            , NUnit.Framework.Throws.InstanceOf<StyledXMLParserException>())
-;
+            NUnit.Framework.Assert.Catch(typeof(StyledXMLParserException), () => ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER
+                , "text-relativeMove-invalidX"));
         }
 
         //Y
@@ -223,11 +214,29 @@ namespace iText.Svg.Renderers.Impl {
 
         [NUnit.Framework.Test]
         public virtual void TextRelativeMoveInvalidYTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER, "text-relativeMove-invalidY");
-            }
-            , NUnit.Framework.Throws.InstanceOf<StyledXMLParserException>())
-;
+            NUnit.Framework.Assert.Catch(typeof(StyledXMLParserException), () => ConvertAndCompare(SOURCE_FOLDER, DESTINATION_FOLDER
+                , "text-relativeMove-invalidY"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void TextFontSizeEmUnitsTest() {
+            ConvertAndCompareSinglePage(SOURCE_FOLDER, DESTINATION_FOLDER, "textFontSizeEmUnitsTest");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void TextFontSizeRemUnitsTest() {
+            ConvertAndCompareSinglePage(SOURCE_FOLDER, DESTINATION_FOLDER, "textFontSizeRemUnitsTest");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void TextFontSizeExUnitsTest() {
+            ConvertAndCompareSinglePage(SOURCE_FOLDER, DESTINATION_FOLDER, "textFontSizeExUnitsTest");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void TspanWithOneAbsoluteCoordinateTest() {
+            // TODO change cmp after DEVSIX-4143 is fixed
+            ConvertAndCompareSinglePage(SOURCE_FOLDER, DESTINATION_FOLDER, "tspanWithOneAbsoluteCoordinateTest");
         }
     }
 }

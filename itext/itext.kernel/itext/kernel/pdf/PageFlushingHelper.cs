@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,9 +42,9 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using iText.IO.Util;
-using iText.Kernel;
+using iText.Commons.Utils;
 using iText.Kernel.Events;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf.Layer;
 
 namespace iText.Kernel.Pdf {
@@ -207,7 +207,8 @@ namespace iText.Kernel.Pdf {
         ///     </param>
         public virtual void UnsafeFlushDeep(int pageNum) {
             if (pdfDoc.GetWriter() == null) {
-                throw new ArgumentException(PdfException.FlushingHelperFLushingModeIsNotForDocReadingMode);
+                throw new ArgumentException(KernelExceptionMessageConstant.FLUSHING_HELPER_FLUSHING_MODE_IS_NOT_FOR_DOC_READING_MODE
+                    );
             }
             release = false;
             FlushPage(pageNum);
@@ -280,7 +281,8 @@ namespace iText.Kernel.Pdf {
         ///     </param>
         public virtual void AppendModeFlush(int pageNum) {
             if (pdfDoc.GetWriter() == null) {
-                throw new ArgumentException(PdfException.FlushingHelperFLushingModeIsNotForDocReadingMode);
+                throw new ArgumentException(KernelExceptionMessageConstant.FLUSHING_HELPER_FLUSHING_MODE_IS_NOT_FOR_DOC_READING_MODE
+                    );
             }
             PdfPage page = pdfDoc.GetPage(pageNum);
             if (page.IsFlushed()) {

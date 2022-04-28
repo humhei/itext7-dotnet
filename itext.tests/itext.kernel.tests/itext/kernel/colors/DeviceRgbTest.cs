@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,9 +41,6 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-#if !NETSTANDARD1_6
-using System.Drawing;
-#endif
 using iText.Test;
 using iText.Test.Attributes;
 
@@ -71,7 +68,6 @@ namespace iText.Kernel.Colors {
             NUnit.Framework.Assert.AreEqual(multiplier * (150f / 255), darkerRgbColor.GetColorValue()[2], 0.0001);
         }
 
-#if !NETSTANDARD1_6
         [NUnit.Framework.Test]
         public virtual void ColorByAWTColorConstantTest() {
             // RED
@@ -105,7 +101,7 @@ namespace iText.Kernel.Colors {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.COLORANT_INTENSITIES_INVALID, Count = 14)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.COLORANT_INTENSITIES_INVALID, Count = 14)]
         public virtual void InvalidConstructorArgumentsTest() {
             NUnit.Framework.Assert.AreEqual(0, GetSumOfColorValues(new DeviceRgb(-2f, 0f, 0f)), 0.001f);
             NUnit.Framework.Assert.AreEqual(0, GetSumOfColorValues(new DeviceRgb(0f, -2f, 0f)), 0.001f);
@@ -122,7 +118,7 @@ namespace iText.Kernel.Colors {
             NUnit.Framework.Assert.AreEqual(0, GetSumOfColorValues(new DeviceRgb(-2f, -2f, -2f)), 0.001f);
             NUnit.Framework.Assert.AreEqual(3, GetSumOfColorValues(new DeviceRgb(2f, 2f, 2f)), 0.001f);
         }
-#endif
+
         private float GetSumOfColorValues(DeviceRgb deviceRgb) {
             float sum = 0;
             float[] values = deviceRgb.GetColorValue();

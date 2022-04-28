@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -79,26 +79,6 @@ namespace iText.Kernel.Colors {
         public override void SetColorValue(float[] value) {
             base.SetColorValue(value);
             underlyingColor.SetColorValue(value);
-        }
-
-        /// <summary>
-        /// Changes pattern for
-        /// <see cref="PatternColor"/>.
-        /// </summary>
-        /// <remarks>
-        /// Changes pattern for
-        /// <see cref="PatternColor"/>
-        /// . Be sure to only set uncolored patterns for uncolored
-        /// <see cref="PatternColor"/>
-        /// ,
-        /// and vice versa, only set colored patterns for colored
-        /// <see cref="PatternColor"/>.
-        /// </remarks>
-        /// <param name="pattern">a pattern to be set for this instance.</param>
-        [System.ObsoleteAttribute(@"To be removed in iText 7.2. In order to change pattern one shall create a new PatternColor ."
-            )]
-        public virtual void SetPattern(PdfPattern pattern) {
-            this.pattern = pattern;
         }
 
         public override bool Equals(Object o) {

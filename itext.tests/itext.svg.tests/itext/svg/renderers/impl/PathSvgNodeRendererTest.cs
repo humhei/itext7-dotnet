@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -89,7 +89,6 @@ namespace iText.Svg.Renderers.Impl {
 
         [NUnit.Framework.Test]
         public virtual void PathNodeRendererMoveToTest1() {
-            //TODO (RND-904) This test should fail when RND-904 (relative line operator l ) is implemented.
             String filename = "pathNodeRendererMoveToTest1.pdf";
             PdfDocument doc = new PdfDocument(new PdfWriter(destinationFolder + filename));
             doc.AddNewPage();
@@ -202,7 +201,7 @@ namespace iText.Svg.Renderers.Impl {
             Stream xmlStream = new FileStream(sourceFolder + svgFilename, FileMode.Open, FileAccess.Read);
             IElementNode rootTag = new JsoupXmlParser().Parse(xmlStream, "ISO-8859-1");
             DefaultSvgProcessor processor = new DefaultSvgProcessor();
-            IBranchSvgNodeRenderer root = (IBranchSvgNodeRenderer)processor.Process(rootTag).GetRootRenderer();
+            IBranchSvgNodeRenderer root = (IBranchSvgNodeRenderer)processor.Process(rootTag, null).GetRootRenderer();
             SvgDrawContext context = new SvgDrawContext(null, null);
             PdfCanvas cv = new PdfCanvas(doc, 1);
             context.PushCanvas(cv);
@@ -220,7 +219,7 @@ namespace iText.Svg.Renderers.Impl {
             Stream xmlStream = new FileStream(sourceFolder + svgFilename, FileMode.Open, FileAccess.Read);
             IElementNode rootTag = new JsoupXmlParser().Parse(xmlStream, "ISO-8859-1");
             DefaultSvgProcessor processor = new DefaultSvgProcessor();
-            IBranchSvgNodeRenderer root = (IBranchSvgNodeRenderer)processor.Process(rootTag).GetRootRenderer();
+            IBranchSvgNodeRenderer root = (IBranchSvgNodeRenderer)processor.Process(rootTag, null).GetRootRenderer();
             SvgDrawContext context = new SvgDrawContext(null, null);
             PdfCanvas cv = new PdfCanvas(doc, 1);
             context.PushCanvas(cv);
@@ -238,7 +237,7 @@ namespace iText.Svg.Renderers.Impl {
             Stream xmlStream = new FileStream(sourceFolder + svgFilename, FileMode.Open, FileAccess.Read);
             IElementNode rootTag = new JsoupXmlParser().Parse(xmlStream, "ISO-8859-1");
             DefaultSvgProcessor processor = new DefaultSvgProcessor();
-            IBranchSvgNodeRenderer root = (IBranchSvgNodeRenderer)processor.Process(rootTag).GetRootRenderer();
+            IBranchSvgNodeRenderer root = (IBranchSvgNodeRenderer)processor.Process(rootTag, null).GetRootRenderer();
             SvgDrawContext context = new SvgDrawContext(null, null);
             PdfCanvas cv = new PdfCanvas(doc, 1);
             context.PushCanvas(cv);
@@ -269,20 +268,14 @@ namespace iText.Svg.Renderers.Impl {
 
         [NUnit.Framework.Test]
         public virtual void InvalidZOperatorTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                ConvertAndCompare(sourceFolder, destinationFolder, "invalidZOperatorTest01");
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>())
-;
+            NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => ConvertAndCompare(sourceFolder, destinationFolder
+                , "invalidZOperatorTest01"));
         }
 
         [NUnit.Framework.Test]
         public virtual void InvalidOperatorTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                ConvertAndCompare(sourceFolder, destinationFolder, "invalidOperatorTest01");
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>())
-;
+            NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => ConvertAndCompare(sourceFolder, destinationFolder
+                , "invalidOperatorTest01"));
         }
 
         //TODO DEVSIX-2242. This test should fail when the ticket is resolved
@@ -364,11 +357,28 @@ namespace iText.Svg.Renderers.Impl {
 
         [NUnit.Framework.Test]
         public virtual void EofillUnsuportedPathTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                ConvertAndCompare(sourceFolder, destinationFolder, "eofillUnsuportedPathTest");
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>())
-;
+            NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => ConvertAndCompare(sourceFolder, destinationFolder
+                , "eofillUnsuportedPathTest"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void MultiplePairsAfterMoveToRelativeTest() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "multiplePairsAfterMoveToRelative");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void MultiplePairsAfterMoveToAbsoluteTest() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "multiplePairsAfterMoveToAbsolute");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void PathHOperatorAbsoluteAfterMultiplePairsTest() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "pathHOperatorAbsoluteAfterMultiplePairs");
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void PathHOperatorRelativeAfterMultiplePairsTest() {
+            ConvertAndCompare(sourceFolder, destinationFolder, "pathHOperatorRelativeAfterMultiplePairs");
         }
     }
 }

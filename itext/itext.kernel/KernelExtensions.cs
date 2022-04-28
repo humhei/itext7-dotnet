@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-    Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -48,10 +48,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
-using iText.IO.Util;
-using iText.IO.Util.Collections;
+using iText.Commons.Utils;
+using iText.Commons.Utils.Collections;
 using Org.BouncyCastle.Crypto;
 
 internal static class KernelExtensions {
@@ -241,6 +242,33 @@ internal static class KernelExtensions {
         }
         return modified;
     }
+    
+    public static bool RemoveAll<T>(this ICollection<T> toClean, ICollection<T> c) {
+        bool modified = false;
+        foreach (T element in c)
+        {
+            bool anythingToRemove;
+            do
+            {
+                anythingToRemove = toClean.Remove(element);
+                modified |= anythingToRemove;
+            } while (anythingToRemove);
+        }
+        return modified;
+    }
+    
+    public static bool RetainAll<T>(this ICollection<T> toClean, ICollection<T> c) {
+        IList<T> toRemove = new List<T>();
+        foreach (T element in toClean)
+        {
+            if (!c.Contains(element))
+            {
+                toRemove.Add(element);
+            }
+        }
+        
+        return toClean.RemoveAll(toRemove);
+    }
 
     public static T PollFirst<T>(this SortedSet<T> set) {
         T item = set.First();
@@ -312,6 +340,46 @@ internal static class KernelExtensions {
         }
     }
 
+    public static TValue Get<TKey, TValue>(this ConditionalWeakTable<TKey, TValue > table, TKey key) where
+        TKey: class where TValue: class
+    {
+        TValue value = default(TValue);
+        if (key != null)
+        {
+            table.TryGetValue(key, out value);
+        }
+
+        return value;
+    }
+
+    public static TValue Put<TKey, TValue>(this ConditionalWeakTable<TKey, TValue> table, TKey key, TValue value)
+        where TKey : class where TValue : class
+    {
+        TValue oldVal = table.Get(key);
+        if (oldVal != null)
+        {
+            table.Remove(key);
+        }
+        table.Add(key, value);
+        return oldVal;
+    }
+
+    public static TValue JRemove<TKey, TValue>(this ConditionalWeakTable<TKey, TValue> table, TKey key)
+        where TKey : class where TValue : class
+    {
+        TValue value;
+        table.TryGetValue(key, out value);
+        table.Remove(key);
+
+        return value;
+    }
+
+    public static bool ContainsKey<TKey, TValue>(this ConditionalWeakTable<TKey, TValue> table, TKey key)
+        where TKey : class where TValue : class
+    {
+        return table.Get(key) != null;
+    }
+
     public static bool Contains<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key) {
         return dictionary.ContainsKey(key);
     }
@@ -361,7 +429,7 @@ internal static class KernelExtensions {
         dgst.DoFinal(buff, offest);
     }
 
-#if !NETSTANDARD1_6
+#if !NETSTANDARD2_0
     public static Attribute GetCustomAttribute(this Assembly assembly, Type attributeType) {
         object[] customAttributes = assembly.GetCustomAttributes(attributeType, false);
         if (customAttributes.Length > 0 && customAttributes[0] is Attribute) {
@@ -373,14 +441,14 @@ internal static class KernelExtensions {
 #endif
 
     public static Assembly GetAssembly(this Type type) {
-#if !NETSTANDARD1_6
+#if !NETSTANDARD2_0
         return type.Assembly;
 #else
         return type.GetTypeInfo().Assembly;
 #endif
     }
 
-#if NETSTANDARD1_6
+#if NETSTANDARD2_0
     public static MethodInfo GetMethod(this Type type, String methodName, Type[] parameterTypes) {
         return type.GetTypeInfo().GetMethod(methodName, parameterTypes);
     }

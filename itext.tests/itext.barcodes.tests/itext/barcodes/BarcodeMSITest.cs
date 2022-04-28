@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,7 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Kernel.Colors;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
@@ -92,6 +92,40 @@ namespace iText.Barcodes {
             document.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + filename, sourceFolder
                  + "cmp_" + filename, destinationFolder, "diff02_"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void BarcodeAlignRightTest() {
+            String filename = "barcodeMSI_AlignRight.pdf";
+            PdfWriter writer = new PdfWriter(destinationFolder + filename);
+            PdfDocument document = new PdfDocument(writer);
+            PdfPage page = document.AddNewPage();
+            PdfCanvas canvas = new PdfCanvas(page);
+            Barcode1D barcode = new BarcodeMSI(document);
+            barcode.SetCode("123456789");
+            barcode.SetGenerateChecksum(true);
+            barcode.SetTextAlignment(Barcode1D.ALIGN_RIGHT);
+            barcode.PlaceBarcode(canvas, ColorConstants.BLACK, ColorConstants.RED);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + filename, sourceFolder
+                 + "cmp_" + filename, destinationFolder, "diff01_"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void BarcodeAlignCenterTest() {
+            String filename = "barcodeMSI_AlignCenter.pdf";
+            PdfWriter writer = new PdfWriter(destinationFolder + filename);
+            PdfDocument document = new PdfDocument(writer);
+            PdfPage page = document.AddNewPage();
+            PdfCanvas canvas = new PdfCanvas(page);
+            Barcode1D barcode = new BarcodeMSI(document);
+            barcode.SetCode("123456789");
+            barcode.SetGenerateChecksum(true);
+            barcode.SetTextAlignment(Barcode1D.ALIGN_CENTER);
+            barcode.PlaceBarcode(canvas, ColorConstants.BLACK, ColorConstants.RED);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(destinationFolder + filename, sourceFolder
+                 + "cmp_" + filename, destinationFolder, "diff01_"));
         }
 
         [NUnit.Framework.Test]

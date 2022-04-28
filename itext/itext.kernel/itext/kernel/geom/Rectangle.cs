@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -44,14 +44,14 @@ address: sales@itextpdf.com
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using iText.IO.Util;
-using iText.Kernel;
+using iText.Commons.Utils;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
 
 namespace iText.Kernel.Geom {
     /// <summary>Class that represent rectangle object.</summary>
     public class Rectangle {
-        private static float EPS = 1e-4f;
+        internal static float EPS = 1e-4f;
 
         protected internal float x;
 
@@ -191,6 +191,13 @@ namespace iText.Kernel.Geom {
                 ));
         }
 
+        /// <summary>Convert rectangle to an array of points</summary>
+        /// <returns>array of four extreme points of rectangle</returns>
+        public virtual Point[] ToPointsArray() {
+            return new Point[] { new Point(x, y), new Point(x + width, y), new Point(x + width, y + height), new Point
+                (x, y + height) };
+        }
+
         /// <summary>Get the rectangle representation of the intersection between this rectangle and the passed rectangle
         ///     </summary>
         /// <param name="rect">the rectangle to find the intersection with</param>
@@ -209,7 +216,13 @@ namespace iText.Kernel.Geom {
             float ury = Math.Min(GetTop(), rect.GetTop());
             //If width or height is non-negative, there is overlap and we can construct the intersection rectangle
             float width = urx - llx;
+            if (Math.Abs(width) < EPS) {
+                width = 0;
+            }
             float height = ury - lly;
+            if (Math.Abs(height) < EPS) {
+                height = 0;
+            }
             if (JavaUtil.FloatCompare(width, 0) >= 0 && JavaUtil.FloatCompare(height, 0) >= 0) {
                 if (JavaUtil.FloatCompare(width, 0) < 0) {
                     width = 0;
@@ -246,18 +259,39 @@ namespace iText.Kernel.Geom {
         }
 
         /// <summary>Check if this rectangle and the passed rectangle overlap</summary>
-        /// <param name="rect"/>
+        /// <param name="rect">a rectangle which is to be checked if it overlaps the passed rectangle</param>
         /// <returns>true if there is overlap of some kind</returns>
         public virtual bool Overlaps(iText.Kernel.Geom.Rectangle rect) {
+            return Overlaps(rect, -EPS);
+        }
+
+        /// <summary>Check if this rectangle and the passed rectangle overlap</summary>
+        /// <param name="rect">a rectangle which is to be checked if it overlaps the passed rectangle</param>
+        /// <param name="epsilon">
+        /// if greater than zero, then this is the maximum distance that one rectangle can go to another, but
+        /// they will not overlap, if less than zero, then this is the minimum required distance between the
+        /// rectangles so that they do not overlap
+        /// </param>
+        /// <returns>true if there is overlap of some kind</returns>
+        public virtual bool Overlaps(iText.Kernel.Geom.Rectangle rect, float epsilon) {
             // Two rectangles do not overlap if any of the following holds
-            // 1. the lower left corner of the second rectangle is to the right of the upper-right corner of the first.
-            return !(this.GetX() + this.GetWidth() < rect.GetX() || 
-                        // 2. the lower left corner of the second rectangle is above the upper right corner of the first.
-                        this.GetY() + this.GetHeight() < rect.GetY() || 
-                        // 3. the upper right corner of the second rectangle is to the left of the lower-left corner of the first.
-                        this.GetX() > rect.GetX() + rect.GetWidth() || 
-                        // 4. the upper right corner of the second rectangle is below the lower left corner of the first.
-                        this.GetY() > rect.GetY() + rect.GetHeight());
+            // The first rectangle lies to the left of the second rectangle or touches very slightly
+            if ((this.GetX() + this.GetWidth()) < (rect.GetX() + epsilon)) {
+                return false;
+            }
+            // The first rectangle lies to the right of the second rectangle or touches very slightly
+            if ((this.GetX() + epsilon) > (rect.GetX() + rect.GetWidth())) {
+                return false;
+            }
+            // The first rectangle lies to the bottom of the second rectangle or touches very slightly
+            if ((this.GetY() + this.GetHeight()) < (rect.GetY() + epsilon)) {
+                return false;
+            }
+            // The first rectangle lies to the top of the second rectangle or touches very slightly
+            if ((this.GetY() + epsilon) > (rect.GetY() + rect.GetHeight())) {
+                return false;
+            }
+            return true;
         }
 
         /// <summary>Sets the rectangle by the coordinates, specifying its lower left and upper right points.</summary>
@@ -399,6 +433,32 @@ namespace iText.Kernel.Geom {
             return this;
         }
 
+        /// <summary>Increases the width of rectangle by the given value.</summary>
+        /// <remarks>Increases the width of rectangle by the given value. May be used in chain.</remarks>
+        /// <param name="extra">the value of the extra wudth to be added.</param>
+        /// <returns>
+        /// this
+        /// <see cref="Rectangle"/>
+        /// instance.
+        /// </returns>
+        public virtual iText.Kernel.Geom.Rectangle IncreaseWidth(float extra) {
+            this.width += extra;
+            return this;
+        }
+
+        /// <summary>Decreases the width of rectangle by the given value.</summary>
+        /// <remarks>Decreases the width of rectangle by the given value. May be used in chain.</remarks>
+        /// <param name="extra">the value of the extra width to be subtracted.</param>
+        /// <returns>
+        /// this
+        /// <see cref="Rectangle"/>
+        /// instance.
+        /// </returns>
+        public virtual iText.Kernel.Geom.Rectangle DecreaseWidth(float extra) {
+            this.width -= extra;
+            return this;
+        }
+
         /// <summary>Gets the X coordinate of the left edge of the rectangle.</summary>
         /// <remarks>
         /// Gets the X coordinate of the left edge of the rectangle. Same as:
@@ -497,7 +557,7 @@ namespace iText.Kernel.Geom {
         /// <see langword="true"/>
         /// the rectangle will expand, otherwise it will shrink
         /// </param>
-        /// <returns>the  rectanglewith applied margins</returns>
+        /// <returns>the rectangle with applied margins</returns>
         public virtual iText.Kernel.Geom.Rectangle ApplyMargins(float topIndent, float rightIndent, float bottomIndent
             , float leftIndent, bool reverse) {
             x += leftIndent * (reverse ? -1 : 1);
@@ -533,6 +593,15 @@ namespace iText.Kernel.Geom {
         /// <returns>the string representation of rectangle.</returns>
         public override String ToString() {
             return "Rectangle: " + GetWidth() + 'x' + GetHeight();
+        }
+
+        /// <summary>
+        /// Creates a "deep copy" of this rectangle, meaning the object returned by this method will be independent
+        /// of the object being cloned.
+        /// </summary>
+        /// <returns>the copied rectangle.</returns>
+        public virtual iText.Kernel.Geom.Rectangle Clone() {
+            return (iText.Kernel.Geom.Rectangle) MemberwiseClone();
         }
 
         /// <summary>Compares instance of this rectangle with given deviation equals to 0.0001</summary>
@@ -617,7 +686,7 @@ namespace iText.Kernel.Geom {
             ) {
             IList<iText.Kernel.Geom.Rectangle> boundingRectangles = new List<iText.Kernel.Geom.Rectangle>();
             if (quadPoints.Size() % 8 != 0) {
-                throw new PdfException(PdfException.QuadPointArrayLengthIsNotAMultipleOfEight);
+                throw new PdfException(KernelExceptionMessageConstant.QUAD_POINT_ARRAY_LENGTH_IS_NOT_A_MULTIPLE_OF_EIGHT);
             }
             for (int i = 0; i < quadPoints.Size(); i += 8) {
                 float[] quadPointEntry = JavaUtil.ArraysCopyOfRange(quadPoints.ToFloatArray(), i, i + 8);
@@ -633,7 +702,7 @@ namespace iText.Kernel.Geom {
         public static iText.Kernel.Geom.Rectangle CreateBoundingRectangleFromQuadPoint(PdfArray quadPoints) {
             //Check if array length is a multiple of 8
             if (quadPoints.Size() % 8 != 0) {
-                throw new PdfException(PdfException.QuadPointArrayLengthIsNotAMultipleOfEight);
+                throw new PdfException(KernelExceptionMessageConstant.QUAD_POINT_ARRAY_LENGTH_IS_NOT_A_MULTIPLE_OF_EIGHT);
             }
             float llx = float.MaxValue;
             float lly = float.MaxValue;
@@ -657,15 +726,6 @@ namespace iText.Kernel.Geom {
                 }
             }
             return (new iText.Kernel.Geom.Rectangle(llx, lly, urx - llx, ury - lly));
-        }
-
-        /// <summary>
-        /// Creates a "deep copy" of this rectangle, meaning the object returned by this method will be independent
-        /// of the object being cloned.
-        /// </summary>
-        /// <returns>the copied rectangle.</returns>
-        public virtual iText.Kernel.Geom.Rectangle Clone() {
-            return (iText.Kernel.Geom.Rectangle) MemberwiseClone();
         }
     }
 }

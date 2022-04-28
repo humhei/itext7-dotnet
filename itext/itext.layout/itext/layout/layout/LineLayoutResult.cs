@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -118,26 +118,26 @@ namespace iText.Layout.Layout {
             return splitForcedByNewline;
         }
 
-        /// <summary>
-        /// Sets
-        /// <see cref="SetSplitForcedByNewline(bool)"/>
-        /// </summary>
+        /// <summary>Sets a flat that split was forced by new line symbol in rendered text.</summary>
         /// <param name="isSplitForcedByNewline">indicates that split was forced by new line symbol in rendered text.</param>
         /// <returns>
         /// 
         /// <see cref="LineLayoutResult">this layout result</see>
         /// the setting was applied on.
         /// </returns>
-        /// <seealso cref="SetSplitForcedByNewline(bool)"/>
         public virtual iText.Layout.Layout.LineLayoutResult SetSplitForcedByNewline(bool isSplitForcedByNewline) {
             this.splitForcedByNewline = isSplitForcedByNewline;
             return this;
         }
 
+        /// <summary>Gets the list of floats overflowed to next page.</summary>
+        /// <returns>list of floats overflowed to next page</returns>
         public virtual IList<IRenderer> GetFloatsOverflowedToNextPage() {
             return floatsOverflowedToNextPage;
         }
 
+        /// <summary>Sets the list of floats overflowed to next page.</summary>
+        /// <param name="floatsOverflowedToNextPage">the floats overflowed to next page</param>
         public virtual void SetFloatsOverflowedToNextPage(IList<IRenderer> floatsOverflowedToNextPage) {
             this.floatsOverflowedToNextPage = floatsOverflowedToNextPage;
         }

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-    Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -47,7 +47,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Text;
-using iText.IO.Util.Collections;
+using iText.Commons.Utils.Collections;
 
 namespace iText.IO {
     internal static class IOExtensions {
@@ -205,7 +205,7 @@ namespace iText.IO {
         }
 
         public static Assembly GetAssembly(this Type type) {
-#if !NETSTANDARD1_6
+#if !NETSTANDARD2_0
             return type.Assembly;
 #else
             return type.GetTypeInfo().Assembly;

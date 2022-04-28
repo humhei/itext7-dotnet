@@ -1,7 +1,7 @@
 /*
 *
 * This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 * Authors: Bruno Lowagie, Paulo Soares, et al.
 *
 * This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@ Copyright (c) 1998-2019 iText Group NV
 * address: sales@itextpdf.com
 */
 using System;
-using iText.IO.Util;
+using iText.Commons.Utils;
 
 namespace iText.IO.Font.Otf {
     public class Glyph {
@@ -252,11 +252,12 @@ namespace iText.IO.Font.Otf {
         }
 
         public virtual bool HasOffsets() {
-            return xPlacement != 0 || yPlacement != 0 || xAdvance != 0 || yAdvance != 0;
+            return HasAdvance() || HasPlacement();
         }
 
+        // In case some of placement values are not zero we always expect anchorDelta to be non-zero
         public virtual bool HasPlacement() {
-            return xPlacement != 0 || yPlacement != 0;
+            return anchorDelta != 0;
         }
 
         public virtual bool HasAdvance() {

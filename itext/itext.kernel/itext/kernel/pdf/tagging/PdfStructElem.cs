@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,9 +43,10 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
-using iText.IO.Util;
-using iText.Kernel;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Annot;
 using iText.Kernel.Pdf.Filespec;
@@ -77,7 +78,7 @@ namespace iText.Kernel.Pdf.Tagging {
         public PdfStructElem(PdfDocument document, PdfName role, PdfAnnotation annot)
             : this(document, role) {
             if (annot.GetPage() == null) {
-                throw new PdfException(PdfException.AnnotationShallHaveReferenceToPage);
+                throw new PdfException(KernelExceptionMessageConstant.ANNOTATION_SHALL_HAVE_REFERENCE_TO_PAGE);
             }
             // Explicitly using object indirect reference here in order to correctly process released objects.
             GetPdfObject().Put(PdfName.Pg, annot.GetPage().GetPdfObject().GetIndirectReference());
@@ -89,8 +90,21 @@ namespace iText.Kernel.Pdf.Tagging {
             GetPdfObject().Put(PdfName.S, role);
         }
 
-        /// <summary>Method to to distinguish struct elements from other elements of the logical tree (like mcr or struct tree root).
+        /// <summary>Method to distinguish struct elements from other elements of the logical tree (like mcr or struct tree root).
         ///     </summary>
+        /// <param name="dictionary">
+        /// the
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// to check on containing struct elements
+        /// </param>
+        /// <returns>
+        /// if the type of
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// is StructElem or
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary"/>
+        /// contains the required key S
+        /// then true, otherwise false
+        /// </returns>
         public static bool IsStructElem(PdfDictionary dictionary) {
             // S is required key of the struct elem
             return (PdfName.StructElem.Equals(dictionary.GetAsName(PdfName.Type)) || dictionary.ContainsKey(PdfName.S)
@@ -335,7 +349,8 @@ namespace iText.Kernel.Pdf.Tagging {
         /// </param>
         public virtual void AddRef(iText.Kernel.Pdf.Tagging.PdfStructElem @ref) {
             if (!@ref.GetPdfObject().IsIndirect()) {
-                throw new PdfException(PdfException.RefArrayItemsInStructureElementDictionaryShallBeIndirectObjects);
+                throw new PdfException(KernelExceptionMessageConstant.REF_ARRAY_ITEMS_IN_STRUCTURE_ELEMENT_DICTIONARY_SHALL_BE_INDIRECT_OBJECTS
+                    );
             }
             VersionConforming.ValidatePdfVersionForDictEntry(GetDocument(), PdfVersion.PDF_2_0, PdfName.Ref, PdfName.StructElem
                 );
@@ -507,8 +522,8 @@ namespace iText.Kernel.Pdf.Tagging {
         /// <param name="fs">file specification dictionary of associated file</param>
         public virtual void AddAssociatedFile(String description, PdfFileSpec fs) {
             if (null == ((PdfDictionary)fs.GetPdfObject()).Get(PdfName.AFRelationship)) {
-                ILog logger = LogManager.GetLogger(typeof(iText.Kernel.Pdf.Tagging.PdfStructElem));
-                logger.Error(iText.IO.LogMessageConstant.ASSOCIATED_FILE_SPEC_SHALL_INCLUDE_AFRELATIONSHIP);
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.Tagging.PdfStructElem));
+                logger.LogError(iText.IO.Logs.IoLogMessageConstant.ASSOCIATED_FILE_SPEC_SHALL_INCLUDE_AFRELATIONSHIP);
             }
             if (null != description) {
                 GetDocument().GetCatalog().GetNameTree(PdfName.EmbeddedFiles).AddEntry(description, fs.GetPdfObject());
@@ -540,8 +555,8 @@ namespace iText.Kernel.Pdf.Tagging {
         }
 
         /// <summary>Returns files associated with structure element.</summary>
-        /// <param name="create">iText will create AF array if it doesn't exist and create value is true</param>
-        /// <returns>associated files array.</returns>
+        /// <param name="create">defines whether AF arrays will be created if it doesn't exist</param>
+        /// <returns>associated files array</returns>
         public virtual PdfArray GetAssociatedFiles(bool create) {
             PdfArray afArray = GetPdfObject().GetAsArray(PdfName.AF);
             if (afArray == null && create) {
@@ -572,10 +587,11 @@ namespace iText.Kernel.Pdf.Tagging {
 
         internal static void AddKidObject(PdfDictionary parent, int index, PdfObject kid) {
             if (parent.IsFlushed()) {
-                throw new PdfException(PdfException.CannotAddKidToTheFlushedElement);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_ADD_KID_TO_THE_FLUSHED_ELEMENT);
             }
             if (!parent.ContainsKey(PdfName.P)) {
-                throw new PdfException(PdfException.StructureElementShallContainParentObject, parent);
+                throw new PdfException(KernelExceptionMessageConstant.STRUCTURE_ELEMENT_SHALL_CONTAIN_PARENT_OBJECT, parent
+                    );
             }
             PdfObject k = parent.Get(PdfName.K);
             if (k == null) {
@@ -601,7 +617,7 @@ namespace iText.Kernel.Pdf.Tagging {
             parent.SetModified();
             if (kid is PdfDictionary && IsStructElem((PdfDictionary)kid)) {
                 if (!parent.IsIndirect()) {
-                    throw new PdfException(PdfException.StructureElementDictionaryShallBeAnIndirectObjectInOrderToHaveChildren
+                    throw new PdfException(KernelExceptionMessageConstant.STRUCTURE_ELEMENT_DICTIONARY_SHALL_BE_AN_INDIRECT_OBJECT_IN_ORDER_TO_HAVE_CHILDREN
                         );
                 }
                 ((PdfDictionary)kid).Put(PdfName.P, parent);
@@ -627,7 +643,7 @@ namespace iText.Kernel.Pdf.Tagging {
         private PdfDocument GetDocEnsureIndirectForKids() {
             PdfDocument doc = GetDocument();
             if (doc == null) {
-                throw new PdfException(PdfException.StructureElementDictionaryShallBeAnIndirectObjectInOrderToHaveChildren
+                throw new PdfException(KernelExceptionMessageConstant.STRUCTURE_ELEMENT_DICTIONARY_SHALL_BE_AN_INDIRECT_OBJECT_IN_ORDER_TO_HAVE_CHILDREN
                     );
             }
             return doc;

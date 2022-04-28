@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -46,6 +46,7 @@ using System.Collections.Generic;
 using iText.IO.Font;
 using iText.Kernel.Colors;
 using iText.Kernel.Pdf.Action;
+using iText.Kernel.Pdf.Colorspace;
 using iText.Kernel.Pdf.Navigation;
 
 namespace iText.Kernel.Pdf {
@@ -150,6 +151,25 @@ namespace iText.Kernel.Pdf {
         }
 
         /// <summary>
+        /// Gets color for the outline entry's text,
+        /// <c>C</c>
+        /// key.
+        /// </summary>
+        /// <returns>
+        /// color
+        /// <see cref="iText.Kernel.Colors.Color"/>.
+        /// </returns>
+        public virtual Color GetColor() {
+            PdfArray colorArray = content.GetAsArray(PdfName.C);
+            if (colorArray == null) {
+                return null;
+            }
+            else {
+                return Color.MakeColor(PdfColorSpace.MakeColorSpace(PdfName.DeviceRGB), colorArray.ToFloatArray());
+            }
+        }
+
+        /// <summary>
         /// Sets text style for the outline entry’s text,
         /// <c>F</c>
         /// key.
@@ -166,6 +186,16 @@ namespace iText.Kernel.Pdf {
             if (style == FLAG_BOLD || style == FLAG_ITALIC) {
                 content.Put(PdfName.F, new PdfNumber(style));
             }
+        }
+
+        /// <summary>
+        /// Gets text style for the outline entry's text,
+        /// <c>F</c>
+        /// key.
+        /// </summary>
+        /// <returns>style value.</returns>
+        public virtual int? GetStyle() {
+            return content.GetAsInt(PdfName.F);
         }
 
         /// <summary>Gets content dictionary.</summary>
@@ -258,6 +288,13 @@ namespace iText.Kernel.Pdf {
             }
         }
 
+        /// <summary>Defines if the outline is open or closed.</summary>
+        /// <returns>true if open,false otherwise.</returns>
+        public virtual bool IsOpen() {
+            int? count = content.GetAsInt(PdfName.Count);
+            return count == null || count >= 0;
+        }
+
         /// <summary>
         /// Adds a new
         /// <c>PdfOutline</c>
@@ -343,25 +380,10 @@ namespace iText.Kernel.Pdf {
             return newOutline;
         }
 
-        /// <summary>Clear list of children.</summary>
-        internal virtual void Clear() {
-            children.Clear();
-        }
-
-        /// <summary>
-        /// Sets
-        /// <see cref="iText.Kernel.Pdf.Navigation.PdfDestination"/>.
-        /// </summary>
-        /// <param name="destination">
-        /// instance of
-        /// <see cref="iText.Kernel.Pdf.Navigation.PdfDestination"/>.
-        /// </param>
-        internal virtual void SetDestination(PdfDestination destination) {
-            this.destination = destination;
-        }
-
         /// <summary>Remove this outline from the document.</summary>
-        internal virtual void RemoveOutline() {
+        /// <remarks>Remove this outline from the document. Outlines that are children of this outline are removed recursively
+        ///     </remarks>
+        public virtual void RemoveOutline() {
             if (!pdfDoc.HasOutlines() || IsOutlineRoot()) {
                 pdfDoc.GetCatalog().Remove(PdfName.Outlines);
                 return;
@@ -394,6 +416,23 @@ namespace iText.Kernel.Pdf {
                     next.Remove(PdfName.Prev);
                 }
             }
+        }
+
+        /// <summary>Clear list of children.</summary>
+        internal virtual void Clear() {
+            children.Clear();
+        }
+
+        /// <summary>
+        /// Sets
+        /// <see cref="iText.Kernel.Pdf.Navigation.PdfDestination"/>.
+        /// </summary>
+        /// <param name="destination">
+        /// instance of
+        /// <see cref="iText.Kernel.Pdf.Navigation.PdfDestination"/>.
+        /// </param>
+        internal virtual void SetDestination(PdfDestination destination) {
+            this.destination = destination;
         }
 
         /// <summary>

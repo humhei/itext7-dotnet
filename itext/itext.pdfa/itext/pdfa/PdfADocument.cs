@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,15 +42,16 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System;
-using System.Collections.Generic;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
 using iText.Kernel.Font;
-using iText.Kernel.Log;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
 using iText.Kernel.Pdf.Tagutils;
 using iText.Kernel.XMP;
 using iText.Pdfa.Checker;
+using iText.Pdfa.Exceptions;
+using iText.Pdfa.Logs;
 
 namespace iText.Pdfa {
     /// <summary>
@@ -69,14 +70,20 @@ namespace iText.Pdfa {
     /// <see cref="iText.Kernel.Pdf.PdfAConformanceLevel"/>
     /// ) to ensure that the PDF/A standard is followed.
     /// This class will throw exceptions, mostly
-    /// <see cref="PdfAConformanceException"/>
+    /// <see cref="iText.Pdfa.Exceptions.PdfAConformanceException"/>
     /// ,
     /// and thus refuse to output a PDF/A file if at any point the document does not
     /// adhere to the PDF/A guidelines specified by the
     /// <see cref="iText.Kernel.Pdf.PdfAConformanceLevel"/>.
     /// </remarks>
     public class PdfADocument : PdfDocument {
+        private static IPdfPageFactory pdfAPageFactory = new PdfAPageFactory();
+
         protected internal PdfAChecker checker;
+
+        private bool alreadyLoggedThatObjectFlushingWasNotPerformed = false;
+
+        private bool alreadyLoggedThatPageFlushingWasNotPerformed = false;
 
         /// <summary>Constructs a new PdfADocument for writing purposes, i.e. from scratch.</summary>
         /// <remarks>
@@ -138,20 +145,7 @@ namespace iText.Pdfa {
         /// <param name="properties">properties of the stamping process</param>
         public PdfADocument(PdfReader reader, PdfWriter writer, StampingProperties properties)
             : base(reader, writer, properties) {
-            byte[] existingXmpMetadata = GetXmpMetadata();
-            if (existingXmpMetadata == null) {
-                throw new PdfAConformanceException(PdfAConformanceException.DOCUMENT_TO_READ_FROM_SHALL_BE_A_PDFA_CONFORMANT_FILE_WITH_VALID_XMP_METADATA
-                    );
-            }
-            XMPMeta meta;
-            try {
-                meta = XMPMetaFactory.ParseFromBuffer(existingXmpMetadata);
-            }
-            catch (XMPException) {
-                throw new PdfAConformanceException(PdfAConformanceException.DOCUMENT_TO_READ_FROM_SHALL_BE_A_PDFA_CONFORMANT_FILE_WITH_VALID_XMP_METADATA
-                    );
-            }
-            PdfAConformanceLevel conformanceLevel = PdfAConformanceLevel.GetConformanceLevel(meta);
+            PdfAConformanceLevel conformanceLevel = reader.GetPdfAConformanceLevel();
             if (conformanceLevel == null) {
                 throw new PdfAConformanceException(PdfAConformanceException.DOCUMENT_TO_READ_FROM_SHALL_BE_A_PDFA_CONFORMANT_FILE_WITH_VALID_XMP_METADATA
                     );
@@ -161,11 +155,6 @@ namespace iText.Pdfa {
 
         public override void CheckIsoConformance(Object obj, IsoKey key) {
             CheckIsoConformance(obj, key, null, null);
-        }
-
-        [Obsolete]
-        public override void CheckIsoConformance(Object obj, IsoKey key, PdfResources resources) {
-            CheckIsoConformance(obj, key, resources, null);
         }
 
         public override void CheckIsoConformance(Object obj, IsoKey key, PdfResources resources, PdfStream contentStream
@@ -228,6 +217,11 @@ namespace iText.Pdfa {
                     checker.CheckFontGlyphs(((CanvasGraphicsState)obj).GetFont(), contentStream);
                     break;
                 }
+
+                case IsoKey.XREF_TABLE: {
+                    checker.CheckXrefTable((PdfXrefTable)obj);
+                    break;
+                }
             }
         }
 
@@ -244,6 +238,15 @@ namespace iText.Pdfa {
             return checker.GetConformanceLevel();
         }
 
+        internal virtual void LogThatPdfAPageFlushingWasNotPerformed() {
+            if (!alreadyLoggedThatPageFlushingWasNotPerformed) {
+                alreadyLoggedThatPageFlushingWasNotPerformed = true;
+                // This log message will be printed once for one instance of the document.
+                ITextLogManager.GetLogger(typeof(iText.Pdfa.PdfADocument)).LogWarning(PdfALogMessageConstant.PDFA_PAGE_FLUSHING_WAS_NOT_PERFORMED
+                    );
+            }
+        }
+
         protected override void AddCustomMetadataExtensions(XMPMeta xmpMeta) {
             if (this.IsTagged()) {
                 try {
@@ -253,8 +256,8 @@ namespace iText.Pdfa {
                     }
                 }
                 catch (XMPException exc) {
-                    ILog logger = LogManager.GetLogger(typeof(iText.Pdfa.PdfADocument));
-                    logger.Error(iText.IO.LogMessageConstant.EXCEPTION_WHILE_UPDATING_XMPMETADATA, exc);
+                    ILogger logger = ITextLogManager.GetLogger(typeof(iText.Pdfa.PdfADocument));
+                    logger.LogError(exc, iText.IO.Logs.IoLogMessageConstant.EXCEPTION_WHILE_UPDATING_XMPMETADATA);
                 }
             }
         }
@@ -269,8 +272,8 @@ namespace iText.Pdfa {
                 SetXmpMetadata(xmpMeta);
             }
             catch (XMPException e) {
-                ILog logger = LogManager.GetLogger(typeof(iText.Pdfa.PdfADocument));
-                logger.Error(iText.IO.LogMessageConstant.EXCEPTION_WHILE_UPDATING_XMPMETADATA, e);
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Pdfa.PdfADocument));
+                logger.LogError(e, iText.IO.Logs.IoLogMessageConstant.EXCEPTION_WHILE_UPDATING_XMPMETADATA);
             }
         }
 
@@ -283,10 +286,16 @@ namespace iText.Pdfa {
             if (isClosing || checker.ObjectIsChecked(pdfObject)) {
                 base.FlushObject(pdfObject, canBeInObjStm);
             }
+            else {
+                if (!alreadyLoggedThatObjectFlushingWasNotPerformed) {
+                    alreadyLoggedThatObjectFlushingWasNotPerformed = true;
+                    // This log message will be printed once for one instance of the document.
+                    ITextLogManager.GetLogger(typeof(iText.Pdfa.PdfADocument)).LogWarning(PdfALogMessageConstant.PDFA_OBJECT_FLUSHING_WAS_NOT_PERFORMED
+                        );
+                }
+            }
         }
 
-        //suppress the call
-        //TODO log unsuccessful call
         protected override void FlushFonts() {
             foreach (PdfFont pdfFont in GetDocumentFonts()) {
                 checker.CheckFont(pdfFont);
@@ -317,9 +326,12 @@ namespace iText.Pdfa {
             tagStructureContext = new TagStructureContext(this, GetPdfVersionForPdfA(checker.GetConformanceLevel()));
         }
 
-        [Obsolete]
-        protected override IList<ICounter> GetCounters() {
-            return CounterManager.GetInstance().GetCounters(typeof(iText.Pdfa.PdfADocument));
+        protected override IPdfPageFactory GetPageFactory() {
+            return pdfAPageFactory;
+        }
+
+        internal virtual bool IsClosing() {
+            return isClosing;
         }
 
         private static PdfVersion GetPdfVersionForPdfA(PdfAConformanceLevel conformanceLevel) {

@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -51,42 +51,40 @@ namespace iText.Svg.Utils {
     public class SkewXTransformationTest : ExtendedITextTest {
         [NUnit.Framework.Test]
         public virtual void NormalSkewXTest() {
-            AffineTransform expected = new AffineTransform(1d, 0d, Math.Tan(MathUtil.ToRadians((float)CssUtils.ParseFloat
-                ("143"))), 1d, 0d, 0d);
+            AffineTransform expected = new AffineTransform(1d, 0d, Math.Tan(MathUtil.ToRadians((float)CssDimensionParsingUtils
+                .ParseFloat("143"))), 1d, 0d, 0d);
             AffineTransform actual = TransformUtils.ParseTransform("skewX(143)");
             NUnit.Framework.Assert.AreEqual(expected, actual);
         }
 
         [NUnit.Framework.Test]
         public virtual void NoSkewXValuesTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                TransformUtils.ParseTransform("skewX()");
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>().With.Message.EqualTo(SvgLogMessageConstant.TRANSFORM_INCORRECT_NUMBER_OF_VALUES))
-;
+            Exception e = NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => TransformUtils.ParseTransform
+                ("skewX()"));
+            NUnit.Framework.Assert.AreEqual(SvgExceptionMessageConstant.TRANSFORM_INCORRECT_NUMBER_OF_VALUES, e.Message
+                );
         }
 
         [NUnit.Framework.Test]
         public virtual void TwoSkewXValuesTest() {
-            NUnit.Framework.Assert.That(() =>  {
-                TransformUtils.ParseTransform("skewX(1 2)");
-            }
-            , NUnit.Framework.Throws.InstanceOf<SvgProcessingException>().With.Message.EqualTo(SvgLogMessageConstant.TRANSFORM_INCORRECT_NUMBER_OF_VALUES))
-;
+            Exception e = NUnit.Framework.Assert.Catch(typeof(SvgProcessingException), () => TransformUtils.ParseTransform
+                ("skewX(1 2)"));
+            NUnit.Framework.Assert.AreEqual(SvgExceptionMessageConstant.TRANSFORM_INCORRECT_NUMBER_OF_VALUES, e.Message
+                );
         }
 
         [NUnit.Framework.Test]
         public virtual void NegativeSkewXTest() {
-            AffineTransform expected = new AffineTransform(1d, 0d, Math.Tan(MathUtil.ToRadians((float)CssUtils.ParseFloat
-                ("-26"))), 1d, 0d, 0d);
+            AffineTransform expected = new AffineTransform(1d, 0d, Math.Tan(MathUtil.ToRadians((float)CssDimensionParsingUtils
+                .ParseFloat("-26"))), 1d, 0d, 0d);
             AffineTransform actual = TransformUtils.ParseTransform("skewX(-26)");
             NUnit.Framework.Assert.AreEqual(expected, actual);
         }
 
         [NUnit.Framework.Test]
         public virtual void NinetyDegreesTest() {
-            AffineTransform expected = new AffineTransform(1d, 0d, Math.Tan(MathUtil.ToRadians((float)CssUtils.ParseFloat
-                ("90"))), 1d, 0d, 0d);
+            AffineTransform expected = new AffineTransform(1d, 0d, Math.Tan(MathUtil.ToRadians((float)CssDimensionParsingUtils
+                .ParseFloat("90"))), 1d, 0d, 0d);
             AffineTransform actual = TransformUtils.ParseTransform("skewX(90)");
             NUnit.Framework.Assert.AreEqual(expected, actual);
         }

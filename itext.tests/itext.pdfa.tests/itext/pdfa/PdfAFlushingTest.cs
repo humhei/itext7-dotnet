@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -48,7 +48,9 @@ using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
 using iText.Kernel.Pdf.Xobject;
 using iText.Kernel.Utils;
+using iText.Pdfa.Logs;
 using iText.Test;
+using iText.Test.Attributes;
 
 namespace iText.Pdfa {
     public class PdfAFlushingTest : ExtendedITextTest {
@@ -64,6 +66,7 @@ namespace iText.Pdfa {
         }
 
         [NUnit.Framework.Test]
+        [LogMessage(PdfALogMessageConstant.PDFA_OBJECT_FLUSHING_WAS_NOT_PERFORMED)]
         public virtual void FlushingTest01() {
             String outPdf = destinationFolder + "pdfA1b_flushingTest01.pdf";
             String cmpPdf = sourceFolder + "cmp/PdfAFlushingTest/cmp_pdfA1b_flushingTest01.pdf";
@@ -74,7 +77,7 @@ namespace iText.Pdfa {
             PdfCanvas canvas = new PdfCanvas(doc.AddNewPage());
             PdfImageXObject imageXObject = new PdfImageXObject(ImageDataFactory.Create(sourceFolder + "Desert.jpg"));
             imageXObject.MakeIndirect(doc);
-            canvas.AddXObject(imageXObject, new Rectangle(30, 300, 300, 300));
+            canvas.AddXObjectFittedIntoRectangle(imageXObject, new Rectangle(30, 300, 300, 300));
             imageXObject.Flush();
             if (imageXObject.IsFlushed()) {
                 NUnit.Framework.Assert.Fail("Flushing of unchecked objects shall be forbidden.");
@@ -84,6 +87,7 @@ namespace iText.Pdfa {
         }
 
         [NUnit.Framework.Test]
+        [LogMessage(PdfALogMessageConstant.PDFA_PAGE_FLUSHING_WAS_NOT_PERFORMED)]
         public virtual void FlushingTest02() {
             String outPdf = destinationFolder + "pdfA2b_flushingTest02.pdf";
             String cmpPdf = sourceFolder + "cmp/PdfAFlushingTest/cmp_pdfA2b_flushingTest02.pdf";
@@ -94,7 +98,7 @@ namespace iText.Pdfa {
             PdfCanvas canvas = new PdfCanvas(doc.AddNewPage());
             PdfImageXObject imageXObject = new PdfImageXObject(ImageDataFactory.Create(sourceFolder + "Desert.jpg"));
             imageXObject.MakeIndirect(doc);
-            canvas.AddXObject(imageXObject, new Rectangle(30, 300, 300, 300));
+            canvas.AddXObjectFittedIntoRectangle(imageXObject, new Rectangle(30, 300, 300, 300));
             PdfPage lastPage = doc.GetLastPage();
             lastPage.Flush();
             if (lastPage.IsFlushed()) {
@@ -114,7 +118,7 @@ namespace iText.Pdfa {
                 , "http://www.color.org", "sRGB IEC61966-2.1", @is));
             PdfCanvas canvas = new PdfCanvas(doc.AddNewPage());
             PdfImageXObject imageXObject = new PdfImageXObject(ImageDataFactory.Create(sourceFolder + "Desert.jpg"));
-            canvas.AddXObject(imageXObject, new Rectangle(30, 300, 300, 300));
+            canvas.AddXObjectFittedIntoRectangle(imageXObject, new Rectangle(30, 300, 300, 300));
             PdfPage lastPage = doc.GetLastPage();
             lastPage.Flush(true);
             if (!imageXObject.IsFlushed()) {
@@ -126,6 +130,7 @@ namespace iText.Pdfa {
         }
 
         [NUnit.Framework.Test]
+        [LogMessage(PdfALogMessageConstant.PDFA_OBJECT_FLUSHING_WAS_NOT_PERFORMED)]
         public virtual void AddUnusedStreamObjectsTest() {
             String outPdf = destinationFolder + "pdfA1b_docWithUnusedObjects_3.pdf";
             String cmpPdf = sourceFolder + "cmp/PdfAFlushingTest/cmp_pdfA1b_docWithUnusedObjects_3.pdf";

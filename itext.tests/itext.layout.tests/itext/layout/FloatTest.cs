@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -49,6 +49,7 @@ using iText.Kernel.Pdf.Canvas;
 using iText.Kernel.Utils;
 using iText.Layout.Borders;
 using iText.Layout.Element;
+using iText.Layout.Logs;
 using iText.Layout.Properties;
 using iText.Test;
 using iText.Test.Attributes;
@@ -60,6 +61,8 @@ namespace iText.Layout {
 
         public static readonly String destinationFolder = NUnit.Framework.TestContext.CurrentContext.TestDirectory
              + "/test/itext/layout/FloatTest/";
+
+        private const String shortText = "Video provides a powerful way to help you prove your point. When you click Online Video, you can paste in the embed code for the video you want to add. You can also type a keyword to search online for the video that best fits your document. ";
 
         private const String text = "Video provides a powerful way to help you prove your point. When you click Online Video, you can paste in the embed code for the video you want to add. You can also type a keyword to search online for the video that best fits your document. "
              + "To make your document look professionally produced, Word provides header, footer, cover page, and text box designs that complement each other. For example, you can add a matching cover page, header, and sidebar. Click Insert and then choose the elements you want from the different galleries. "
@@ -400,8 +403,8 @@ namespace iText.Layout {
             PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outFile)).SetTagged();
             PdfPage page = pdfDoc.AddNewPage();
             PdfCanvas pdfCanvas = new PdfCanvas(page);
-            iText.Layout.Canvas canvas = new iText.Layout.Canvas(pdfCanvas, pdfDoc, page.GetPageSize().ApplyMargins(36
-                , 36, 36, 36, false));
+            iText.Layout.Canvas canvas = new iText.Layout.Canvas(pdfCanvas, page.GetPageSize().ApplyMargins(36, 36, 36
+                , 36, false));
             canvas.EnableAutoTagging(page);
             Div div = new Div().SetBackgroundColor(ColorConstants.RED);
             Div fDiv = new Div().SetBackgroundColor(ColorConstants.BLUE).SetWidth(200).SetHeight(200);
@@ -500,7 +503,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.CLIP_ELEMENT, Count = 3)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.CLIP_ELEMENT, Count = 3)]
         public virtual void FloatFixedHeightContentNotFit() {
             String cmpFileName = sourceFolder + "cmp_floatFixedHeightContentNotFit.pdf";
             String outFile = destinationFolder + "floatFixedHeightContentNotFit.pdf";
@@ -704,7 +707,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
         public virtual void ClearancePageSplitFloatNothingInRoot01() {
             String cmpFileName = sourceFolder + "cmp_clearancePageSplitFloatNothingInRoot01.pdf";
             String outFile = destinationFolder + "clearancePageSplitFloatNothingInRoot01.pdf";
@@ -774,7 +777,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
         public virtual void ClearancePageSplitFloatNothingInBlock01() {
             String cmpFileName = sourceFolder + "cmp_clearancePageSplitFloatNothingInBlock01.pdf";
             String outFile = destinationFolder + "clearancePageSplitFloatNothingInBlock01.pdf";
@@ -902,7 +905,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA, Count = 2)]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA, Count = 2)]
         public virtual void FloatsOnPageSplit01() {
             String cmpFileName = sourceFolder + "cmp_floatsOnPageSplit01.pdf";
             String outFile = destinationFolder + "floatsOnPageSplit01.pdf";
@@ -957,7 +960,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
         public virtual void FloatsOnPageSplit04() {
             String cmpFileName = sourceFolder + "cmp_floatsOnPageSplit04.pdf";
             String outFile = destinationFolder + "floatsOnPageSplit04.pdf";
@@ -1042,7 +1045,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
         public virtual void FloatsOnPageSplit06_03() {
             String cmpFileName = sourceFolder + "cmp_floatsOnPageSplit06_03.pdf";
             String outFile = destinationFolder + "floatsOnPageSplit06_03.pdf";
@@ -1112,7 +1115,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
         public virtual void FloatsOnPageSplit08_02() {
             String cmpFileName = sourceFolder + "cmp_floatsOnPageSplit08_02.pdf";
             String outFile = destinationFolder + "floatsOnPageSplit08_02.pdf";
@@ -1139,7 +1142,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
         public virtual void FloatsOnPageSplit08_03() {
             String cmpFileName = sourceFolder + "cmp_floatsOnPageSplit08_03.pdf";
             String outFile = destinationFolder + "floatsOnPageSplit08_03.pdf";
@@ -1185,7 +1188,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
         public virtual void FloatsOnPageSplit10() {
             String cmpFileName = sourceFolder + "cmp_floatsOnPageSplit10.pdf";
             String outFile = destinationFolder + "floatsOnPageSplit10.pdf";
@@ -1206,7 +1209,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
         public virtual void FloatsOnPageSplit11() {
             String cmpFileName = sourceFolder + "cmp_floatsOnPageSplit11.pdf";
             String outFile = destinationFolder + "floatsOnPageSplit11.pdf";
@@ -1402,7 +1405,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
         public virtual void FloatsKeepTogetherOnPageSplit01() {
             String cmpFileName = sourceFolder + "cmp_floatsKeepTogetherOnPageSplit01.pdf";
             String outFile = destinationFolder + "floatsKeepTogetherOnPageSplit01.pdf";
@@ -1418,7 +1421,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
         public virtual void FloatsKeepTogetherOnPageSplit02() {
             String cmpFileName = sourceFolder + "cmp_floatsKeepTogetherOnPageSplit02.pdf";
             String outFile = destinationFolder + "floatsKeepTogetherOnPageSplit02.pdf";
@@ -1431,6 +1434,25 @@ namespace iText.Layout {
             for (int i = 0; i < 5; ++i) {
                 document.Add(new Paragraph(text));
             }
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFile, cmpFileName, destinationFolder, 
+                "diff39_"));
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA, Count = 2)]
+        public virtual void FloatsKeepTogetherOnPageSplit03() {
+            String cmpFileName = sourceFolder + "cmp_floatsKeepTogetherOnPageSplit03.pdf";
+            String outFile = destinationFolder + "floatsKeepTogetherOnPageSplit03.pdf";
+            Document document = new Document(new PdfDocument(new PdfWriter(outFile)));
+            document.Add(new Paragraph(text));
+            Div floatedKeptTogetherDiv = new Div().Add(new Paragraph(text + text)).SetBackgroundColor(ColorConstants.BLUE
+                ).SetWidth(200).SetKeepTogether(true);
+            floatedKeptTogetherDiv.SetProperty(Property.FLOAT, FloatPropertyValue.LEFT);
+            document.Add(floatedKeptTogetherDiv);
+            Div longKeptTogetherDiv = new Div().Add(new Paragraph(text + text + text + text + text + text)).SetKeepTogether
+                (true);
+            document.Add(longKeptTogetherDiv);
             document.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFile, cmpFileName, destinationFolder, 
                 "diff39_"));
@@ -1680,7 +1702,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
         public virtual void FloatsFirstOnPageNotFit01() {
             String cmpFileName = sourceFolder + "cmp_floatsFirstOnPageNotFit01.pdf";
             String outFile = destinationFolder + "floatsFirstOnPageNotFit01.pdf";
@@ -1700,7 +1722,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
         public virtual void FloatsFirstOnPageNotFit02() {
             String cmpFileName = sourceFolder + "cmp_floatsFirstOnPageNotFit02.pdf";
             String outFile = destinationFolder + "floatsFirstOnPageNotFit02.pdf";
@@ -1720,7 +1742,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
         public virtual void FloatsFirstOnPageNotFit03() {
             String cmpFileName = sourceFolder + "cmp_floatsFirstOnPageNotFit03.pdf";
             String outFile = destinationFolder + "floatsFirstOnPageNotFit03.pdf";
@@ -1866,7 +1888,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.CLIP_ELEMENT)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.CLIP_ELEMENT)]
         public virtual void FloatsHeightFixedInBlock01() {
             String cmpFileName = sourceFolder + "cmp_floatsHeightFixedInBlock01.pdf";
             String outFile = destinationFolder + "floatsHeightFixedInBlock01.pdf";
@@ -1882,7 +1904,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.CLIP_ELEMENT)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.CLIP_ELEMENT)]
         public virtual void FloatsHeightFixedInBlock02() {
             String cmpFileName = sourceFolder + "cmp_floatsHeightFixedInBlock02.pdf";
             String outFile = destinationFolder + "floatsHeightFixedInBlock02.pdf";
@@ -1899,7 +1921,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.CLIP_ELEMENT)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.CLIP_ELEMENT)]
         public virtual void FloatsHeightFixedInParagraph01() {
             String cmpFileName = sourceFolder + "cmp_floatsHeightFixedInParagraph01.pdf";
             String outFile = destinationFolder + "floatsHeightFixedInParagraph01.pdf";
@@ -1917,7 +1939,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.CLIP_ELEMENT)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.CLIP_ELEMENT)]
         public virtual void FloatsHeightFixedInParagraph02() {
             String cmpFileName = sourceFolder + "cmp_floatsHeightFixedInParagraph02.pdf";
             String outFile = destinationFolder + "floatsHeightFixedInParagraph02.pdf";
@@ -1936,7 +1958,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.CLIP_ELEMENT)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.CLIP_ELEMENT)]
         public virtual void FloatsMaxHeightFixedInBlock01() {
             String cmpFileName = sourceFolder + "cmp_floatsMaxHeightFixedInBlock01.pdf";
             String outFile = destinationFolder + "floatsMaxHeightFixedInBlock01.pdf";
@@ -1952,7 +1974,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.CLIP_ELEMENT)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.CLIP_ELEMENT)]
         public virtual void FloatsMaxHeightFixedInBlock02() {
             String cmpFileName = sourceFolder + "cmp_floatsMaxHeightFixedInBlock02.pdf";
             String outFile = destinationFolder + "floatsMaxHeightFixedInBlock02.pdf";
@@ -1969,7 +1991,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.CLIP_ELEMENT)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.CLIP_ELEMENT)]
         public virtual void FloatsMaxHeightFixedInParagraph01() {
             String cmpFileName = sourceFolder + "cmp_floatsMaxHeightFixedInParagraph01.pdf";
             String outFile = destinationFolder + "floatsMaxHeightFixedInParagraph01.pdf";
@@ -1987,7 +2009,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.CLIP_ELEMENT)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.CLIP_ELEMENT)]
         public virtual void FloatsMaxHeightFixedInParagraph02() {
             String cmpFileName = sourceFolder + "cmp_floatsMaxHeightFixedInParagraph02.pdf";
             String outFile = destinationFolder + "floatsMaxHeightFixedInParagraph02.pdf";
@@ -2091,7 +2113,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.CLIP_ELEMENT)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.CLIP_ELEMENT)]
         public virtual void FloatsMinHeightApplyingOnSplitTest02() {
             String cmpFileName = sourceFolder + "cmp_floatsMinHeightApplyingOnSplitTest02.pdf";
             String outFile = destinationFolder + "floatsMinHeightApplyingOnSplitTest02.pdf";
@@ -2112,7 +2134,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.CLIP_ELEMENT)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.CLIP_ELEMENT)]
         public virtual void FloatsMinHeightApplyingOnSplitTest03() {
             String cmpFileName = sourceFolder + "cmp_floatsMinHeightApplyingOnSplitTest03.pdf";
             String outFile = destinationFolder + "floatsMinHeightApplyingOnSplitTest03.pdf";
@@ -2132,7 +2154,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.CLIP_ELEMENT, Count = 2)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.CLIP_ELEMENT, Count = 2)]
         public virtual void FloatsMinHeightApplyingOnSplitTest04() {
             String cmpFileName = sourceFolder + "cmp_floatsMinHeightApplyingOnSplitTest04.pdf";
             String outFile = destinationFolder + "floatsMinHeightApplyingOnSplitTest04.pdf";
@@ -2159,7 +2181,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.CLIP_ELEMENT, Count = 2)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.CLIP_ELEMENT, Count = 2)]
         public virtual void FloatsMinHeightApplyingOnSplitTest05() {
             String cmpFileName = sourceFolder + "cmp_floatsMinHeightApplyingOnSplitTest05.pdf";
             String outFile = destinationFolder + "floatsMinHeightApplyingOnSplitTest05.pdf";
@@ -2426,7 +2448,7 @@ namespace iText.Layout {
         }
 
         [NUnit.Framework.Test]
-        [LogMessage(iText.IO.LogMessageConstant.TABLE_WIDTH_IS_MORE_THAN_EXPECTED_DUE_TO_MIN_WIDTH)]
+        [LogMessage(iText.IO.Logs.IoLogMessageConstant.TABLE_WIDTH_IS_MORE_THAN_EXPECTED_DUE_TO_MIN_WIDTH)]
         public virtual void FloatTableTest01() {
             String cmpFileName = sourceFolder + "cmp_floatTableTest01.pdf";
             String outFile = destinationFolder + "floatTableTest01.pdf";
@@ -2448,6 +2470,241 @@ namespace iText.Layout {
             doc.Close();
             NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFile, cmpFileName, destinationFolder, 
                 "diff03_"));
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
+        public virtual void KeepTogetherEnoughSpaceOnNewPageWithFloatTest() {
+            String cmpFileName = sourceFolder + "cmp_keepTogetherEnoughSpaceOnNewPageWithFloatTest.pdf";
+            String outFile = destinationFolder + "keepTogetherEnoughSpaceOnNewPageWithFloatTest.pdf";
+            Document document = new Document(new PdfDocument(new PdfWriter(outFile)));
+            FillWithKeptTogetherElement(document, text, 2, false, false);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFile, cmpFileName, destinationFolder, 
+                "diff50_"));
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
+        public virtual void KeepTogetherNotEnoughSpaceOnNewPageWithFloatEnoughOnEmptyTest() {
+            String cmpFileName = sourceFolder + "cmp_keepTogetherNotEnoughSpaceOnNewPageWithFloatEnoughOnEmptyTest.pdf";
+            String outFile = destinationFolder + "keepTogetherNotEnoughSpaceOnNewPageWithFloatEnoughOnEmptyTest.pdf";
+            Document document = new Document(new PdfDocument(new PdfWriter(outFile)));
+            FillWithKeptTogetherElement(document, text, 3, false, false);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFile, cmpFileName, destinationFolder, 
+                "diff50_"));
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA, Count = 2)]
+        public virtual void KeepTogetherNotEnoughSpaceOnNewEmptyPageTest() {
+            String cmpFileName = sourceFolder + "cmp_keepTogetherNotEnoughSpaceOnNewEmptyPageTest.pdf";
+            String outFile = destinationFolder + "keepTogetherNotEnoughSpaceOnNewEmptyPageTest.pdf";
+            Document document = new Document(new PdfDocument(new PdfWriter(outFile)));
+            FillWithKeptTogetherElement(document, text, 4, false, false);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFile, cmpFileName, destinationFolder, 
+                "diff50_"));
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA, Count = 1)]
+        public virtual void KeepTogetherNotEnoughSpaceOnNewEmptyPageShortFloatTest() {
+            String cmpFileName = sourceFolder + "cmp_keepTogetherNotEnoughSpaceOnNewEmptyPageShortFloatTest.pdf";
+            String outFile = destinationFolder + "keepTogetherNotEnoughSpaceOnNewEmptyPageShortFloatTest.pdf";
+            Document document = new Document(new PdfDocument(new PdfWriter(outFile)));
+            FillWithKeptTogetherElement(document, "Some short text", 4, false, true);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFile, cmpFileName, destinationFolder, 
+                "diff50_"));
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
+        public virtual void InnerKeepTogetherEnoughSpaceOnNewPageWithFloatTest() {
+            String cmpFileName = sourceFolder + "cmp_innerKeepTogetherEnoughSpaceOnNewPageWithFloatTest.pdf";
+            String outFile = destinationFolder + "innerKeepTogetherEnoughSpaceOnNewPageWithFloatTest.pdf";
+            Document document = new Document(new PdfDocument(new PdfWriter(outFile)));
+            FillWithKeptTogetherElement(document, text, 2, true, false);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFile, cmpFileName, destinationFolder, 
+                "diff50_"));
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA)]
+        public virtual void InnerKeepTogetherNotEnoughSpaceOnNewPageWithFloatEnoughOnEmptyTest() {
+            String cmpFileName = sourceFolder + "cmp_innerKeepTogetherNotEnoughSpaceOnNewPageWithFloatEnoughOnEmptyTest.pdf";
+            String outFile = destinationFolder + "innerKeepTogetherNotEnoughSpaceOnNewPageWithFloatEnoughOnEmptyTest.pdf";
+            Document document = new Document(new PdfDocument(new PdfWriter(outFile)));
+            FillWithKeptTogetherElement(document, text, 3, true, false);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFile, cmpFileName, destinationFolder, 
+                "diff50_"));
+        }
+
+        [NUnit.Framework.Test]
+        [LogMessage(LayoutLogMessageConstant.ELEMENT_DOES_NOT_FIT_AREA, Count = 2)]
+        public virtual void InnerKeepTogetherNotEnoughSpaceOnNewEmptyPageTest() {
+            String cmpFileName = sourceFolder + "cmp_innerKeepTogetherNotEnoughSpaceOnNewEmptyPageTest.pdf";
+            String outFile = destinationFolder + "innerKeepTogetherNotEnoughSpaceOnNewEmptyPageTest.pdf";
+            Document document = new Document(new PdfDocument(new PdfWriter(outFile)));
+            FillWithKeptTogetherElement(document, text, 4, true, false);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFile, cmpFileName, destinationFolder, 
+                "diff50_"));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void IndentInParagraphAndFloatInInnerDivTest() {
+            String outFile = destinationFolder + "indentInParagraphAndFloatInInnerDiv.pdf";
+            String cmpFileName = sourceFolder + "cmp_indentInParagraphAndFloatInInnerDiv.pdf";
+            Document document = new Document(new PdfDocument(new PdfWriter(outFile)));
+            Div div = new Div().Add(new Paragraph("Video provides a powerful way to help you prove" + " your point. When you click Online Video, you can"
+                ));
+            div.SetProperty(Property.FLOAT, FloatPropertyValue.RIGHT);
+            div.SetBackgroundColor(ColorConstants.YELLOW);
+            Paragraph p = new Paragraph();
+            p.SetFirstLineIndent(50);
+            p.Add(div);
+            p.Add(text);
+            document.Add(p);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFile, cmpFileName, destinationFolder));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void FloatAndIndentInFirstParagraphInDivTest() {
+            String outFile = destinationFolder + "floatAndIndentInFirstParagraphInDiv.pdf";
+            String cmpFileName = sourceFolder + "cmp_floatAndIndentInFirstParagraphInDiv.pdf";
+            Document document = new Document(new PdfDocument(new PdfWriter(outFile)));
+            Paragraph shortFloat = new Paragraph("Hello, iText! Hello, iText!").SetBackgroundColor(ColorConstants.CYAN
+                );
+            shortFloat.SetFirstLineIndent(50).SetProperty(Property.FLOAT, FloatPropertyValue.RIGHT);
+            Paragraph p = new Paragraph(text).SetBackgroundColor(ColorConstants.YELLOW);
+            Div div = new Div();
+            div.Add(shortFloat);
+            div.Add(p);
+            document.Add(div);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFile, cmpFileName, destinationFolder));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ShortFloatRightAndIndentInSecondParagraphInDivTest() {
+            String outFile = destinationFolder + "shortFloatRightAndIndentInSecondParagraphInDiv.pdf";
+            String cmpFileName = sourceFolder + "cmp_shortFloatRightAndIndentInSecondParagraphInDiv.pdf";
+            Document document = new Document(new PdfDocument(new PdfWriter(outFile)));
+            Paragraph shortFloat = new Paragraph("Hello, iText! Hello, iText!").SetBackgroundColor(ColorConstants.CYAN
+                );
+            shortFloat.SetProperty(Property.FLOAT, FloatPropertyValue.RIGHT);
+            Paragraph p = new Paragraph(text).SetFirstLineIndent(50).SetBackgroundColor(ColorConstants.YELLOW);
+            Div div = new Div();
+            div.Add(shortFloat);
+            div.Add(p);
+            document.Add(div);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFile, cmpFileName, destinationFolder));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void ShortFloatLeftAndIndentInSecondParagraphInDivTest() {
+            String outFile = destinationFolder + "shortFloatLeftAndIndentInSecondParagraphInDiv.pdf";
+            String cmpFileName = sourceFolder + "cmp_shortFloatLeftAndIndentInSecondParagraphInDiv.pdf";
+            Document document = new Document(new PdfDocument(new PdfWriter(outFile)));
+            Paragraph shortFloat = new Paragraph("Hello, iText! Hello, iText!").SetBackgroundColor(ColorConstants.CYAN
+                );
+            shortFloat.SetProperty(Property.FLOAT, FloatPropertyValue.LEFT);
+            Paragraph p = new Paragraph(text).SetFirstLineIndent(50).SetBackgroundColor(ColorConstants.YELLOW);
+            Div div = new Div();
+            div.Add(shortFloat);
+            div.Add(p);
+            document.Add(div);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFile, cmpFileName, destinationFolder));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void LongFloatAndIndentInSecondParagraphInDivTest() {
+            String outFile = destinationFolder + "longFloatAndIndentInSecondParagraphInDiv.pdf";
+            String cmpFileName = sourceFolder + "cmp_longFloatAndIndentInSecondParagraphInDiv.pdf";
+            Document document = new Document(new PdfDocument(new PdfWriter(outFile)));
+            Paragraph longFloat = new Paragraph(text).SetBackgroundColor(ColorConstants.CYAN);
+            longFloat.SetProperty(Property.FLOAT, FloatPropertyValue.RIGHT);
+            Paragraph p = new Paragraph(text).SetFirstLineIndent(50).SetBackgroundColor(ColorConstants.YELLOW);
+            Div div = new Div();
+            div.Add(longFloat);
+            div.Add(p);
+            document.Add(div);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFile, cmpFileName, destinationFolder));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void IndentInParentParagraphShortFirstFloatTest() {
+            String outFile = destinationFolder + "indentInParentParagraphShortFirstFloat.pdf";
+            String cmpFileName = sourceFolder + "cmp_indentInParentParagraphShortFirstFloat.pdf";
+            Document document = new Document(new PdfDocument(new PdfWriter(outFile)));
+            Paragraph parent = new Paragraph(text).SetFirstLineIndent(50);
+            Paragraph shortFloat = new Paragraph(shortText).SetBackgroundColor(ColorConstants.CYAN);
+            shortFloat.SetProperty(Property.FLOAT, FloatPropertyValue.RIGHT);
+            parent.Add(shortFloat);
+            Paragraph p = new Paragraph(text).SetBackgroundColor(ColorConstants.YELLOW);
+            parent.Add(p);
+            document.Add(parent);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFile, cmpFileName, destinationFolder));
+        }
+
+        [NUnit.Framework.Test]
+        public virtual void IndentInParentParagraphLongFirstFloatTest() {
+            String outFile = destinationFolder + "indentInParentParagraphLongFirstFloat.pdf";
+            String cmpFileName = sourceFolder + "cmp_indentInParentParagraphLongFirstFloat.pdf";
+            Document document = new Document(new PdfDocument(new PdfWriter(outFile)));
+            Paragraph parent = new Paragraph(text).SetFirstLineIndent(50);
+            Paragraph longFloat = new Paragraph(text).SetBackgroundColor(ColorConstants.CYAN);
+            longFloat.SetProperty(Property.FLOAT, FloatPropertyValue.RIGHT);
+            parent.Add(longFloat);
+            Paragraph p = new Paragraph(text).SetBackgroundColor(ColorConstants.YELLOW);
+            parent.Add(p);
+            document.Add(parent);
+            document.Close();
+            NUnit.Framework.Assert.IsNull(new CompareTool().CompareByContent(outFile, cmpFileName, destinationFolder));
+        }
+
+        private static void FillWithKeptTogetherElement(Document doc, String floatText, int textTimes, bool isInner
+            , bool floatAsFirst) {
+            Div floatedDiv = new Div().SetWidth(150).SetBorder(new SolidBorder(ColorConstants.BLUE, 3)).SetKeepTogether
+                (true);
+            floatedDiv.SetProperty(Property.FLOAT, FloatPropertyValue.LEFT);
+            floatedDiv.Add(new Paragraph(floatText).SetFontColor(ColorConstants.LIGHT_GRAY));
+            Paragraph keptTogetherParagraph = new Paragraph().SetKeepTogether(true);
+            for (int i = 0; i < textTimes; i++) {
+                keptTogetherParagraph.Add(text);
+            }
+            if (isInner) {
+                Div container = new Div();
+                container.Add(floatedDiv);
+                if (!floatAsFirst) {
+                    container.Add(new Paragraph("Hello"));
+                    container.Add(new Paragraph("Hello"));
+                    container.Add(new Paragraph("Hello"));
+                    container.Add(new Paragraph("Hello"));
+                }
+                container.Add(keptTogetherParagraph);
+                doc.Add(container);
+            }
+            else {
+                doc.Add(floatedDiv);
+                if (!floatAsFirst) {
+                    doc.Add(new Paragraph("Hello"));
+                    doc.Add(new Paragraph("Hello"));
+                    doc.Add(new Paragraph("Hello"));
+                    doc.Add(new Paragraph("Hello"));
+                }
+                doc.Add(keptTogetherParagraph);
+            }
         }
     }
 }

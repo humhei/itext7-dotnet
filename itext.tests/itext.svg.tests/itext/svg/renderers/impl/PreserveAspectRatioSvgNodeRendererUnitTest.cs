@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is offered under a commercial and under the AGPL license.
@@ -22,14 +22,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 using System;
 using System.Collections.Generic;
-using iText.IO.Util;
+using iText.Commons.Utils;
 using iText.Kernel.Geom;
 using iText.Svg;
 using iText.Svg.Renderers;
+using iText.Test;
 
 namespace iText.Svg.Renderers.Impl {
-    public class PreserveAspectRatioSvgNodeRendererUnitTest {
-        private static readonly Rectangle VIEWPORT_VALUE = PageSize.Default;
+    public class PreserveAspectRatioSvgNodeRendererUnitTest : ExtendedITextTest {
+        private static readonly Rectangle VIEWPORT_VALUE = PageSize.DEFAULT;
 
         private static readonly float[] VIEWBOX_VALUES = new float[] { 0, 0, 300, 400 };
 

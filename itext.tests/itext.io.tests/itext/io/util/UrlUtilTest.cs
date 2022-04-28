@@ -1,6 +1,6 @@
 /*
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: iText Software.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,11 @@ address: sales@itextpdf.com
 */
 using System;
 using System.IO;
+using System.Net;
+using System.Text;
+using iText.Commons.Utils;
 using iText.Test;
+using NUnit.Framework;
 
 namespace iText.IO.Util {
     public class UrlUtilTest : ExtendedITextTest {
@@ -62,20 +66,54 @@ namespace iText.IO.Util {
             NUnit.Framework.Assert.IsTrue(FileUtil.DeleteFile(tempFile));
         }
 
+        // This test checks that when we pass invalid url and trying get stream related to final redirected url,exception
+        // would be thrown.
+        [NUnit.Framework.Test]
+        public virtual void GetInputStreamOfFinalConnectionThrowExceptionTest() {
+            Uri invalidUrl = new Uri("http://itextpdf");
+            
+            NUnit.Framework.Assert.That(() => {
+                    UrlUtil.GetInputStreamOfFinalConnection(invalidUrl);
+                }, NUnit.Framework.Throws.InstanceOf<WebException>());
+        }
+        
+        // This test checks that when we pass valid url and trying get stream related to final redirected url, it would
+        // not be null.
+        [NUnit.Framework.Test]
+        public virtual void GetInputStreamOfFinalConnectionTest() {
+            Uri initialUrl = new Uri("http://itextpdf.com");
+            Stream streamOfFinalConnectionOfInvalidUrl = UrlUtil.GetInputStreamOfFinalConnection(initialUrl);
+            
+            NUnit.Framework.Assert.NotNull(streamOfFinalConnectionOfInvalidUrl);
+        }
+
         [NUnit.Framework.Test]
         public void GetBaseUriTest() {
             String absolutePathRoot = new Uri(new Uri("file://"), destinationFolder).AbsoluteUri;
             // artificial fix with subtracting the last backslash
             String expected = absolutePathRoot.Substring(0, absolutePathRoot.Length - 1) + System.IO.Path.DirectorySeparatorChar;
             FileInfo tempFile = FileUtil.CreateTempFile(destinationFolder);
-            NUnit.Framework.Assert.AreEqual(expected, FileUtil.GetParentDirectory(tempFile));
+            NUnit.Framework.Assert.AreEqual(expected, FileUtil.GetParentDirectoryUri(tempFile));
         }
 
         [NUnit.Framework.Test]
-        public void nullBaseUriTest() {
+        public void NullBaseUriTest() {
             String expected = "";
             FileInfo tempFile = null;
-            NUnit.Framework.Assert.AreEqual(expected, FileUtil.GetParentDirectory(tempFile));
+            NUnit.Framework.Assert.AreEqual(expected, FileUtil.GetParentDirectoryUri(tempFile));
+        }
+
+        [NUnit.Framework.Test]
+        public void OpenStreamTest() {
+            String projectFolder = iText.Test.TestUtil.GetParentProjectDirectory(NUnit.Framework.TestContext
+                .CurrentContext.TestDirectory);
+            string resPath = projectFolder + "/resources/itext/io/util/textFile.dat";
+            Stream openStream = UrlUtil.OpenStream(new Uri(resPath));
+
+            byte[] bytes = StreamUtil.InputStreamToArray(openStream);
+            String actual = Encoding.UTF8.GetString(bytes, 0, bytes.Length);
+            NUnit.Framework.Assert.AreEqual("Hello world from text file!", actual);
+            
         }
     }
 }

@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,9 +43,10 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.IO.Font.Constants;
-using iText.IO.Util;
 using iText.Kernel.Font;
 using iText.Kernel.Geom;
 using iText.Kernel.Numbering;
@@ -89,7 +90,26 @@ namespace iText.Layout.Renderer {
             return result;
         }
 
+        /// <summary>
+        /// Gets a new instance of this class to be used as a next renderer, after this renderer is used, if
+        /// <see cref="Layout(iText.Layout.Layout.LayoutContext)"/>
+        /// is called more than once.
+        /// </summary>
+        /// <remarks>
+        /// Gets a new instance of this class to be used as a next renderer, after this renderer is used, if
+        /// <see cref="Layout(iText.Layout.Layout.LayoutContext)"/>
+        /// is called more than once.
+        /// <para />
+        /// If a renderer overflows to the next area, iText uses this method to create a renderer
+        /// for the overflow part. So if one wants to extend
+        /// <see cref="ListRenderer"/>
+        /// , one should override
+        /// this method: otherwise the default method will be used and thus the default rather than the custom
+        /// renderer will be created.
+        /// </remarks>
+        /// <returns>new renderer instance</returns>
         public override IRenderer GetNextRenderer() {
+            LogWarningIfGetNextRendererNotOverridden(typeof(iText.Layout.Renderer.ListRenderer), this.GetType());
             return new iText.Layout.Renderer.ListRenderer((List)modelElement);
         }
 
@@ -219,7 +239,7 @@ namespace iText.Layout.Renderer {
                              == ListNumberingType.ZAPF_DINGBATS_3 || numberingType == ListNumberingType.ZAPF_DINGBATS_4) {
                             String constantFont = (numberingType == ListNumberingType.GREEK_LOWER || numberingType == ListNumberingType
                                 .GREEK_UPPER) ? StandardFonts.SYMBOL : StandardFonts.ZAPFDINGBATS;
-                            textRenderer = new _TextRenderer_210(constantFont, textElement);
+                            textRenderer = new ListRenderer.ConstantFontTextRenderer(textElement, constantFont);
                             try {
                                 textRenderer.SetProperty(Property.FONT, PdfFontFactory.CreateFont(constantFont));
                             }
@@ -247,24 +267,6 @@ namespace iText.Layout.Renderer {
                     }
                 }
             }
-        }
-
-        private sealed class _TextRenderer_210 : TextRenderer {
-            public _TextRenderer_210(String constantFont, Text baseArg1)
-                : base(baseArg1) {
-                this.constantFont = constantFont;
-            }
-
-            public override void Draw(DrawContext drawContext) {
-                try {
-                    this.SetProperty(Property.FONT, PdfFontFactory.CreateFont(constantFont));
-                }
-                catch (System.IO.IOException) {
-                }
-                base.Draw(drawContext);
-            }
-
-            private readonly String constantFont;
         }
 
         // Wrap the bullet with a line because the direction (f.e. RTL) is processed on the LineRenderer level.
@@ -417,19 +419,24 @@ namespace iText.Layout.Renderer {
                 listItemNum = 0;
                 foreach (IRenderer childRenderer in childRenderers) {
                     childRenderer.SetParent(this);
-                    childRenderer.DeleteOwnProperty(Property.MARGIN_LEFT);
-                    UnitValue marginLeftUV = childRenderer.GetProperty(Property.MARGIN_LEFT, UnitValue.CreatePointValue(0f));
-                    if (!marginLeftUV.IsPointValue()) {
-                        ILog logger = LogManager.GetLogger(typeof(iText.Layout.Renderer.ListRenderer));
-                        logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED, Property
-                            .MARGIN_LEFT));
+                    // Symbol indent's value should be summed with the margin's value
+                    bool isRtl = BaseDirection.RIGHT_TO_LEFT == childRenderer.GetProperty<BaseDirection?>(Property.BASE_DIRECTION
+                        );
+                    int marginToSet = isRtl ? Property.MARGIN_RIGHT : Property.MARGIN_LEFT;
+                    childRenderer.DeleteOwnProperty(marginToSet);
+                    UnitValue marginToSetUV = childRenderer.GetProperty<UnitValue>(marginToSet, UnitValue.CreatePointValue(0f)
+                        );
+                    if (!marginToSetUV.IsPointValue()) {
+                        ILogger logger = ITextLogManager.GetLogger(typeof(iText.Layout.Renderer.ListRenderer));
+                        logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.PROPERTY_IN_PERCENTS_NOT_SUPPORTED
+                            , marginToSet));
                     }
-                    float calculatedMargin = marginLeftUV.GetValue();
+                    float calculatedMargin = marginToSetUV.GetValue();
                     if ((ListSymbolPosition)GetListItemOrListProperty(childRenderer, this, Property.LIST_SYMBOL_POSITION) == ListSymbolPosition
                         .DEFAULT) {
                         calculatedMargin += maxSymbolWidth + (float)(symbolIndent != null ? symbolIndent : 0f);
                     }
-                    childRenderer.SetProperty(Property.MARGIN_LEFT, UnitValue.CreatePointValue(calculatedMargin));
+                    childRenderer.SetProperty(marginToSet, UnitValue.CreatePointValue(calculatedMargin));
                     IRenderer symbolRenderer = symbolRenderers[listItemNum++];
                     ((ListItemRenderer)childRenderer).AddSymbolRenderer(symbolRenderer, maxSymbolWidth);
                     if (symbolRenderer != null) {
@@ -446,6 +453,25 @@ namespace iText.Layout.Renderer {
                 }
             }
             return null;
+        }
+
+        private sealed class ConstantFontTextRenderer : TextRenderer {
+            private String constantFontName;
+
+            public ConstantFontTextRenderer(Text textElement, String font)
+                : base(textElement) {
+                constantFontName = font;
+            }
+
+            public override void Draw(DrawContext drawContext) {
+                try {
+                    SetProperty(Property.FONT, PdfFontFactory.CreateFont(constantFontName));
+                }
+                catch (System.IO.IOException) {
+                }
+                // Do nothing
+                base.Draw(drawContext);
+            }
         }
     }
 }

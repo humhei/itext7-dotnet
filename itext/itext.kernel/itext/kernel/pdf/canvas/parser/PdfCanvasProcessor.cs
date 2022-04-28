@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,19 +43,22 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.IO.Source;
-using iText.IO.Util;
-using iText.Kernel;
 using iText.Kernel.Colors;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Font;
 using iText.Kernel.Geom;
+using iText.Kernel.Logs;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
 using iText.Kernel.Pdf.Canvas.Parser.Data;
 using iText.Kernel.Pdf.Canvas.Parser.Listener;
 using iText.Kernel.Pdf.Canvas.Parser.Util;
 using iText.Kernel.Pdf.Colorspace;
+using iText.Kernel.Pdf.Extgstate;
 
 namespace iText.Kernel.Pdf.Canvas.Parser {
     /// <summary>Processor for a PDF content stream.</summary>
@@ -243,7 +246,7 @@ namespace iText.Kernel.Pdf.Canvas.Parser {
         /// <param name="resources">the resources of the content stream. Must not be null.</param>
         public virtual void ProcessContent(byte[] contentBytes, PdfResources resources) {
             if (resources == null) {
-                throw new PdfException(PdfException.ResourcesCannotBeNull);
+                throw new PdfException(KernelExceptionMessageConstant.RESOURCES_CANNOT_BE_NULL);
             }
             this.resourcesStack.Push(resources);
             PdfTokenizer tokeniser = new PdfTokenizer(new RandomAccessFileOrArray(new RandomAccessSourceFactory().CreateSource
@@ -257,7 +260,7 @@ namespace iText.Kernel.Pdf.Canvas.Parser {
                 }
             }
             catch (System.IO.IOException e) {
-                throw new PdfException(PdfException.CannotParseContentStream, e);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_PARSE_CONTENT_STREAM, e);
             }
             this.resourcesStack.Pop();
         }
@@ -463,10 +466,15 @@ namespace iText.Kernel.Pdf.Canvas.Parser {
         /// <remarks>
         /// Creates a
         /// <see cref="iText.Kernel.Font.PdfFont"/>
-        /// object by a font dictionary. The font may have been cached in case it is an indirect object.
+        /// object by a font dictionary. The font may have been cached in case
+        /// it is an indirect object.
         /// </remarks>
-        /// <param name="fontDict"/>
-        /// <returns>the font</returns>
+        /// <param name="fontDict">
+        /// the
+        /// <see cref="iText.Kernel.Pdf.PdfDictionary">font dictionary</see>
+        /// to create the font from
+        /// </param>
+        /// <returns>the created font</returns>
         protected internal virtual PdfFont GetFont(PdfDictionary fontDict) {
             if (fontDict.GetIndirectReference() == null) {
                 return PdfFontFactory.CreateFont(fontDict);
@@ -815,17 +823,17 @@ namespace iText.Kernel.Pdf.Canvas.Parser {
                 PdfName dictionaryName = (PdfName)operands[0];
                 PdfDictionary extGState = processor.GetResources().GetResource(PdfName.ExtGState);
                 if (extGState == null) {
-                    throw new PdfException(PdfException.ResourcesDoNotContainExtgstateEntryUnableToProcessOperator1).SetMessageParams
-                        (@operator);
+                    throw new PdfException(KernelExceptionMessageConstant.RESOURCES_DO_NOT_CONTAIN_EXTGSTATE_ENTRY_UNABLE_TO_PROCESS_THIS_OPERATOR
+                        ).SetMessageParams(@operator);
                 }
                 PdfDictionary gsDic = extGState.GetAsDictionary(dictionaryName);
                 if (gsDic == null) {
                     gsDic = extGState.GetAsStream(dictionaryName);
                     if (gsDic == null) {
-                        throw new PdfException(PdfException._1IsAnUnknownGraphicsStateDictionary).SetMessageParams(dictionaryName);
+                        throw new PdfException(KernelExceptionMessageConstant.UNKNOWN_GRAPHICS_STATE_DICTIONARY).SetMessageParams(
+                            dictionaryName);
                     }
                 }
-                // at this point, all we care about is the FONT entry in the GS dictionary TODO merge the whole gs dictionary
                 PdfArray fontParameter = gsDic.GetAsArray(PdfName.Font);
                 if (fontParameter != null) {
                     PdfFont font = processor.GetFont(fontParameter.GetAsDictionary(0));
@@ -833,6 +841,8 @@ namespace iText.Kernel.Pdf.Canvas.Parser {
                     processor.GetGraphicsState().SetFont(font);
                     processor.GetGraphicsState().SetFontSize(size);
                 }
+                PdfExtGState pdfExtGState = new PdfExtGState(gsDic.Clone(JavaCollectionsUtil.SingletonList(PdfName.Font)));
+                processor.GetGraphicsState().UpdateFromExtGState(pdfExtGState);
             }
         }
 
@@ -867,8 +877,8 @@ namespace iText.Kernel.Pdf.Canvas.Parser {
                         throw;
                     }
                     else {
-                        ILog logger = LogManager.GetLogger(typeof(PdfCanvasProcessor));
-                        logger.Error(MessageFormatUtil.Format(iText.IO.LogMessageConstant.FAILED_TO_PROCESS_A_TRANSFORMATION_MATRIX
+                        ILogger logger = ITextLogManager.GetLogger(typeof(PdfCanvasProcessor));
+                        logger.LogError(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.FAILED_TO_PROCESS_A_TRANSFORMATION_MATRIX
                             ));
                     }
                 }
@@ -963,6 +973,9 @@ namespace iText.Kernel.Pdf.Canvas.Parser {
                     }
                 }
             }
+            ILogger logger = ITextLogManager.GetLogger(typeof(PdfCanvasProcessor));
+            logger.LogWarning(MessageFormatUtil.Format(KernelLogMessageConstant.UNABLE_TO_PARSE_COLOR_WITHIN_COLORSPACE
+                , JavaUtil.ArraysToString((Object[])operands.ToArray()), pdfColorSpace.GetPdfObject()));
             return null;
         }
 
@@ -1072,8 +1085,8 @@ namespace iText.Kernel.Pdf.Canvas.Parser {
             }
 
             internal static PdfColorSpace DetermineColorSpace(PdfName colorSpace, PdfCanvasProcessor processor) {
-                PdfColorSpace pdfColorSpace = null;
-                if (PdfColorSpace.directColorSpaces.Contains(colorSpace)) {
+                PdfColorSpace pdfColorSpace;
+                if (PdfColorSpace.DIRECT_COLOR_SPACES.Contains(colorSpace)) {
                     pdfColorSpace = PdfColorSpace.MakeColorSpace(colorSpace);
                 }
                 else {
@@ -1143,7 +1156,7 @@ namespace iText.Kernel.Pdf.Canvas.Parser {
         private class BeginMarkedContentOperator : IContentOperator {
             /// <summary><inheritDoc/></summary>
             public virtual void Invoke(PdfCanvasProcessor processor, PdfLiteral @operator, IList<PdfObject> operands) {
-                processor.BeginMarkedContent((PdfName)operands[0], new PdfDictionary());
+                processor.BeginMarkedContent((PdfName)operands[0], null);
             }
         }
 
@@ -1164,15 +1177,15 @@ namespace iText.Kernel.Pdf.Canvas.Parser {
                 PdfName dictionaryName = ((PdfName)operand1);
                 PdfDictionary properties = resources.GetResource(PdfName.Properties);
                 if (null == properties) {
-                    ILog logger = LogManager.GetLogger(typeof(PdfCanvasProcessor));
-                    logger.Warn(MessageFormatUtil.Format(iText.IO.LogMessageConstant.PDF_REFERS_TO_NOT_EXISTING_PROPERTY_DICTIONARY
+                    ILogger logger = ITextLogManager.GetLogger(typeof(PdfCanvasProcessor));
+                    logger.LogWarning(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.PDF_REFERS_TO_NOT_EXISTING_PROPERTY_DICTIONARY
                         , PdfName.Properties));
                     return null;
                 }
                 PdfDictionary propertiesDictionary = properties.GetAsDictionary(dictionaryName);
                 if (null == propertiesDictionary) {
-                    ILog logger = LogManager.GetLogger(typeof(PdfCanvasProcessor));
-                    logger.Warn(MessageFormatUtil.Format(iText.IO.LogMessageConstant.PDF_REFERS_TO_NOT_EXISTING_PROPERTY_DICTIONARY
+                    ILogger logger = ITextLogManager.GetLogger(typeof(PdfCanvasProcessor));
+                    logger.LogWarning(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.PDF_REFERS_TO_NOT_EXISTING_PROPERTY_DICTIONARY
                         , dictionaryName));
                     return null;
                 }

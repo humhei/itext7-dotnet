@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -43,10 +43,11 @@ address: sales@itextpdf.com
 */
 using System;
 using System.Collections.Generic;
+using iText.Commons.Utils;
+using iText.IO.Exceptions;
 using iText.IO.Font.Constants;
 using iText.IO.Font.Woff2;
 using iText.IO.Source;
-using iText.IO.Util;
 
 namespace iText.IO.Font {
     /// <summary>Provides methods for creating various types of fonts.</summary>
@@ -230,7 +231,7 @@ namespace iText.IO.Font {
                                         fontProgram = WoffConverter.Convert(fontProgram);
                                     }
                                     catch (ArgumentException woffException) {
-                                        throw new iText.IO.IOException(iText.IO.IOException.InvalidWoffFile, woffException);
+                                        throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.InvalidWoffFile, woffException);
                                     }
                                 }
                                 else {
@@ -239,7 +240,8 @@ namespace iText.IO.Font {
                                         fontProgram = Woff2Converter.Convert(fontProgram);
                                     }
                                     catch (FontCompressionException woff2Exception) {
-                                        throw new iText.IO.IOException(iText.IO.IOException.InvalidWoff2File, woff2Exception);
+                                        throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.InvalidWoff2File, woff2Exception
+                                            );
                                     }
                                 }
                                 fontBuilt = new TrueTypeFont(fontProgram);
@@ -251,11 +253,12 @@ namespace iText.IO.Font {
                                         // count(.ttc) = 4
                                         String ttcName = baseName.JSubstring(0, ttcSplit + 4);
                                         // count(.ttc,) = 5)
-                                        int ttcIndex = Convert.ToInt32(baseName.Substring(ttcSplit + 5));
+                                        int ttcIndex = Convert.ToInt32(baseName.Substring(ttcSplit + 5), System.Globalization.CultureInfo.InvariantCulture
+                                            );
                                         fontBuilt = new TrueTypeFont(ttcName, ttcIndex);
                                     }
                                     catch (FormatException nfe) {
-                                        throw new iText.IO.IOException(nfe.Message, nfe);
+                                        throw new iText.IO.Exceptions.IOException(nfe.Message, nfe);
                                     }
                                 }
                             }
@@ -265,10 +268,11 @@ namespace iText.IO.Font {
             }
             if (fontBuilt == null) {
                 if (name != null) {
-                    throw new iText.IO.IOException(iText.IO.IOException.TypeOfFont1IsNotRecognized).SetMessageParams(name);
+                    throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.TypeOfFont1IsNotRecognized).SetMessageParams
+                        (name);
                 }
                 else {
-                    throw new iText.IO.IOException(iText.IO.IOException.TypeOfFontIsNotRecognized);
+                    throw new iText.IO.Exceptions.IOException(iText.IO.Exceptions.IOException.TypeOfFontIsNotRecognized);
                 }
             }
             return cached ? FontCache.SaveFont(fontBuilt, fontKey) : fontBuilt;
@@ -552,7 +556,7 @@ namespace iText.IO.Font {
                 (path));
             int bufLen = (int)raf.Length();
             if (bufLen < raf.Length()) {
-                throw new iText.IO.IOException(MessageFormatUtil.Format("Source data from \"{0}\" is bigger than byte array can hold."
+                throw new iText.IO.Exceptions.IOException(MessageFormatUtil.Format("Source data from \"{0}\" is bigger than byte array can hold."
                     , path));
             }
             byte[] buf = new byte[bufLen];

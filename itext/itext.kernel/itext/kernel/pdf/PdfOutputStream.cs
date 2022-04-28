@@ -1,7 +1,7 @@
 /*
 
 This file is part of the iText (R) project.
-Copyright (c) 1998-2019 iText Group NV
+Copyright (c) 1998-2022 iText Group NV
 Authors: Bruno Lowagie, Paulo Soares, et al.
 
 This program is free software; you can redistribute it and/or modify
@@ -42,11 +42,12 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System.IO;
-using Common.Logging;
+using Microsoft.Extensions.Logging;
+using iText.Commons;
+using iText.Commons.Utils;
 using iText.IO.Source;
-using iText.IO.Util;
-using iText.Kernel;
 using iText.Kernel.Crypto;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf.Filters;
 
 namespace iText.Kernel.Pdf {
@@ -62,9 +63,6 @@ namespace iText.Kernel.Pdf {
         private static readonly byte[] endIndirect = ByteUtils.GetIsoBytes(" R");
 
         private static readonly byte[] endIndirectWithZeroGenNr = ByteUtils.GetIsoBytes(" 0 R");
-
-        // For internal usage only
-        private byte[] duplicateContentBuffer = null;
 
         /// <summary>Document associated with PdfOutputStream.</summary>
         protected internal PdfDocument document = null;
@@ -87,7 +85,7 @@ namespace iText.Kernel.Pdf {
                 pdfObject = pdfObject.GetIndirectReference();
             }
             if (pdfObject.CheckState(PdfObject.READ_ONLY)) {
-                throw new PdfException(PdfException.CannotWriteObjectAfterItWasReleased);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_WRITE_OBJECT_AFTER_IT_WAS_RELEASED);
             }
             switch (pdfObject.GetObjectType()) {
                 case PdfObject.ARRAY: {
@@ -182,9 +180,9 @@ namespace iText.Kernel.Pdf {
                 Write(key);
                 PdfObject value = pdfDictionary.Get(key, false);
                 if (value == null) {
-                    ILog logger = LogManager.GetLogger(typeof(iText.Kernel.Pdf.PdfOutputStream));
-                    logger.Warn(MessageFormatUtil.Format(iText.IO.LogMessageConstant.INVALID_KEY_VALUE_KEY_0_HAS_NULL_VALUE, key
-                        ));
+                    ILogger logger = ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.PdfOutputStream));
+                    logger.LogWarning(MessageFormatUtil.Format(iText.IO.Logs.IoLogMessageConstant.INVALID_KEY_VALUE_KEY_0_HAS_NULL_VALUE
+                        , key));
                     value = PdfNull.PDF_NULL;
                 }
                 if ((value.GetObjectType() == PdfObject.NUMBER || value.GetObjectType() == PdfObject.LITERAL || value.GetObjectType
@@ -209,18 +207,19 @@ namespace iText.Kernel.Pdf {
 
         private void Write(PdfIndirectReference indirectReference) {
             if (document != null && !indirectReference.GetDocument().Equals(document)) {
-                throw new PdfException(PdfException.PdfIndirectObjectBelongsToOtherPdfDocument);
+                throw new PdfException(KernelExceptionMessageConstant.PDF_INDIRECT_OBJECT_BELONGS_TO_OTHER_PDF_DOCUMENT);
             }
             if (indirectReference.IsFree()) {
-                ILog logger = LogManager.GetLogger(typeof(iText.Kernel.Pdf.PdfOutputStream));
-                logger.Error(iText.IO.LogMessageConstant.FLUSHED_OBJECT_CONTAINS_FREE_REFERENCE);
+                ILogger logger = ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.PdfOutputStream));
+                logger.LogError(iText.IO.Logs.IoLogMessageConstant.FLUSHED_OBJECT_CONTAINS_FREE_REFERENCE);
                 Write(PdfNull.PDF_NULL);
             }
             else {
                 if (indirectReference.refersTo == null && (indirectReference.CheckState(PdfObject.MODIFIED) || indirectReference
                     .GetReader() == null || !(indirectReference.GetOffset() > 0 || indirectReference.GetIndex() >= 0))) {
-                    ILog logger = LogManager.GetLogger(typeof(iText.Kernel.Pdf.PdfOutputStream));
-                    logger.Error(iText.IO.LogMessageConstant.FLUSHED_OBJECT_CONTAINS_REFERENCE_WHICH_NOT_REFER_TO_ANY_OBJECT);
+                    ILogger logger = ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.PdfOutputStream));
+                    logger.LogError(iText.IO.Logs.IoLogMessageConstant.FLUSHED_OBJECT_CONTAINS_REFERENCE_WHICH_NOT_REFER_TO_ANY_OBJECT
+                        );
                     Write(PdfNull.PDF_NULL);
                 }
                 else {
@@ -300,7 +299,8 @@ namespace iText.Kernel.Pdf {
                     Stream fout = this;
                     DeflaterOutputStream def = null;
                     OutputStreamEncryption ose = null;
-                    if (crypto != null && !crypto.IsEmbeddedFilesOnly()) {
+                    if (crypto != null && (!crypto.IsEmbeddedFilesOnly() || document.DoesStreamBelongToEmbeddedFile(pdfStream)
+                        )) {
                         fout = ose = crypto.GetEncryptionStream(fout);
                     }
                     if (toCompress && (allowCompression || userDefinedCompression)) {
@@ -382,7 +382,7 @@ namespace iText.Kernel.Pdf {
                         }
                     }
                     catch (System.IO.IOException ioe) {
-                        throw new PdfException(PdfException.IoException, ioe);
+                        throw new PdfException(KernelExceptionMessageConstant.IO_EXCEPTION, ioe);
                     }
                     pdfStream.Put(PdfName.Length, new PdfNumber(byteArrayStream.Length));
                     pdfStream.UpdateLength((int)byteArrayStream.Length);
@@ -394,12 +394,13 @@ namespace iText.Kernel.Pdf {
                 }
             }
             catch (System.IO.IOException e) {
-                throw new PdfException(PdfException.CannotWriteToPdfStream, e, pdfStream);
+                throw new PdfException(KernelExceptionMessageConstant.CANNOT_WRITE_TO_PDF_STREAM, e, pdfStream);
             }
         }
 
         protected internal virtual bool CheckEncryption(PdfStream pdfStream) {
-            if (crypto == null || crypto.IsEmbeddedFilesOnly()) {
+            if (crypto == null || (crypto.IsEmbeddedFilesOnly() && !document.DoesStreamBelongToEmbeddedFile(pdfStream)
+                )) {
                 return false;
             }
             else {
@@ -442,7 +443,7 @@ namespace iText.Kernel.Pdf {
                         }
                     }
                     else {
-                        throw new PdfException(PdfException.FilterIsNotANameOrArray);
+                        throw new PdfException(KernelExceptionMessageConstant.FILTER_IS_NOT_A_NAME_OR_ARRAY);
                     }
                 }
             }
@@ -476,8 +477,8 @@ namespace iText.Kernel.Pdf {
                             ((PdfArray)decodeParms).Add(0, new PdfNull());
                         }
                         else {
-                            throw new PdfException(PdfException.DecodeParameterType1IsNotSupported).SetMessageParams(decodeParms.GetType
-                                ().ToString());
+                            throw new PdfException(KernelExceptionMessageConstant.THIS_DECODE_PARAMETER_TYPE_IS_NOT_SUPPORTED).SetMessageParams
+                                (decodeParms.GetType().ToString());
                         }
                     }
                 }
@@ -502,7 +503,7 @@ namespace iText.Kernel.Pdf {
                     filterName = filtersArray.GetAsName(0);
                 }
                 else {
-                    throw new PdfException(PdfException.FilterIsNotANameOrArray);
+                    throw new PdfException(KernelExceptionMessageConstant.FILTER_IS_NOT_A_NAME_OR_ARRAY);
                 }
             }
             if (!PdfName.FlateDecode.Equals(filterName)) {
@@ -525,8 +526,8 @@ namespace iText.Kernel.Pdf {
                         decodeParams = decodeParamsArray.GetAsDictionary(0);
                     }
                     else {
-                        throw new PdfException(PdfException.DecodeParameterType1IsNotSupported).SetMessageParams(decodeParamsObject
-                            .GetType().ToString());
+                        throw new PdfException(KernelExceptionMessageConstant.THIS_DECODE_PARAMETER_TYPE_IS_NOT_SUPPORTED).SetMessageParams
+                            (decodeParamsObject.GetType().ToString());
                     }
                 }
             }
