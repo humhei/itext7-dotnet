@@ -42,8 +42,10 @@ For more information, please contact iText Software Corp. at this
 address: sales@itextpdf.com
 */
 using System.Collections.Generic;
+using iText.Commons.Utils;
 using iText.IO.Util;
 using iText.Kernel;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf.Canvas;
 using iText.Kernel.Pdf.Canvas.Parser.ClipperLib;
@@ -194,7 +196,7 @@ namespace iText.Kernel.Pdf.Canvas.Parser {
                 return transformed;
             }
             catch (NoninvertibleTransformException e) {
-                throw new PdfException(PdfException.NoninvertibleMatrixCannotBeProcessed, e);
+                throw new PdfException(e);
             }
         }
     }
