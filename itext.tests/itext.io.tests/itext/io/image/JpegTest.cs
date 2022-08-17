@@ -85,7 +85,7 @@ namespace iText.IO.Image {
 
         [NUnit.Framework.Test]
         public virtual void OpenJpeg4() {
-            ImageData img = ImageDataFactory.Create(SOURCE_FOLDER + "WP_20140410_001_negate.jpg");
+            ImageData img = ImageDataFactory.Create(@"C:\Users\Jia\Desktop\convert cmyk image to gray1.jpg");
             NUnit.Framework.Assert.AreEqual(2592, img.GetWidth(), 0);
             NUnit.Framework.Assert.AreEqual(1456, img.GetHeight(), 0);
             NUnit.Framework.Assert.AreEqual(8, img.GetBpc());

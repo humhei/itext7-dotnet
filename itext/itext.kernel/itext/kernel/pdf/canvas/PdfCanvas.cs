@@ -253,7 +253,7 @@ namespace iText.Kernel.Pdf.Canvas {
         /// </param>
         public PdfCanvas(PdfPage page, bool wrapOldContent)
             : this(GetPageStream(page), page.GetResources(), page.GetDocument()) {
-            if (wrapOldContent) {
+            if (wrapOldContent) {   
                 // Wrap old content in q/Q in order not to get unexpected results because of the CTM
                 page.NewContentStreamBefore().GetOutputStream().WriteBytes(ByteUtils.GetIsoBytes("q\n"));
                 contentStream.GetOutputStream().WriteBytes(ByteUtils.GetIsoBytes("Q\n"));

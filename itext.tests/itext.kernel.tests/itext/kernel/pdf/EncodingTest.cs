@@ -288,7 +288,7 @@ namespace iText.Kernel.Pdf {
 
         [NUnit.Framework.Test]
         public virtual void DifferentCodeSpaceRangeLengthsExtractionTest() {
-            String fileName = sourceFolder + "differentCodeSpaceRangeLengths01.pdf";
+            String fileName = @"C:\Users\Jia\Desktop\New Document1.pdf";
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(fileName));
             String extractedText = PdfTextExtractor.GetTextFromPage(pdfDocument.GetPage(1));
             NUnit.Framework.Assert.AreEqual("Hello\u7121\u540dworld\u6b98\u528d", extractedText);

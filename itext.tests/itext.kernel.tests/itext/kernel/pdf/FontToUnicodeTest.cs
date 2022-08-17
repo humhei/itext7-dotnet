@@ -69,8 +69,8 @@ namespace iText.Kernel.Pdf {
             // TODO DEVSIX-3634. SUBSTITUTE "Assert.assertEquals("\u2F46"..." to "Assert.assertEquals("\u65E0"..." after the fix
             String outFileName = destinationFolder + "severalUnicodesWithinOneGlyphTest.pdf";
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(outFileName));
-            PdfFont font = PdfFontFactory.CreateFont(fontsFolder + "NotoSansCJKjp-Bold.otf", PdfEncodings.IDENTITY_H);
-            IList<Glyph> glyphs = JavaCollectionsUtil.SingletonList(font.GetGlyph((int)'\u65E0'));
+            PdfFont font = PdfFontFactory.CreateFont(@"D:\VsCode\Workspace\Shrimp.Pdf\Shrimp.Pdf\Resources\Fonts\Arial-Unicode\arial unicode ms.ttf", PdfEncodings.IDENTITY_H);
+            IList<Glyph> glyphs = JavaCollectionsUtil.SingletonList(font.GetGlyph((int)'\uE5B8'));
             GlyphLine glyphLine = new GlyphLine(glyphs);
             PdfCanvas canvas2 = new PdfCanvas(pdfDocument.AddNewPage());
             canvas2.SaveState().BeginText().MoveText(36, 800).SetFontAndSize(font, 12).ShowText(glyphLine).EndText().RestoreState
