@@ -460,11 +460,26 @@ namespace iText.Kernel.Font {
             }
         }
 
-        private void FlushFontData() {
-            if (((Type3Font)GetFontProgram()).GetNumberOfGlyphs() < 1) {
-                throw new PdfException(KernelExceptionMessageConstant.NO_GLYPHS_DEFINED_FOR_TYPE_3_FONT);
-            }
+        public virtual void FlushCharProcs() 
+        {
             PdfDictionary charProcs = new PdfDictionary();
+            for (int i = 0; i <= PdfFont.SIMPLE_FONT_MAX_CHAR_CODE_VALUE; i++)
+            // {
+            //     Type3Glyph glyph = null;
+            //     if (fontEncoding.CanDecode(i))
+            //     {
+            //         glyph = GetType3Glyph(fontEncoding.GetUnicode(i));
+            //     }
+            //     if (glyph == null)
+            //     {
+            //         glyph = ((Type3Font)GetFontProgram()).GetType3GlyphByCode(i);
+            //     }
+            //     if (glyph != null)
+            //     {
+            //         charProcs.Put(new PdfName(fontEncoding.GetDifference(i)), glyph.GetContentStream());
+            //         glyph.GetContentStream().Flush();
+            //     }
+            // }
             for (int i = 0; i <= PdfFont.SIMPLE_FONT_MAX_CHAR_CODE_VALUE; i++) {
                 Type3Glyph glyph = ((Type3Font)GetFontProgram()).GetType3GlyphByCode(i);
                 if (glyph != null) {
@@ -473,6 +488,13 @@ namespace iText.Kernel.Font {
                 }
             }
             GetPdfObject().Put(PdfName.CharProcs, charProcs);
+        }
+        
+        private void FlushFontData() {
+            if (((Type3Font)GetFontProgram()).GetNumberOfGlyphs() < 1) {
+                throw new PdfException(KernelExceptionMessageConstant.NO_GLYPHS_DEFINED_FOR_TYPE_3_FONT);
+            }
+            FlushCharProcs();
             double[] fontMatrixDouble = GetFontMatrix();
             int[] fontBBoxInt = GetFontProgram().GetFontMetrics().GetBbox();
             double[] fontBBoxDouble = new double[] { fontBBoxInt[FONT_BBOX_LLX], fontBBoxInt[FONT_BBOX_LLY], fontBBoxInt
@@ -483,6 +505,7 @@ namespace iText.Kernel.Font {
             GetPdfObject().Put(PdfName.FontBBox, new PdfArray(fontBBoxDouble));
             String fontName = fontProgram.GetFontNames().GetFontName();
             base.FlushFontData(fontName, PdfName.Type3);
+
             MakeObjectIndirect(GetPdfObject().Get(PdfName.Widths));
             //BaseFont is not listed as key in Type 3 font specification.
             GetPdfObject().Remove(PdfName.BaseFont);
