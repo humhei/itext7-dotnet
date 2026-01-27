@@ -746,7 +746,7 @@ namespace iText.Kernel.Pdf {
             return d;
         }
 
-        internal virtual PdfDictionary FillAndGetOcPropertiesDictionary() {
+        public virtual PdfDictionary FillAndGetOcPropertiesDictionary() {
             if (ocProperties != null) {
                 ocProperties.FillDictionary(false);
                 GetPdfObject().Put(PdfName.OCProperties, ocProperties.GetPdfObject());

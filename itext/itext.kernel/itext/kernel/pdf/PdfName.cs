@@ -50,7 +50,8 @@ using iText.IO.Source;
 namespace iText.Kernel.Pdf {
     public class PdfName : PdfPrimitiveObject, IComparable<iText.Kernel.Pdf.PdfName> {
         //  ' '
-        private static readonly byte[] space = ByteUtils.GetIsoBytes("#20");
+        private static readonly byte[] space =  
+                ByteUtils.GetIsoBytes("#20");
 
         //  '%'
         private static readonly byte[] percent = ByteUtils.GetIsoBytes("#25");

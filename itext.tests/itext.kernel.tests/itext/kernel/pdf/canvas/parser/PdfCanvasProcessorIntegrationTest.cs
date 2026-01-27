@@ -88,7 +88,7 @@ namespace iText.Kernel.Pdf.Canvas.Parser {
 
         [NUnit.Framework.Test]
         public virtual void ProcessGraphicsStateResourceOperatorFillOpacityTest() {
-            PdfDocument document = new PdfDocument(new PdfReader(SOURCE_FOLDER + "transparentText.pdf"));
+            PdfDocument document = new PdfDocument(new PdfReader(@"D:\VsCode\Workspace\Shrimp.Pdf.DSL\Shrimp.Pdf.Tests\bin\Debug\net6.0\datas\extract\extract texts2.pdf"));
             float? expOpacity = 0.5f;
             IDictionary<String, Object> textRenderInfo = new Dictionary<String, Object>();
             for (int i = 1; i <= document.GetNumberOfPages(); ++i) {

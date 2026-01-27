@@ -131,7 +131,7 @@ namespace iText.IO.Source {
             return GetIsoBytes(d, buffer, HighPrecision);
         }
 
-        internal static byte[] GetIsoBytes(double d, ByteBuffer buffer, bool highPrecision) {
+        public static byte[] GetIsoBytes(double d, ByteBuffer buffer, bool highPrecision) {
             if (highPrecision) {
                 if (Math.Abs(d) < 0.000001) {
                     if (buffer != null) {

@@ -68,6 +68,16 @@ namespace iText.Kernel.Pdf.Canvas.Parser {
                 ));
         }
 
+
+        [NUnit.Framework.Test]
+        public virtual void SMaskText()
+        {
+            PdfCanvasProcessor parser = new PdfCanvasProcessor(new FilteredEventListener()
+                );
+            parser.ProcessPageContent(new PdfDocument(new PdfReader(@"D:\VsCode\Workspace\Shrimp.Pdf.Enhancement\tests\Shrimp.Pdf.Enhancement.Tests\datas\manipulate\set font ratio.pdf")).GetPage(FIRST_PAGE
+                ));
+        }
+
         /// <summary>
         /// Test introduced to exclude a bug related to a Unicode quirk for
         /// Japanese.

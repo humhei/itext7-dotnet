@@ -47,7 +47,8 @@ namespace iText.Kernel.Pdf.Canvas.Parser {
 
         [NUnit.Framework.Test]
         public virtual void ExtractSingleInlineImageWithIndexedColorSpaceTest() {
-            PdfDocument pdf = new PdfDocument(new PdfReader(sourceFolder + "inlineImageExtraction.pdf"));
+            //PdfDocument pdf = new PdfDocument(new PdfReader(sourceFolder + "inlineImageExtraction.pdf"));
+            PdfDocument pdf = new PdfDocument(new PdfReader(@"C:\Users\Administrator\Desktop\吊牌反面.up21212121.pdf"));
             InlineImageExtractionTest.InlineImageEventListener eventListener = new InlineImageExtractionTest.InlineImageEventListener
                 ();
             PdfCanvasProcessor canvasProcessor = new PdfCanvasProcessor(eventListener);

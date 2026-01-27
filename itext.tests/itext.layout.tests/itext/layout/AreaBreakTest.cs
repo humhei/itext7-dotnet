@@ -51,6 +51,7 @@ using iText.Layout.Layout;
 using iText.Layout.Properties;
 using iText.Layout.Renderer;
 using iText.Test;
+using System.IO;
 
 namespace iText.Layout {
     public class AreaBreakTest : ExtendedITextTest {
@@ -67,6 +68,8 @@ namespace iText.Layout {
 
         [NUnit.Framework.Test]
         public virtual void PageBreakTest1() {
+
+
             String outFileName = destinationFolder + "pageBreak1.pdf";
             String cmpFileName = sourceFolder + "cmp_pageBreak1.pdf";
             PdfDocument pdfDocument = new PdfDocument(new PdfWriter(outFileName));

@@ -62,6 +62,10 @@ namespace iText.Barcodes {
 
         [NUnit.Framework.Test]
         public virtual void Barcode01Test() {
+            var pdfFile = @"D:\Users\Jia\Documents\MyData\Docs\2017\½¡ÄÍ\MX\MARVELµõÅÆ95x65mm.pdf";
+            var writer2 = new PdfWriter(System.IO.Path.ChangeExtension(pdfFile, ".writer.pdf"));
+            var reader = new PdfReader(pdfFile);
+            var document2 = new PdfDocument(reader, writer2);
             String filename = "barcode128_01.pdf";
             PdfWriter writer = new PdfWriter(destinationFolder + filename);
             PdfDocument document = new PdfDocument(writer);

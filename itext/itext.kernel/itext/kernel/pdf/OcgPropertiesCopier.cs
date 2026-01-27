@@ -50,7 +50,7 @@ using iText.IO.Font;
 using iText.Kernel.Pdf.Annot;
 
 namespace iText.Kernel.Pdf {
-    internal sealed class OcgPropertiesCopier {
+    public sealed class OcgPropertiesCopier {
         private static readonly ILogger LOGGER = ITextLogManager.GetLogger(typeof(iText.Kernel.Pdf.OcgPropertiesCopier
             ));
 

@@ -87,7 +87,10 @@ namespace iText.Kernel.Pdf.Canvas.Parser.ClipperLib {
         /// </remarks>
         public static double floatMultiplier = Math
                 //TODO DEVSIX-5770 make this constant a single non-static configuration
-                .Pow(10, 14);
+                //.Pow(10, 14);
+                .Pow(10, 10);
+
+        
 
         private ClipperBridge() {
         }

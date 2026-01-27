@@ -139,7 +139,7 @@ namespace iText.Kernel.Font {
 
         /// <summary>Creates a Type 3 font based on an existing font dictionary, which must be an indirect object.</summary>
         /// <param name="fontDictionary">a dictionary of type <c>/Font</c>, must have an indirect reference.</param>
-        internal PdfType3Font(PdfDictionary fontDictionary)
+        public PdfType3Font(PdfDictionary fontDictionary)
             : base(fontDictionary) {
             subset = true;
             embedded = true;
@@ -255,7 +255,7 @@ namespace iText.Kernel.Font {
         /// <returns>number of glyphs.</returns>
         public virtual int GetNumberOfGlyphs() {
             return ((Type3Font)GetFontProgram()).GetNumberOfGlyphs();
-        }
+        }   
 
         /// <summary>Defines a glyph.</summary>
         /// <remarks>Defines a glyph. If the character was already defined it will return the same content</remarks>
@@ -441,7 +441,7 @@ namespace iText.Kernel.Font {
             return -1;
         }
 
-        private void AddGlyphsFromCharProcs(PdfDictionary charProcsDic, int[] widths) {
+        public void AddGlyphsFromCharProcs(PdfDictionary charProcsDic, int[] widths) {
             if (charProcsDic == null) {
                 return;
             }
@@ -471,25 +471,41 @@ namespace iText.Kernel.Font {
             }
         }
 
-        private void FlushFontData() {
-            if (((Type3Font)GetFontProgram()).GetNumberOfGlyphs() < 1) {
-                throw new PdfException(KernelExceptionMessageConstant.NO_GLYPHS_DEFINED_FOR_TYPE_3_FONT);
-            }
+        public virtual void FlushCharProcs()
+        {
+
             PdfDictionary charProcs = new PdfDictionary();
-            for (int i = 0; i <= PdfFont.SIMPLE_FONT_MAX_CHAR_CODE_VALUE; i++) {
+            for (int i = 0; i <= PdfFont.SIMPLE_FONT_MAX_CHAR_CODE_VALUE; i++)
+            {
                 Type3Glyph glyph = null;
-                if (fontEncoding.CanDecode(i)) {
+                if (fontEncoding.CanDecode(i))
+                {
                     glyph = GetType3Glyph(fontEncoding.GetUnicode(i));
                 }
-                if (glyph == null) {
+                if (glyph == null)
+                {
                     glyph = ((Type3Font)GetFontProgram()).GetType3GlyphByCode(i);
                 }
-                if (glyph != null) {
+                if (glyph != null)
+                {
                     charProcs.Put(new PdfName(fontEncoding.GetDifference(i)), glyph.GetContentStream());
                     glyph.GetContentStream().Flush();
                 }
             }
             GetPdfObject().Put(PdfName.CharProcs, charProcs);
+
+        }
+                
+        public virtual void FlushFontData_SuffixAction()
+        {
+
+        }
+
+        private void FlushFontData() {
+            if (((Type3Font)GetFontProgram()).GetNumberOfGlyphs() < 1) {
+                throw new PdfException(KernelExceptionMessageConstant.NO_GLYPHS_DEFINED_FOR_TYPE_3_FONT);
+            }
+            FlushCharProcs();
             double[] fontMatrixDouble = GetFontMatrix();
             int[] fontBBoxInt = GetFontProgram().GetFontMetrics().GetBbox();
             double[] fontBBoxDouble = new double[] { fontBBoxInt[FONT_BBOX_LLX], fontBBoxInt[FONT_BBOX_LLY], fontBBoxInt
@@ -500,9 +516,11 @@ namespace iText.Kernel.Font {
             GetPdfObject().Put(PdfName.FontBBox, new PdfArray(fontBBoxDouble));
             String fontName = fontProgram.GetFontNames().GetFontName();
             base.FlushFontData(fontName, PdfName.Type3);
+            FlushFontData_SuffixAction();
             MakeObjectIndirect(GetPdfObject().Get(PdfName.Widths));
             //BaseFont is not listed as key in Type 3 font specification.
             GetPdfObject().Remove(PdfName.BaseFont);
+
         }
 
         private double[] ReadWidths(PdfDictionary fontDictionary) {

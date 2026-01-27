@@ -146,7 +146,7 @@ namespace iText.IO.Font {
             return fullNamesEnglishOpenType;
         }
 
-        internal virtual String GetFamilyNameEnglishOpenType() {
+        public virtual String GetFamilyNameEnglishOpenType() {
             return familyNameEnglishOpenType;
         }
 
