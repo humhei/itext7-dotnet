@@ -190,7 +190,7 @@ namespace iText.IO.Font {
         }
 
 //\cond DO_NOT_DOCUMENT
-        internal virtual String GetFamilyNameEnglishOpenType() {
+        public virtual String GetFamilyNameEnglishOpenType() {
             return familyNameEnglishOpenType;
         }
 //\endcond

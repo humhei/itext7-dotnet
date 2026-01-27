@@ -159,7 +159,7 @@ namespace iText.IO.Source {
 //\endcond
 
 //\cond DO_NOT_DOCUMENT
-        internal static byte[] GetIsoBytes(double d, ByteBuffer buffer, bool highPrecision) {
+        public static byte[] GetIsoBytes(double d, ByteBuffer buffer, bool highPrecision) {
             if (highPrecision) {
                 if (Math.Abs(d) < 0.000001) {
                     if (buffer != null) {
